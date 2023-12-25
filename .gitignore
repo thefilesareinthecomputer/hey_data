@@ -1,0 +1,9 @@
+_archive/
+_tests/
+app_base_knowledge/
+app_generated_files/
+app_local_models/
+app_source_data/
+hey_data/
+_requirements.txt
+.env

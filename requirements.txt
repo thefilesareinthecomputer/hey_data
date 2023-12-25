@@ -1,0 +1,72 @@
+python3.11
+brew install flac
+brew install portaudio
+
+pip install --upgrade pip
+pip install --upgrade virtualenv
+pip install --upgrade pytest
+pip install --upgrade wheel
+pip install --upgrade certifi
+pip install --upgrade setuptools
+
+pip install SpeechRecognition # requires 'brew install flac' in the shell first
+pip install pyaudio # requires 'brew install portaudio' in the shell first
+
+pip install auto-py-to-exe
+pip install howdoi
+pip install -U google-generativeai
+pip install -U langchain-google-genai pillow
+pip install -U langchain
+pip install python-dotenv
+pip install pyobjc
+pip install webrtcvad
+pip install pyttsx3
+pip install wikipedia
+pip install wolframalpha
+pip install openai
+pip install pandas
+pip install numpy
+pip install transformers
+pip install xformers
+pip install sentencepiece
+pip install torch
+pip install safetensors
+pip install openpyxl
+pip install streamlit
+pip install gpt4all
+pip install chromadb
+pip install llama-cpp-python
+pip install urllib3
+arch -arm64 pip install pymupdf
+pip install pdfplumber
+pip install PyPDF2
+pip install google-api-python-client
+pip install unstructured
+pip install extract-msg
+pip install tabulate
+pip install pandoc
+pip install pypandoc
+pip install tqdm
+pip install sentence_transformers
+pip install requests
+pip install python-docx
+pip install nltk
+pip install scikit-learn
+pip install sacremoses
+pip install sqlalchemy  
+pip install fuzzywuzzy 
+pip install python-Levenshtein 
+pip install pint
+pip install pytesseract
+pip install xlrd
+pip install beautifulsoup4
+pip install selenium
+pip install pyautogui
+pip install yfinance
+
+pip install 
+
+
+
+# pip install forex_python
+# pip install CurrencyConverter
