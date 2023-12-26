@@ -1,9 +1,20 @@
-VERSION
+## VERSION
 
     hey_data 0.1.1
     
 
-DEPENDENCIES
+## LICENSE
+
+### Open Source License
+
+This project is licensed under the GNU General Public License v3.0 - see the LICENSE.txt file for details. This open-source license is primarily for individual researchers, academic institutions, and non-commercial use. Contributions to the open-source version fall under the same GPLv3 licensing terms.
+
+### Commercial License
+
+For commercial use of this project, a separate commercial license is required. This includes use in a commercial entity or for commercial purposes. Please contact us at https://github.com/thefilesareinthecomputer for more information about obtaining a commercial license.
+
+
+## DEPENDENCIES
 
     macOS Sonoma 14
 
@@ -24,7 +35,7 @@ DEPENDENCIES
     This version utilizes the built-in macOS text to speech (TTS) engine, and will need slight modification on windows and linux with pyttsx3 or other TTS libraries.
 
 
-USER DEFINED VARIABLES:
+## USER DEFINED VARIABLES:
 
     within the .env file, optionally declare any of these variables (or others of your own) to extend tool functionality to the assistant:
     PROJECT_VENV_DIRECTORY=/Users/USERNAME/REPOSITORIES_FILDER/REPOSITORY/VENV
@@ -50,7 +61,7 @@ USER DEFINED VARIABLES:
     USER_STOCK_WATCH_LIST - List of stocks the user wants to track in this format: USER_STOCK_WATCH_LIST=AAPL,GOOG,MSFT,VOO
 
 
-APP OVERVIEW & NOTES:
+## APP OVERVIEW & NOTES:
 
     this is a voice activated ai assistent app designed to turn the user's laptop into a voice activated command center, note taker, question answerer, research assistant, information organizer/retriever, task automator, etc.
     when the app is running, it listens for user input and waits until it hears the activation word.
@@ -95,7 +106,7 @@ APP OVERVIEW & NOTES:
                 not complete. we need to add the ability to search for legal information from a list of trusted sources and summarize the results.
 
 
-BACKLOG (planned additions, improvements, and bug fixes):
+## BACKLOG (planned additions, improvements, and bug fixes):
 
     gain the ability to ingest knowledge from various media, interpret and summarize it, index it to a knowledge database (likely a graph database, maybe PostgreSQL), be able to query it in literal terms, and be able to converse about it with the user.
     new voices for the speech interface. Investigate text-to-speech (TTS) libraries that offer a variety of voices. Python libraries like pyttsx3 or using third-party services like Google Cloud Text-to-Speech can provide diverse voice options.
@@ -129,7 +140,7 @@ BACKLOG (planned additions, improvements, and bug fixes):
     add the ability to conduct legal research with websites like casetext, lexisnexis, westlaw, docketbird, pacer, bloomberg law, bna, fastcase, bestlaw, case text, casecheck, case notebook.
 
 
-CURRENT SPRINT DETAILS:
+## CURRENT SPRINT DETAILS:
 
     the speech timeout settings are still a bit clunky with room for improvement.
     currently, the bot is hearing its own output which is muddying the user input when the bot prompts the user for input.
@@ -142,7 +153,7 @@ CURRENT SPRINT DETAILS:
         we need the simplest solution possible to fix this problem.
 
 
-COMPLETION LOG:
+## COMPLETION LOG:
 
     2023-11-30 added google search, wikipedia search, and wolfram alpha query
     2023-12-01 note taking and note recall added
