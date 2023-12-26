@@ -8,15 +8,18 @@ db/
 hey_data/
 venv/
 
+.vscode/
+.idea/
+
 _requirements.txt
 .env
 
+src/__pycache__/
 __pycache__/
 *.pyc
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
+
 *.log
 *.sqlite3
 *.db
