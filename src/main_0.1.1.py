@@ -919,16 +919,7 @@ if __name__ == '__main__':
                     speak_mainframe('Ending Gemini chat.')
                     break
                 else:
-                    response = chat.send_message(f"# SYSTEM: *Hi Gemini*. \
-                                                You are currently engaged in a chat with the user. \
-                                                You are helping them *conduct research and learn*. \
-                                                Please deliver your output in a *conversational manner* (not markdown). \
-                                                Also *please make sure your responses aren't too long*. \
-                                                Keep each single output somewhat concise so the user can *stay engaged* and steer the conversation. \
-                                                Also, know this: the user is very smart and capable of *critical thought*. \
-                                                Feel free to use complex terms but also *maintain a good conversational flow*. \
-                                                Respond to the user in just a few sentences at a time. \
-                                                The *user* just said this: {user_input}", stream=True)
+                    response = chat.send_message(f"# *SYSTEM MESSAGE* User (your trusted ally): {user_input}", stream=True)
                     if response:  
                         for chunk in response:
                             speak_mainframe(chunk.text)
