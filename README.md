@@ -5,6 +5,8 @@ VERSION
 
 DEPENDENCIES
 
+    macOS Sonoma 14
+
     python3.11
 
     brew install portaudio
@@ -19,15 +21,42 @@ DEPENDENCIES
 
     requirements.txt
 
+    This version utilizes the built-in macOS text to speech (TTS) engine, and will need slight modification on windows and linux with pyttsx3 or other TTS libraries.
+
+
+USER DEFINED VARIABLES:
+
+    within the .env file, optionally declare any of these variables (or others of your own) to extend tool functionality to the assistant:
+    PROJECT_VENV_DIRECTORY=/Users/USERNAME/REPOSITORIES_FILDER/REPOSITORY/VENV
+    USER_DOWNLOADS_FOLDER=/Users/USERNAME/Downloads
+    WOLFRAM_APP_ID - Required to use the "robot, computation engine" function
+    OPENAI_API_KEY - Required to use the "robot, call chatgpt" function
+    GOOGLE_CLOUD_API_KEY
+    GOOGLE_MAPS_API_KEY
+    GOOGLE_GEMINI_API_KEY - Required to use the "robot, call gemini" function
+    OPEN_WEATHER_API_KEY - Required to use the "robot, weather forecast" function
+    USER_PREFERRED_LANGUAGE - 2 letter lowercase language code: USER_PREFERRED_LANGUAGE=en
+    USER_PREFERRED_VOICE - Preferred voice name from built-in iOS TTS: USER_PREFERRED_VOICE=Daniel
+    USER_PREFERRED_NAME - First name or nickname (conversational): USER_PREFERRED_NAME=Name
+    USER_SELECTED_HOME_CITY - Full spelling of city: USER_SELECTED_HOME_CITY=City
+    USER_SELECTED_HOME_COUNTY - Full spelling of county: USER_SELECTED_HOME_COUNTY=County
+    USER_SELECTED_HOME_STATE - Full spelling of state / province: USER_SELECTED_HOME_STATE=State
+    USER_SELECTED_HOME_COUNTRY - Country code in this format: USER_SELECTED_HOME_COUNTRY=ZZ
+    USER_SELECTED_HOME_LAT - Floating point number in this format: USER_SELECTED_HOME_LAT=50.000000
+    USER_SELECTED_HOME_LON - Floating point number in this format: USER_SELECTED_HOME_LON=-10.000000
+    USER_SELECTED_PASSWORD - Add an optional passkey like this: USER_SELECTED_PASSWORD=password
+    USER_SELECTED_TIMEZONE - User's local timezone in this format: USER_SELECTED_TIMEZONE=Country/City
+    USER_CRYPTO - List of coins the user wants to track in this format: BTC,ETH,ADA,LTC
+    USER_STOCK_WATCH_LIST - List of stocks the user wants to track in this format: USER_STOCK_WATCH_LIST=AAPL,GOOG,MSFT,VOO
+
 
 APP OVERVIEW & NOTES:
 
-    this is a voice activated ai assistent app designed to turn the user's laptop into a voice activated command center, note taker, question answerer, research assistant, etc.
-    when the app is running, it listens for user input and waits until the input matches the activation word.
-    the user interacts with the app by speaking the activation word (a global constant variable) followed by predetermined commands.
-    the user can also engage with an LLM via TTS STT - the main LLM is currently Gemini via the Google AI Studio API SDK.
+    this is a voice activated ai assistent app designed to turn the user's laptop into a voice activated command center, note taker, question answerer, research assistant, information organizer/retriever, task automator, etc.
+    when the app is running, it listens for user input and waits until it hears the activation word.
+    the activation word, followed by one of the pre-determined hard-coded phrases, will trigger various functions based on the phrases. some will be quick one-off actions, and others will trigger sub-loops such as the 'robot, call gemini' command which will enter a stateful TTS<>STT chat loop with the gemini chatbot via the Google AI Studio SDK API.
+    the user interacts with the app by speaking the activation word (a global constant variable) followed by predetermined phrases.
     
-    The robot will listen for the activation word, then listen for a command.
     The current operational phrases are:
     - "robot, reset robot" to reset the robot
     - "robot, standby mode" to put the robot on standby
