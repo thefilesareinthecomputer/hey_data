@@ -34,6 +34,7 @@ import yfinance as yf
 
 # bring in the environment variables from the .env file
 load_dotenv()
+ACTIVATION_WORD = os.getenv('ACTIVATION_WORD', 'robot')
 USER_DOWNLOADS_FOLDER = os.getenv('USER_DOWNLOADS_FOLDER')
 USER_PREFERRED_LANGUAGE = os.getenv('USER_PREFERRED_LANGUAGE', 'en')  # 2-letter lowercase
 USER_PREFERRED_VOICE = os.getenv('USER_PREFERRED_VOICE', 'Daniel')  # Daniel
@@ -85,7 +86,7 @@ genai.configure(api_key=google_gemini_api_key)
 model = genai.GenerativeModel('gemini-pro')
 
 # Establish the TTS bot's wake/activation word and script-specific global constants
-activation_word = 'robot'
+activation_word = f'{ACTIVATION_WORD}'
 speech_queue = queue.Queue()
 is_actively_speaking = False
 reset_mainframe = False

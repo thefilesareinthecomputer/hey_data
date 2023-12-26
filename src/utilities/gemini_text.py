@@ -49,13 +49,15 @@ PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
 
 # establish relative file paths for the current script
 SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-UTILITIES_DIR_PATH = os.path.join(PROJECT_VENV_DIRECTORY, 'src/utilities')
-FILE_DROP_DIR_PATH = os.path.join(PROJECT_VENV_DIRECTORY, 'app_generated_files')
-NOTES_DROP_DIR_PATH = os.path.join(PROJECT_VENV_DIRECTORY, 'app_base_knowledge')
-LOCAL_LLMS_DIR = os.path.join(PROJECT_VENV_DIRECTORY, 'app_local_models')
-SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_VENV_DIRECTORY, 'app_source_data')
-TESTS_DIR_PATH = os.path.join(PROJECT_VENV_DIRECTORY, '_tests')
-ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_VENV_DIRECTORY, '_archive')
+SRC_DIR_PATH = os.path.dirname(SCRIPT_DIR_PATH)
+PROJECT_ROOT_DIR_PATH = os.path.dirname(SRC_DIR_PATH)
+ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_archive')
+FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_generated_files')
+LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_local_models')
+NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_base_knowledge')
+SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_source_data')
+TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_tests')
+UTILITIES_DIR_PATH = os.path.join(SCRIPT_DIR_PATH, 'utilities')
 
 folders_to_create = [FILE_DROP_DIR_PATH, NOTES_DROP_DIR_PATH, LOCAL_LLMS_DIR, SOURCE_DATA_DIR_PATH, UTILITIES_DIR_PATH, TESTS_DIR_PATH, ARCHIVED_DEV_VERSIONS_PATH]
 for folder in folders_to_create:

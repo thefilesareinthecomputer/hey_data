@@ -98,12 +98,11 @@ APP OVERVIEW & NOTES:
 BACKLOG (planned additions, improvements, and bug fixes):
 
     gain the ability to ingest knowledge from various media, interpret and summarize it, index it to a knowledge database (likely a graph database, maybe PostgreSQL), be able to query it in literal terms, and be able to converse about it with the user.
-    stock analysis and advisor. Utilize the Yahoo Finance API for stock data.
     new voices for the speech interface. Investigate text-to-speech (TTS) libraries that offer a variety of voices. Python libraries like pyttsx3 or using third-party services like Google Cloud Text-to-Speech can provide diverse voice options.
     news report from tailored sources. Implement a feature to fetch news from APIs like NewsAPI, filtering content based on user preferences.
     communication (sms, google voice text, whatsapp text, signal text, email, etc.).
     add tqdm progress bars to long running tasks.
-    consume knowledge from a youtube video playlist and then gain the ability to summarize the playlist, index it to a knowledge database (likely a graph databade), and converse about it with the user.
+    consume knowledge from a youtube video playlist and then gain the ability to summarize the playlist, index it to a knowledge database (likely a graph database), and converse about it with the user.
     translators: google translate for quick phrases, deepl for longer documents.
     click a link on the screen by name based on user speech.
     select a tab or window by description based on user speech (a description, such as 'top left of the screen, in back' or 'bottom right of the screen, in front', or 'minimized browser windows' or 'minimized VS code windows' or 'minimized images').
@@ -118,7 +117,7 @@ BACKLOG (planned additions, improvements, and bug fixes):
     add the ability to follow specific predefined user voice prompts to click windows, open links, type in fields, interact with UIs and apps, edit and crop, adjust settings like brightness and volume, etc. based on voice commands.
     add knowledge bases and retrieval augmented generation from custom knowledge in a vector database or graph database with a semantic layer.
     add the ability to talk to chatgpt, the api is not functioning. the assistant run is executing, but the api is not successfully returning a response. 
-    vad for bot voice and background noice cancellation, or a way to filter out the bot's own voice from the user's input.
+    vad (voice activity detection) for bot voice and background noice cancellation, or a way to filter out the bot's own voice from the user's input.
     chatgpt
         the chatgpt api code in this app is almost working but the chatgpt api is not fully working yet. 
         responses are not coming back from the model but the thread is running.
@@ -126,7 +125,22 @@ BACKLOG (planned additions, improvements, and bug fixes):
         we need to enter a stateful chat loop with chatgpt when chatgpt is called by the user. 
         the user must be able to exit the chat by saying "robot, end chat".
         i need debugging advice and direction please.    
-    
+    integrate it with the phomemo printer to print notes.
+    add the ability to conduct legal research with websites like casetext, lexisnexis, westlaw, docketbird, pacer, bloomberg law, bna, fastcase, bestlaw, case text, casecheck, case notebook.
+
+
+CURRENT SPRINT DETAILS:
+
+    the speech timeout settings are still a bit clunky with room for improvement.
+    currently, the bot is hearing its own output which is muddying the user input when the bot prompts the user for input.
+    this is interfering with the ability to create a stateful chat loop with good conversational flow.
+    the speech recognizer is combining the bot's speech and the user's speech into one message which is not correct.
+    The i/o is currently working like this and needs to be fixed: 
+        the user says "robot, translate to spanish", the bot says "Speak the phrase you want to translate.", the user says "this is the phrase." then the bot interprets and translates "Speak the phrase you want to translate. this is the phrase." into Spanish.
+        this is also affecting other functions like the wikipedia summary function. 
+        the bot also hears its own announcement when it sais "robot online", etc.
+        we need the simplest solution possible to fix this problem.
+
 
 COMPLETION LOG:
 
@@ -150,20 +164,10 @@ COMPLETION LOG:
     2023-12-21 added the ability to enter a chat sub-loop with gemini chatbot by saying "robot, call gemini".
     2023-12-21 fixed a bug where the speech recognizer was retuurning 'None' vs None for unrecognized speech input.
     2023-12-22 installed auto py to exe and docker in anticipation of building a standalone app (tbd on containerization choice).
+    2023-12-25 moved the activation word from hard-coded 'robot' into a user-defined variable in the .env file.
     
     
-CURRENT SPRINT DETAILS:
 
-    the speech timeout settings are still a bit clunky with room for improvement.
-    currently, the bot is hearing its own output which is muddying the user input when the bot prompts the user for input.
-    this is interfering with the ability to create a stateful chat loop with good conversational flow.
-    the speech recognizer is combining the bot's speech and the user's speech into one message which is not correct.
-    The i/o is currently working like this and needs to be fixed: 
-        the user says "robot, translate to spanish", the bot says "Speak the phrase you want to translate.", the user says "this is the phrase." then the bot interprets and translates "Speak the phrase you want to translate. this is the phrase." into Spanish.
-        this is also affecting other functions like the wikipedia summary function. 
-        the bot also hears its own announcement when it sais "robot online", etc.
-        we need the simplest solution possible to fix this problem.
-    add the ability to conduct legal research with websites like casetext, lexisnexis, westlaw, docketbird, pacer, bloomberg law, bna, fastcase, bailii, barbri, bestlaw, case.law, case text, casecheck, case mine, case notebook,
 
     
     
