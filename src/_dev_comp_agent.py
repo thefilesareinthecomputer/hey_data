@@ -7,21 +7,26 @@ from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from dotenv import load_dotenv
+from fake_useragent import UserAgent
 from math import radians, cos, sin, asin, sqrt
 from openai import OpenAI
+from pyppeteer import launch, errors as pyppeteer_errors
 from tqdm import tqdm
 from transformers import MarianMTModel, MarianTokenizer
 from urllib.parse import urlparse, urljoin
+import asyncio # new
 import certifi
 import datetime
 import google.generativeai as genai
 import json
+import logging
 import numpy as np
 import os
 import pandas as pd
 import pyautogui
 import pytz
 import queue
+import random
 import re
 import requests
 import speech_recognition as sr
@@ -97,7 +102,7 @@ pd.set_option('display.precision', 1)
 
 # FUNCTION DEFINITIONS ###################################################################################################################################
 
-address = "23 Avenue des Champs Elysées 75008 Paris, France"
+address = "9 9th Ave, New York, NY 10014"
 search_distance = 10000
     
 class AddressResearcher:
@@ -110,6 +115,13 @@ class AddressResearcher:
             'restaurants': ['restaurant'],
         }
 
+    # User-Agent List
+    USER_AGENTS = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15',
+        # ... add more user agents ...
+    ]
+    
     ### INITIAL PASS OF REPORT FROM API CALL ###
 
     def perform_research(self, address):
@@ -268,39 +280,6 @@ class AddressResearcher:
             json.dump(self.data, file, indent=4)
 
     ### WEB SCRAPING METHODS TO APPEND MORE DATA TO THE REPORT DATASET ###
-
-    def scrape_website_data(self, url):
-        print(f"Scraping website: {url}")
-        try:
-            response = requests.get(url, timeout=10)
-            soup = BeautifulSoup(response.content, 'html.parser')
-
-            # Base URL extraction for concatenating with relative links
-            base_url = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(url))
-
-            # Extract and filter links
-            links = soup.find_all('a', href=True)
-            menu_links = set(self.get_full_link(link['href'], base_url) for link in links if 'menu' in link.get_text().lower() and self.is_valid_link(link['href']))
-            event_links = set(self.get_full_link(link['href'], base_url) for link in links if any(word in link.get_text().lower() for word in ['event', 'calendar', 'schedule']) and self.is_valid_link(link['href']))
-            pdf_links = set(self.get_full_link(link['href'], base_url) for link in links if '.pdf' in link['href'] and self.is_valid_link(link['href']))
-
-            return {'menu_links': list(menu_links), 'event_links': list(event_links), 'pdf_links': list(pdf_links)}
-
-        except requests.exceptions.Timeout:
-            print(f"Timeout occurred while scraping {url}")
-            return {}
-        except requests.exceptions.RequestException as e:
-            print(f"Error scraping {url}: {e}")
-            return {}
-
-    def get_full_link(self, link, base_url):
-        if link.startswith('/'):
-            return urljoin(base_url, link)
-        return link
-
-    def is_valid_link(self, link):
-        # Add logic to filter out invalid or duplicate links
-        return link.startswith("http") or (link.startswith("/") and not link.startswith("//"))
         
     def generate_summary(self):
         for group, places in self.data['grouped_places'].items():
@@ -378,27 +357,402 @@ class AddressResearcher:
 
         # Optionally return the whole data if needed
         return self.data
+
+    # def product_summary(self):
+    #     # Initialize LLM
+    #     genai.configure(api_key=google_gemini_api_key)
+    #     model = genai.GenerativeModel('gemini-pro')
     
+    #     for group, places in self.data['grouped_places'].items():
+    #         for place in tqdm(places, desc=f"Generating summaries for {group}"):
+    #             try:
+    #                 place_data_str = json.dumps(place, ensure_ascii=False)
+    #                 prompt = (
+    #                     "Hi Gemini, write a *CONCISE AND SHORT* summary. Please begin by examining the following json object. This json contains data about a business. "
+    #                     "Describe all products available for sale at this business. "
+    #                     f"Here is the object to analyze: {place_data_str}"
+    #                 )
+    #                 response = model.generate_content(prompt)
+    #                 summary = response.text
+    #                 place['business_summary'] = summary
+    #                 time.sleep(2) 
+    #             except Exception as e:
+    #                 print(f"Error generating summary for {place.get('name', 'N/A')}: {e}")
+    #                 place['product_summary'] = 'N/A'
+    #                 time.sleep(2)
+
+    #     # Optionally return the whole data if needed
+    #     return self.data
+    
+    # def product_summary(self):
+    #     for group, places in self.data['grouped_places'].items():
+    #         for place in tqdm(places, desc=f"Generating summaries for {group}"):
+    #             try:
+    #                 # Combining JSON data with scraped menu content
+    #                 menu_content = place.get('menu_content', '')
+    #                 place_data_str = json.dumps(place, ensure_ascii=False)
+    #                 prompt = (
+    #                     "Hi Gemini, write a *CONCISE AND SHORT* summary. This json contains data about a business, "
+    #                     "including a description of their menu. Describe all products available for sale at this business. "
+    #                     f"Here is the object to analyze: {place_data_str}\n\nMenu/Products Description:\n{menu_content}"
+    #                 )
+    #                 response = model.generate_content(prompt)
+    #                 summary = response.text
+    #                 place['product_summary'] = summary
+    #                 time.sleep(2)
+    #             except Exception as e:
+    #                 print(f"Error generating summary for {place.get('name', 'N/A')}: {e}")
+    #                 place['product_summary'] = 'N/A'
+    #                 time.sleep(2)
+
+    #     # Optionally return the whole data if needed
+    #     return self.data
+
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    
+    # async def scrape_website_data(self, browser, url, visited_urls=set(), depth=0, max_depth=3):
+    #     if depth > max_depth or url in visited_urls:
+    #         return None
+
+    #     visited_urls.add(url)
+
+    #     try:
+    #         print(f"Scraping website: {url} at depth {depth}")
+    #         page = await browser.newPage()
+    #         await page.setUserAgent(UserAgent().random)
+    #         response = await page.goto(url, {'waitUntil': 'networkidle2', 'timeout': 60000})
+
+    #         if response and not response.ok:  # Check if response is successful
+    #             print(f"Error loading {url}: {response.status}")
+    #             await page.close()
+    #             return None
+
+    #         if depth < max_depth:
+    #             links = await page.evaluate('''() => {
+    #                 return Array.from(document.querySelectorAll('a')).map(a => a.href);
+    #             }''')
+
+    #             for link in links:
+    #                 if self.is_valid_link(link) and self.is_potential_menu_link(link):
+    #                     content = await self.scrape_website_data(browser, link, visited_urls, depth + 1, max_depth)
+    #                     if content:
+    #                         await page.close()
+    #                         return content
+
+    #         if await page.isClosed():  # Check if the page is still active
+    #             return None
+
+    #         current_page_content = await page.content()
+    #         soup = BeautifulSoup(current_page_content, 'html.parser')
+    #         menu_content = soup.get_text()
+    #         await page.close()
+    #         return {'menu_link': url, 'menu_content': menu_content.strip()}
+
+    #     except Exception as e:
+    #         print(f"Error scraping {url}: {str(e)}")
+    #         return None
+
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    # async def scrape_website_data(self, browser, url, depth=0, max_depth=3, visited_urls=None):
+    #     # Convert depth to an integer to prevent type errors
+    #     depth = int(depth)
+
+    #     if depth > max_depth:
+    #         return None
+
+    #     if visited_urls is None:
+    #         visited_urls = set()
+
+    #     if url in visited_urls:
+    #         return None
+
+    #     visited_urls.add(url)
+
+    #     try:
+    #         browser = await launch(headless=False, args=['--no-sandbox', '--disable-setuid-sandbox'])
+    #         page = await browser.newPage()
+    #         await page.setUserAgent(UserAgent().random)
+    #         await page.goto(url, {'waitUntil': 'networkidle2'})
+
+    #         links = await page.evaluate('''() => Array.from(document.querySelectorAll('a')).map(a => a.href);''')
+
+    #         for link in links:
+    #             if self.is_valid_link(link) and self.is_potential_menu_link(link) and link not in visited_urls:
+    #                 content = await self.scrape_website_data(link, depth + 1, max_depth, visited_urls)
+    #                 if content:
+    #                     await browser.close()
+    #                     return content
+
+    #         menu_content = await page.evaluate('document.body.innerText')
+    #         await browser.close()
+    #         return {'menu_link': url, 'menu_content': menu_content.strip()}
+
+    #     except Exception as e:
+    #         print(f"Error scraping {url}: {str(e)}")
+    #         return None
+
+    #     finally:
+    #         await browser.close()
+
+    ####################################//////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
+    # async def scrape_website_data(self, browser, url, visited_urls=set(), depth=0, max_depth=2):
+    #     """
+    #     Recursively scrape website data.
+    #     :param browser: Pyppeteer browser instance.
+    #     :param url: URL to scrape.
+    #     :param visited_urls: Set of already visited URLs to avoid repetition.
+    #     :param depth: Current depth of recursion.
+    #     :param max_depth: Maximum depth allowed for recursion.
+    #     :return: Dictionary with menu link and content if found.
+    #     """
+    #     if depth > max_depth or url in visited_urls:
+    #         return None
+
+    #     visited_urls.add(url)
+
+    #     try:
+    #         page = await browser.newPage()
+    #         # User-Agent Rotation
+    #         user_agent = random.choice(self.USER_AGENTS)
+    #         await page.setUserAgent(user_agent)
+
+    #         # Set Referrer
+    #         await page.setExtraHTTPHeaders({'Referer': 'https://www.google.com/'})
+            
+    #         await page.goto(url, {'waitUntil': 'networkidle2'})
+    #         # Throttling Requests
+    #         await asyncio.sleep(random.uniform(0.5, 2.0))
+
+    #         # Extract all links from the page
+    #         links = await page.evaluate('''() => {
+    #             return Array.from(document.querySelectorAll('a')).map(a => a.href);
+    #         }''')
+
+    #         # Recursively check each link
+    #         for link in links:
+    #             if self.is_valid_link(link) and self.is_potential_menu_link(link):
+    #                 content = await self.scrape_website_data(browser, link, visited_urls, depth + 1, max_depth)
+    #                 if content:
+    #                     await page.close()
+    #                     return content
+
+    #         # Extract content from the current page
+    #         current_page_content = await page.content()
+    #         soup = BeautifulSoup(current_page_content, 'html.parser')
+    #         menu_content = soup.get_text()
+
+    #         await page.close()
+    #         return {'menu_link': url, 'menu_content': menu_content.strip()}
+
+    #     except Exception as e:
+    #         print(f"Error scraping {url}: {str(e)}")
+    #         return None
+        
+    # async def scrape_website_data(self, url, depth=0, max_depth=12):
+    #     depth = int(depth)
+    #     if depth > max_depth:
+    #         return None
+
+    #     try:
+    #         browser = await launch(headless=False, args=['--no-sandbox', '--disable-setuid-sandbox'])
+    #         page = await browser.newPage()
+    #         await page.setUserAgent(UserAgent().random)
+    #         await page.setExtraHTTPHeaders({'Referer': 'https://www.google.com'})
+            
+    #         try:
+    #             await page.goto(url, {'waitUntil': 'networkidle2'})
+    #         except pyppeteer_errors.PageError as e:
+    #             logging.error(f"Page navigation failed for {url}: {e}")
+    #             return None
+
+    #         # Manual intervention for CAPTCHAs
+    #         await asyncio.sleep(30)
+
+    #         links = await page.evaluate('''() => Array.from(document.querySelectorAll('a')).map(a => a.href);''')
+
+    #         for link in links:
+    #             if self.is_valid_link(link) and self.is_potential_menu_link(link):
+    #                 content = await self.scrape_website_data(link, depth + 1, max_depth)
+    #                 if content:
+    #                     return content
+
+    #         content = await page.content()
+    #         soup = BeautifulSoup(content, 'html.parser')
+    #         menu_content = soup.get_text()
+
+    #         return {'menu_link': url, 'menu_content': menu_content.strip()}
+
+    #     except Exception as e:
+    #         logging.error(f"Error scraping {url} at depth {depth}: {e}")
+    #         return None
+
+    #     finally:
+    #         if browser:
+    #             await browser.close()
+
+    # async def scrape_website_data(self, browser, url, visited_urls=set(), depth=0, max_depth=3):
+    #     if depth > max_depth or url in visited_urls:
+    #         return None
+
+    #     visited_urls.add(url)
+
+    #     try:
+    #         print(f"Scraping website: {url} at depth {depth}")
+    #         page = await browser.newPage()
+    #         await page.setUserAgent(UserAgent().random)
+    #         response = await page.goto(url, {'waitUntil': 'networkidle2', 'timeout': 60000})
+
+    #         if response and not response.ok:  # Check if response is successful
+    #             print(f"Error loading {url}: {response.status}")
+    #             await page.close()
+    #             return None
+
+    #         if depth < max_depth:
+    #             links = await page.evaluate('''() => {
+    #                 return Array.from(document.querySelectorAll('a')).map(a => a.href);
+    #             }''')
+
+    #             for link in links:
+    #                 if self.is_valid_link(link) and self.is_potential_menu_link(link):
+    #                     content = await self.scrape_website_data(browser, link, visited_urls, depth + 1, max_depth)
+    #                     if content:
+    #                         await page.close()
+    #                         return content
+
+    #         if await page.isClosed():  # Check if the page is still active
+    #             return None
+
+    #         current_page_content = await page.content()
+    #         soup = BeautifulSoup(current_page_content, 'html.parser')
+    #         menu_content = soup.get_text()
+    #         await page.close()
+    #         return {'menu_link': url, 'menu_content': menu_content.strip()}
+
+    #     except Exception as e:
+    #         print(f"Error scraping {url}: {str(e)}")
+    #         return None
+
+    async def scrape_website_data(self, browser, url, depth=0, max_depth=3, visited_urls=None):
+        # Convert depth to an integer to prevent type errors
+        depth = int(depth)
+
+        if depth > max_depth:
+            return None
+
+        if visited_urls is None:
+            visited_urls = set()
+
+        if url in visited_urls:
+            return None
+
+        visited_urls.add(url)
+
+        try:
+            browser = await launch(headless=False, args=['--no-sandbox', '--disable-setuid-sandbox'])
+            page = await browser.newPage()
+            await page.setUserAgent(UserAgent().random)
+            await page.goto(url, {'waitUntil': 'networkidle2'})
+
+            links = await page.evaluate('''() => Array.from(document.querySelectorAll('a')).map(a => a.href);''')
+
+            for link in links:
+                if self.is_valid_link(link) and self.is_potential_menu_link(link) and link not in visited_urls:
+                    content = await self.scrape_website_data(link, depth + 1, max_depth, visited_urls)
+                    if content:
+                        await browser.close()
+                        return content
+
+            menu_content = await page.evaluate('document.body.innerText')
+            await browser.close()
+            return {'menu_link': url, 'menu_content': menu_content.strip()}
+
+        except Exception as e:
+            print(f"Error scraping {url}: {str(e)}")
+            return None
+
+        finally:
+            await browser.close()
+        
+    def is_potential_menu_link(self, url):
+        """
+        Check if a URL is a potential menu or product link.
+        :param url: URL to check.
+        :return: Boolean indicating if the URL is a potential menu/product link.
+        """
+        menu_keywords = [
+            'menu', 'products', 'dinner', 'food', 'dishes', 'cuisine',
+            'dining', 'lunch', 'breakfast', 'brunch', 'specials', 'offers',
+            'meals', 'courses', 'drinks', 'beverages', 'eatery', 'gastronomy',
+            'culinary', 'delicacies', 'fare', 'sustenance', 'provisions'
+        ]
+        return any(keyword in url.lower() for keyword in menu_keywords)
+
+    # def sync_scrape_website_data(self, browser, url):
+    #     return asyncio.get_event_loop().run_until_complete(self.scrape_website_data(browser, url))
+    
+    def sync_scrape_website_data(self, browser, url):
+        # The 'scrape_website_data' expects the URL as its second argument after the browser
+        return asyncio.get_event_loop().run_until_complete(self.scrape_website_data(browser, url, depth=0, max_depth=3, visited_urls=set()))
+
     def augment_place_details_with_web_data(self):
         print("Augmenting place details with web data")
-        for group, places in self.data['grouped_places'].items():
-            for place in tqdm(places, desc=f"Processing {group}"):
-                if 'website' in place:
-                    web_data = self.scrape_website_data(place['website'])
-                    place.update(web_data)
-                    time.sleep(2)  
-                    
-        time.sleep(2) 
-                    
-        self.generate_summary()
-        
-        time.sleep(2) 
-        
-        self.business_summary()
-        
-        time.sleep(2)
+        browser = None
+        try:
+            browser = asyncio.get_event_loop().run_until_complete(launch(headless=False, args=['--no-sandbox', '--disable-setuid-sandbox']))
+            for group, places in self.data['grouped_places'].items():
+                for place in tqdm(places, desc=f"Processing {group}"):
+                    if 'website' in place:
+                        web_data = self.sync_scrape_website_data(browser, place['website'])
+                        if web_data:  # Check if web_data is not None
+                            place.update(web_data)
+                        time.sleep(2)
+        finally:
+            if browser:
+                asyncio.get_event_loop().run_until_complete(browser.close())
 
-        
+    # def augment_place_details_with_web_data(self):
+    #     print("Augmenting place details with web data")
+    #     for group, places in self.data['grouped_places'].items():
+    #         for place in tqdm(places, desc=f"Processing {group}"):
+    #             if 'website' in place:
+    #                 web_data = asyncio.get_event_loop().run_until_complete(self.scrape_website_data(place['website']))
+    #                 if web_data:  # Check if web_data is not None
+    #                     place.update(web_data)
+    #                 time.sleep(2)
+                    
+    def get_full_link(self, link, base_url):
+        if link.startswith('/'):
+            return urljoin(base_url, link)
+        return link
+    
+    def is_valid_link(self, link):
+        """
+        Check if a link is a valid HTTP/HTTPS URL or a valid relative link.
+        :param link: Link to check.
+        :return: Boolean indicating if the link is valid.
+        """
+        return link.startswith("http") or (link.startswith("/") and not link.startswith("//"))
+    
     ### PRINTING THE FINDINGS TO THE CONSOLE ###
     
     def print_human_readable(self):
@@ -601,6 +955,7 @@ class AddressResearcher:
                     'Weighted Relevance Score': round(place.get('weighted_score', 0), 2),
                     'Tags': ', '.join(place.get('types', ['N/A'])),
                     'Google Summary': place.get('editorial_summary', {}).get('overview', 'N/A'),
+                    'Product Summary': place.get('product_summary', 'N/A'),
                     'AI Summary': place.get('gemini_summary', 'N/A'),
                     'Business Summary': place.get('business_summary', 'N/A'),
                     'Opening Hours': AddressResearcher.format_weekday_text(place.get('opening_hours', {})),
@@ -623,7 +978,8 @@ class AddressResearcher:
                     'Menu Links': AddressResearcher.format_links(place.get('menu_links', [])),
                     'Event Links': AddressResearcher.format_links(place.get('event_links', [])),
                     'PDF Links': AddressResearcher.format_links(place.get('pdf_links', [])),
-                    '5 Most Relevant Reviews': AddressResearcher.format_reviews(place.get('reviews', []))
+                    '5 Most Relevant Reviews': AddressResearcher.format_reviews(place.get('reviews', [])),
+                    'Menu Content': place.get('menu_content', 'N/A')
                 }
                 data_for_df.append(place_data)
 

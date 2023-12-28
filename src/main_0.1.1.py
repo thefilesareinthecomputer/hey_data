@@ -6,9 +6,11 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from math import radians, cos, sin, asin, sqrt
 from openai import OpenAI
+from pyppeteer import launch # new
 from tqdm import tqdm
 from transformers import MarianMTModel, MarianTokenizer
 from urllib.parse import urlparse, urljoin
+import asyncio # new
 import certifi
 import datetime
 import google.generativeai as genai
