@@ -81,6 +81,7 @@ google_gemini_api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
 # Initialize helper models
 client = OpenAI()
 # img = PIL.Image.open(f'{USER_DOWNLOADS_FOLDER}/Hillstone Houston Food.pdf')
+
 genai.configure(api_key=google_gemini_api_key)
 model = genai.GenerativeModel('gemini-pro')
 chat = model.start_chat(history=[])
@@ -88,11 +89,21 @@ chat = model.start_chat(history=[])
 
 
 
-response = chat.send_message("explain to me in as simple of terms as possible, in plain english, as you would explain to a child, exactly what qualifies restaurants as 'covered' under the FDA menu nutrition labeling laws passed in 2010 and implemented in 2018. I have seen great amounts of conflicting information about this subject. Some resources say that a covered chain is any group with 20 or more restaurants, some resources say a chain is any group with 20 restaurants of the same name, some say that the menus need to share 70% or or more of the menu items to be considered 'substantially similar.' Some resources say that a chain must only fall under one of these categories to be considered 'covered', and some resources say that in order to be covered a chain must possess all 3 of these qualities. It's hard to understand which resources to believe. I need you to examine the actual law and also look for legal filings related to this matter and how they were ruled on. I need to know which restaurants have had this law imposed on them forcefully, and I also want to know all examples of large chain restaurant groups who have successfully and legally avoided labeling their menus with calorie information. I'd like to learn how this is possible. An example of a conundrum is: Hillstone restaurant group. They operate 39 restaurants, many of which have very similar menus, but they do not label their menus with calorie information. why is this possible? Have they spoken out on the matter publicly? Has anyone taken action against them? What was the outcome? Make sure to fact check yourself. Do not falsify any information. Provide resources and dates and references to your summaries whenever applicable.", stream=True)
+response = chat.send_message("Hi. How are you?", stream=True)
 
 for chunk in response:
     print(chunk.text)
     print()
+
+
+
+
+
+
+
+
+
+
 
 
 

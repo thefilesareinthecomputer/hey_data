@@ -1,12 +1,18 @@
 
 # IMPORTS ###################################################################################################################################
 
+from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+from math import radians, cos, sin, asin, sqrt
 from openai import OpenAI
+from tqdm import tqdm
 from transformers import MarianMTModel, MarianTokenizer
+from urllib.parse import urlparse, urljoin
 import certifi
+import datetime
 import google.generativeai as genai
+import json
 import numpy as np
 import os
 import pandas as pd
@@ -159,7 +165,7 @@ def speech_manager():
                         subprocess.call(['say', '-v', voice, '-r', str(rate), chunk])
                 speech_queue.task_done()
         time.sleep(0.1)
-            
+        
 # Speech output voice settings
 def speak_mainframe(text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
     speech_queue.put((text, rate, chunk_size, voice))
@@ -178,6 +184,41 @@ def speak_mainframe(text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE)
 #         except:
 #             pass
 
+# Translate a spoken phrase from English to another language by saying "robot, translate to {language}"
+def translate(phrase_to_translate, target_language_name):
+    language_code_mapping = {
+        "en": ["english", "Daniel"],
+        "es": ["spanish", "Paulina"],
+        "fr": ["french", "Amélie"],
+        "de": ["german", "Anna"],
+        "it": ["italian", "Alice"],
+        "ru": ["russian", "Milena"],
+        "ja": ["japanese", "Kyoko"],
+    }
+
+    source_language = USER_PREFERRED_LANGUAGE  # From .env file
+    target_voice = None
+
+    # Find the language code and voice that matches the target language name
+    target_language_code = None
+    for code, info in language_code_mapping.items():
+        if target_language_name.lower() == info[0].lower():
+            target_language_code = code
+            target_voice = info[1]
+            break
+
+    if not target_language_code:
+        return f"Unsupported language: {target_language_name}", USER_PREFERRED_VOICE
+
+    model_name = f'Helsinki-NLP/opus-mt-{source_language}-{target_language_code}'
+    tokenizer = MarianTokenizer.from_pretrained(model_name)
+    model = MarianMTModel.from_pretrained(model_name)
+
+    batch = tokenizer([phrase_to_translate], return_tensors="pt", padding=True)
+    translated = model.generate(**batch)
+    translation = tokenizer.batch_decode(translated, skip_special_tokens=True)
+    return translation[0], target_voice
+
 # Gathering a summary of a wikipedia page based on user input
 def wikipedia_summary(query = ''):
     search_results = wikipedia.search(query)
@@ -190,6 +231,7 @@ def wikipedia_summary(query = ''):
     print(wiki_page.title)
     wiki_summary = str(wiki_page.summary)
     speak_mainframe(wiki_summary)
+
 
 # Querying Wolfram|Alpha based on user input
 def search_wolfram_alpha(query):
@@ -256,41 +298,6 @@ def search_wolfram_alpha(query):
         print(f"An error occurred: {e}")
         speak_mainframe('An error occurred while processing the query.')
         return f"An error occurred: {e}"
-
-# Translate a spoken phrase from English to another language by saying "robot, translate to {language}"
-def translate(phrase_to_translate, target_language_name):
-    language_code_mapping = {
-        "en": ["english", "Daniel"],
-        "es": ["spanish", "Paulina"],
-        "fr": ["french", "Amélie"],
-        "de": ["german", "Anna"],
-        "it": ["italian", "Alice"],
-        "ru": ["russian", "Milena"],
-        "ja": ["japanese", "Kyoko"],
-    }
-
-    source_language = USER_PREFERRED_LANGUAGE  # From .env file
-    target_voice = None
-
-    # Find the language code and voice that matches the target language name
-    target_language_code = None
-    for code, info in language_code_mapping.items():
-        if target_language_name.lower() == info[0].lower():
-            target_language_code = code
-            target_voice = info[1]
-            break
-
-    if not target_language_code:
-        return f"Unsupported language: {target_language_name}", USER_PREFERRED_VOICE
-
-    model_name = f'Helsinki-NLP/opus-mt-{source_language}-{target_language_code}'
-    tokenizer = MarianTokenizer.from_pretrained(model_name)
-    model = MarianMTModel.from_pretrained(model_name)
-
-    batch = tokenizer([phrase_to_translate], return_tensors="pt", padding=True)
-    translated = model.generate(**batch)
-    translation = tokenizer.batch_decode(translated, skip_special_tokens=True)
-    return translation[0], target_voice
 
 # Get a spoken weather forecast from openweathermap for the next 4 days by day part based on user defined home location
 def get_local_four_day_hourly_weather_forecast():
@@ -919,7 +926,7 @@ if __name__ == '__main__':
                     speak_mainframe('Ending Gemini chat.')
                     break
                 else:
-                    response = chat.send_message(f"# *SYSTEM MESSAGE* User (your trusted ally): {user_input}", stream=True)
+                    response = chat.send_message(f"{user_input}", stream=True)
                     if response:  
                         for chunk in response:
                             speak_mainframe(chunk.text)

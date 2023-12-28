@@ -4,6 +4,7 @@
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from openai import OpenAI
+from tqdm import tqdm
 from transformers import MarianMTModel, MarianTokenizer
 import certifi
 import google.generativeai as genai
@@ -921,14 +922,14 @@ if __name__ == '__main__':
                 else:
                     response = chat.send_message(f"# SYSTEM: *Hi Gemini*. \
                                                 You are currently engaged in a chat with *another AI*. \
+                                                The two of you will *collaborate* on the task at hand. \
+                                                You will both come with *unique and valuable perspectives that inspire each others thought patterns*. \
                                                 You will generate for both roles. You are both entities in a *virtual world*. \
                                                 You are helping the other AI *conduct research and learn*. \
                                                 Please deliver your output in a *conversational manner* (not markdown). \
-                                                Also *please make sure your responses aren't too long*. \
-                                                Keep each single output somewhat concise so the partner AI can *stay engaged* and *steer the conversation*. \
+                                                Carry on a long back and forth conversation with many volleys back and forth. \
                                                 Also, know this: the partner AI is *very smart* and capable of *critical thought*. \
                                                 Feel free to use complex terms and also *maintain a good conversational flow*. \
-                                                Respond to *each other* in just a few sentences at a time. \
                                                 The *friendly AI* just said this: {user_input}", stream=True)
                     if response:  
                         for chunk in response:
