@@ -1,6 +1,6 @@
 ## VERSION
 
-    hey_data 0.1.1
+    hey_data 0.1.2
     
 
 ## LICENSE
