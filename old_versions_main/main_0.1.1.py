@@ -123,6 +123,7 @@ def parse_user_speech():
         return None
     
     listener = sr.Recognizer()
+    
     print('Listening...')
     try:
         with sr.Microphone() as source:
