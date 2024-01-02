@@ -8,7 +8,6 @@ from urllib.parse import urlparse, urljoin
 import asyncio
 import base64
 import calendar
-import datetime
 import json
 import os
 import queue
@@ -25,7 +24,6 @@ import webbrowser
 
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from openai import OpenAI
 from PIL import Image
 from pyppeteer import launch
 from tqdm import tqdm
@@ -49,11 +47,9 @@ import yfinance as yf
 
 # Load environment variables and verify the supporting directories exist
 load_dotenv()
-ACTIVATION_WORD = os.getenv('ACTIVATION_WORD', 'robot')
 USER_PREFERRED_LANGUAGE = os.getenv('USER_PREFERRED_LANGUAGE', 'en')  # 2-letter lowercase
 USER_PREFERRED_VOICE = os.getenv('USER_PREFERRED_VOICE', 'Evan')  # Daniel
 USER_PREFERRED_NAME = os.getenv('USER_PREFERRED_NAME', 'User')  # Title case
-USER_SELECTED_PASSWORD = os.getenv('USER_SELECTED_PASSWORD', 'None')  
 USER_SELECTED_HOME_CITY = os.getenv('USER_SELECTED_HOME_CITY', 'None')  # Title case
 USER_SELECTED_HOME_COUNTY = os.getenv('USER_SELECTED_HOME_COUNTY', 'None')  # Title case
 USER_SELECTED_HOME_STATE = os.getenv('USER_SELECTED_HOME_STATE', 'None')  # Title case
@@ -92,26 +88,147 @@ google_cloud_api_key = os.getenv('GOOGLE_CLOUD_API_KEY')
 google_maps_api_key = os.getenv('GOOGLE_MAPS_API_KEY')
 google_gemini_api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
 google_api_key = os.getenv('GOOGLE_API_KEY')
-google_custom_search_engine_id = os.getenv('GOOGLE_CUSTOM_SEARCH_ENGINE_ID')
+google_documentation_search_engine_id = os.getenv('GOOGLE_DOCUMENTATION_SEARCH_ENGINE_ID')
 
-# Initialize external AI models
-client = OpenAI()
+# Establish the TTS bot's wake/activation word and script-specific global constants
+activation_word = os.getenv('ACTIVATION_WORD', 'robot')
+password = os.getenv('USER_SELECTED_PASSWORD', 'None')
+speech_queue = queue.Queue()
+
+# Initialize the Google Gemini LLM
 genai.configure(api_key=google_gemini_api_key)
 model = genai.GenerativeModel('gemini-pro')
 
-# Establish the TTS bot's wake/activation word and script-specific global constants
-activation_word = f'{ACTIVATION_WORD}'
-password = f'{USER_SELECTED_PASSWORD}'
-speech_queue = queue.Queue()
-
 # CLASS DEFINITIONS ###################################################################################################################################
 
+# Main class for custom search engines in Google Cloud, etc. and a static method which engages a chatbot wrapper around the engines
+class CustomSearchEngines:
+    def __init__(self):
+        self.engines = {
+            'documentation': {
+                'api_key': google_cloud_api_key,
+                'cse_id': google_documentation_search_engine_id
+            }
+            # Add more search engines here if needed
+        }
+
+    def search(self, engine_name, query):
+        if engine_name not in self.engines:
+            print(f"Search engine {engine_name} not found.")
+            return None
+
+        engine = self.engines[engine_name]
+        url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            'key': engine['api_key'],
+            'cx': engine['cse_id'],
+            'q': query
+        }
+
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"Error in {engine_name} Search: {e}")
+            return None
+
+    @staticmethod
+    def search_chat_bot():
+        search_engines = CustomSearchEngines()
+        speak_mainframe("Specify the search engine to use.")
+        input = parse_user_speech()
+        if not input:
+            return None
+        engine_name = input.lower()
+        print(f"Search Assistant Active using {engine_name}.")
+        time.sleep(.5)
+        
+        search_results = [] 
+        
+        speak_mainframe("Please say what you'd like to search")
+        
+        while True:
+            user_input = parse_user_speech()
+            
+            if not user_input:
+                continue
+            
+            query = user_input.lower()
+            
+            if query == 'exit search':
+                break
+            
+            results = search_engines.search(engine_name, query)
+            
+            if results and results.get('items'):
+                for item in results['items']:
+                    title = item.get('title', 'No Title')
+                    link = item.get('link', 'No Link')
+                    snippet = item.get('snippet', 'No Description')
+                    search_results.append(f"Title: {title}\nSnippet: {snippet}\n")
+                    print(f"Title: {title}\nSnippet: {snippet}\nLink: {link}")
+                    
+                chat = model.start_chat(history=[])
+
+                search_analysis = chat.send_message(
+                    f'''Hi Gemini. A user who you are working with just leveraged a Google custom 
+                    search engine for this query: "{query}". These are the 
+                    search results: {search_results}. Please analyze which result is the most relevant 
+                    to the original query from the user. Also, based on the user's query and the results and
+                    your own internal knowledge, please guide the user in how to solve the problem or answer the question
+                    present in their query. If necessary, also guide the user in crafting a more efficient and effective query. 
+                    Please keep your answers short, direct, and concise. Thank you!''', 
+                    stream=True)
+                
+                if search_analysis:
+                    for chunk in search_analysis:
+                        speak_mainframe(chunk.text)
+                                
+            else:
+                speak_mainframe("No results found or an error occurred.")
+        
 # Conducts various targeted stock market reports such as discounts, recommendations, etc. based on user defined watch list
-class Finance:
+class StockReports:
     def __init__(self, user_watch_list):
         self.user_watch_list = user_watch_list
         self.stock_data = None
     
+    def handle_single_stock_query(self, stock):
+        try:
+            # Fetch data directly for the requested stock
+            stock_data = yf.Ticker(stock)
+
+            # Check if the ticker is valid and has historical data
+            hist = stock_data.history(period="1y")
+            if hist.empty:
+                raise ValueError(f"No historical data available for {stock}")
+
+            rsi = self.calculate_rsi(hist['Close']).iloc[-1]
+            buy_signal, buy_reason = self.is_buy_signal(hist, rsi, stock)
+            sell_signal, sell_reason = self.is_sell_signal(hist, rsi, stock)
+
+            stock_info = {
+                'symbol': stock,
+                'price': hist['Close'].iloc[-1],
+                'change': hist['Close'].iloc[-1] - hist['Open'].iloc[-1],
+                'percent_change': ((hist['Close'].iloc[-1] - hist['Open'].iloc[-1]) / hist['Open'].iloc[-1]) * 100
+            }
+
+            stock_update = (f"Stock: {stock_info['symbol']}\n...\n"
+                            f"Price: {stock_info['price']:.1f}\n...\n"
+                            f"Change vs LY: {stock_info['change']:.1f}\n...\n"
+                            f"Percent Change: {stock_info['percent_change']:.1f}%\n...\n"
+                            f"RSI: {rsi:.1f}\n...\n"
+                            f"Buy Signal: {'Yes' if buy_signal else 'No'} ({buy_reason})\n...\n"
+                            f"Sell Signal: {'Yes' if sell_signal else 'No'} ({sell_reason})\n...\n")
+            speak_mainframe(stock_update)
+            print(stock_update)
+        except ValueError as e:
+            speak_mainframe(str(e))
+        except Exception as e:
+            speak_mainframe(f"Error fetching data for {stock}: {e}")
+                
     def fetch_all_stock_data(self):
         try:
             self.stock_data = yf.download(self.user_watch_list, period="1d")
@@ -305,7 +422,7 @@ class Finance:
                     report_line = f"{symbol}: Yearly Change: {year_change:.1f}%, Discount: {discount_from_high:.1f}%\n...\n"
                     discounted_stocks_report.append(report_line)
         return '\n'.join(discounted_stocks_report) if discounted_stocks_report else "No discounted stocks found meeting the criteria."
-    
+
 # FUNCTION DEFINITIONS ###################################################################################################################################
 
 # Main speech_recognition function
@@ -345,7 +462,7 @@ def speech_manager():
         time.sleep(0.1)
         
 # Speech output voice settings
-def speak_mainframe(text, rate=195, chunk_size=1000, voice=USER_PREFERRED_VOICE):
+def speak_mainframe(text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
     speech_queue.put((text, rate, chunk_size, voice))
 
 def control_mouse(action, direction=None, distance=0):
@@ -397,7 +514,7 @@ def translate(phrase_to_translate, target_language_name):
     return translation[0], target_voice
 
 # Gathering a summary of a wikipedia page based on user input
-def wikipedia_summary(query = ''):
+def wiki_summary(query = ''):
     search_results = wikipedia.search(query)
     if not search_results:
         print('No results found.')
@@ -410,7 +527,7 @@ def wikipedia_summary(query = ''):
     speak_mainframe(wiki_summary)
 
 # Querying Wolfram|Alpha based on user input
-def search_wolfram_alpha(query):
+def wolfram_alpha(query):
     wolfram_client = wolframalpha.Client(wolfram_app_id)
     try:
         response = wolfram_client.query(query)
@@ -476,7 +593,7 @@ def search_wolfram_alpha(query):
         return f"An error occurred: {e}"
 
 # Get a spoken weather forecast from openweathermap for the next 4 days by day part based on user defined home location
-def get_local_four_day_hourly_weather_forecast():
+def get_weather_forecast():
     appid = f'{open_weather_api_key}'
 
     # Fetching coordinates from environment variables
@@ -521,51 +638,51 @@ def get_local_four_day_hourly_weather_forecast():
 
     return forecast
 
-# Conduct research focusing on predetermined reliable science websites (INCOMPLETE / NOT YET FUNCTIONAL)
-def scientific_research(query):
-    science_websites = [
-        'https://arxiv.org/',
-        'https://blog.scienceopen.com/',
-        'https://clinicaltrials.gov/',
-        'https://doaj.org/',
-        'https://osf.io/preprints/psyarxiv',
-        'https://plos.org/',
-        'https://pubmed.ncbi.nlm.nih.gov/',
-        'https://scholar.google.com/',
-        'https://www.amjmed.com/',
-        'https://www.cdc.gov/',
-        'https://www.cell.com/',
-        'https://www.drugs.com/',
-        'https://www.health.harvard.edu/',
-        'https://www.health.harvard.edu/',
-        'https://www.mayoclinic.org/',
-        'https://www.mayoclinic.org/',
-        'https://www.medicinenet.com/',
-        'https://www.medlineplus.gov/',
-        'https://www.nature.com/',
-        'https://www.ncbi.nlm.nih.gov/pmc',
-        'https://www.nejm.org/',
-        'https://www.nhs.uk/',
-        'https://www.nih.gov/',
-        'https://www.nlm.nih.gov/',
-        'https://www.safemedication.com/',
-        'https://www.science.gov/',
-        'https://www.science.org/',
-        'https://www.semanticscholar.org/',
-        'https://zenodo.org/',
-        ]
-    research_summary = []
-    # scrape the websites for relevent search results from each site above and append them to the research_summary list
-    for site in science_websites:
-        # scrape the site for search results and append them to the research_summary list in the form of a list of strings
-        pass
+def gemini_chat():
+    speak_mainframe('Gemini has entered the chat.')
+    time.sleep(1)
+    chat = model.start_chat(history=[])
 
+    while True:
+        user_input = parse_user_speech()
+        if not user_input:
+            continue
+
+        query = user_input.lower().split()
+        if not query:
+            continue
+
+        if query[0] == activation_word and query[1] == 'terminate' and query[2] == 'chat':
+            speak_mainframe('Ending Gemini chat.')
+            break
+        else:
+            response = chat.send_message(user_input, stream=True)
+            if response:
+                for chunk in response:
+                    speak_mainframe(chunk.text)
+          
 # MAIN LOOP ###################################################################################################################################
 
 if __name__ == '__main__':
-    finance = Finance(USER_STOCK_WATCH_LIST)
+    stock_reports = StockReports(USER_STOCK_WATCH_LIST)
     threading.Thread(target=speech_manager, daemon=True).start()
+    
+    # # Prompt for password
+    # speak_mainframe('Please say the password to continue.')
+    # time.sleep(.5)
+    # while True:
+    #     spoken_password = parse_user_speech().lower()
+    #     if not spoken_password:
+    #         continue
+    #     if spoken_password == password:
+    #         speak_mainframe('Cool.')
+    #         time.sleep(.5)
+    #         break
+    #     else:
+    #         speak_mainframe('Try again.')
+    
     speak_mainframe(f'{activation_word} online.')
+    time.sleep(.5)
     
     while True:
         user_input = parse_user_speech()
@@ -579,24 +696,8 @@ if __name__ == '__main__':
         # end program
         if len(query) > 1 and query[0] == activation_word and query[1] == 'terminate' and query[2] == 'program':
             speak_mainframe('Shutting down.')
+            time.sleep(.5)
             break
-        
-        # talk about yourself
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'talk' and query[2] == 'about':
-            if query[3] == 'yourself':
-                speak_mainframe('Hi, I\'m Robot. I respond to "Robot" and then your command.')
-                continue
-            if query[3] == 'what' and query[4] == 'you' and query[5] == 'can' and query[6] == 'do':
-                speak_mainframe('Hi, I\'m Robot... I can perform tasks from voice commands like saying "google search", \
-                                ...or "take notes" and "recall notes", ...or "chat gpt" for communicating with chat gpt, ...or \
-                                "wolfram alpha" for interacting with the Wolfram|Alpha computation engine, ...or "translate file",\
-                                ...or research assignments, ...and more. ...I\'m here to help you with whatever you need. \
-                                ...Where would you like to start?')
-                continue
-            else:
-                speech = f'I don\'t know much about {query[3:]} yet.'
-                speak_mainframe(speech)
-                continue
 
         # screenshot the screen
         if len(query) > 1 and query[0] == activation_word and query[1] == 'screenshot':
@@ -605,18 +706,22 @@ if __name__ == '__main__':
             # Save the screenshot to the file drop folder
             subprocess.call(['mv', 'screenshot.png', f'{FILE_DROP_DIR_PATH}/screenshot_{today}.png'])
             speak_mainframe('Saved.')
+            time.sleep(.5)
             continue
             
         # Note taking
         if len(query) > 1 and query[0] == activation_word and query[1] == 'take' and query[2] == 'notes':
             today = datetime.today().strftime('%Y%m%d %H%M%S')         
             speak_mainframe('OK... What is the subject of the note?')
+            time.sleep(.5)
             new_note_subject = parse_user_speech().lower().replace(' ', '_')
-            speak_mainframe('Ready.')
+            speak_mainframe('OK, go ahead.')
+            time.sleep(.5)
             new_note_text = parse_user_speech().lower()
             with open(f'{NOTES_DROP_DIR_PATH}/notes_{new_note_subject}.txt', 'a') as f:
                 f.write(f'{today}, {new_note_text}' + '\n')
             speak_mainframe('Saved.')
+            time.sleep(.5)
             continue
 
         # recall notes
@@ -628,6 +733,7 @@ if __name__ == '__main__':
                     subject = re.search(subject_pattern, file).group(1)
                     subjects.append(subject)
             speak_mainframe(f'These subjects are present in your notes: {subjects}. Please specify the subject of the note you want to recall.')
+            time.sleep(1)
             desired_subject = parse_user_speech().lower().replace(' ', '_')
             with open(f'{NOTES_DROP_DIR_PATH}/notes_{desired_subject}.txt', 'r') as f:
                 note_contents = f.read()
@@ -659,18 +765,20 @@ if __name__ == '__main__':
         if len(query) > 1 and query[0] == activation_word and query[1] == 'translate' and query[2] == 'to':
             target_language_name = query[3]
             speak_mainframe(f'Speak the phrase you want to translate.')
+            time.sleep(1)
             phrase_to_translate = parse_user_speech().lower()
             translation, target_voice = translate(phrase_to_translate, target_language_name)
             speak_mainframe(f'In {target_language_name}, it\'s: {translation}', voice=target_voice)
             continue
 
         # wikipedia summary
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'wiki' and query[2] == 'research':
-            speak_mainframe(f'What would you like summarized from Wikipedia?')
+        if len(query) > 1 and query[0] == activation_word and query[1] == 'wiki' and query[2] == 'summary':
+            speak_mainframe(f'What should we summarize from Wikipedia?')
+            time.sleep(1)
             wikipedia_summary_query = parse_user_speech().lower()
             print("Wikipedia Query:", wikipedia_summary_query)  # Debugging print statement
             speak_mainframe(f'Searching {wikipedia_summary_query}')
-            summary = wikipedia_summary(wikipedia_summary_query)  # Get the summary
+            summary = wiki_summary(wikipedia_summary_query)  # Get the summary
             speak_mainframe(summary)  # Speak the summary
             continue
 
@@ -685,18 +793,18 @@ if __name__ == '__main__':
             continue
         
         # wolfram alpha
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'computation' and query[2] == 'engine':
+        if len(query) > 1 and query[0] == activation_word and query[1] == 'wolfram' and query[2] == 'alpha':
             speak_mainframe(f'What would you like to ask?')
             wolfram_alpha_query = parse_user_speech().lower()
             speak_mainframe(f'Weird question but ok...')
-            result = search_wolfram_alpha(wolfram_alpha_query)
+            result = wolfram_alpha(wolfram_alpha_query)
             print(f'User: {wolfram_alpha_query} \nWolfram|Alpha: {result}')
             continue
                 
         # open weather forecast
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'weather' and query[2] == 'forecast':
+        if len(query) > 1 and query[0] == activation_word and query[1] == 'get' and query[2] == 'weather' and query[3] == 'forecast':
             speak_mainframe(f'OK - beginning weather forecast for {USER_SELECTED_HOME_CITY}, {USER_SELECTED_HOME_STATE}')
-            weather_forecast = get_local_four_day_hourly_weather_forecast()
+            weather_forecast = get_weather_forecast()
             print("Weather forecast:", weather_forecast)
             speak_mainframe(f'Weather forecast for {USER_SELECTED_HOME_CITY}, {USER_SELECTED_HOME_STATE}: {weather_forecast}')
             continue
@@ -704,101 +812,53 @@ if __name__ == '__main__':
         # stock market reports
         if len(query) > 1 and query[0] == activation_word and query[1] == 'stock' and query[2] == 'report':
             today = datetime.today().strftime('%Y%m%d %H%M%S')         
-            speak_mainframe('Category?')
-            focus = parse_user_speech().lower()
-            if focus == 'discounts':
-                discounts_update = finance.find_discounted_stocks()
+            speak_mainframe('Discounts, recommendations, yesterday, or single?')
+            answer = parse_user_speech()
+            if not answer:
+                continue
+            focus = answer.lower().split()
+            if 'discounts' in focus:
+                discounts_update = stock_reports.find_discounted_stocks()
                 speak_mainframe(discounts_update)
                 print(discounts_update)
                 continue
-            if focus == 'recommendations':
-                recs_update = finance.find_stock_recommendations()
+            if 'recommendations' in focus:
+                recs_update = stock_reports.find_stock_recommendations()
                 speak_mainframe(recs_update)
                 print(recs_update)
                 continue
-            if focus == 'yesterday':
-                portfolio_update = finance.stock_market_report()
+            if 'yesterday' in focus:
+                portfolio_update = stock_reports.stock_market_report()
                 speak_mainframe(portfolio_update)
                 print(portfolio_update)
                 continue
-            if focus == 'world':
-                world_market_update = finance.stock_market_report(['^GSPC', '^IXIC', '^DJI'])  # S&P 500, NASDAQ, Dow Jones
-                speak_mainframe(world_market_update)
-                print(world_market_update)
-                continue
-            if focus == 'single':
-                speak_mainframe('Please spell the stock ticker, letter by letter.')
+            if 'single' in focus:
+                speak_mainframe('Please spell the stock ticker.')
+                time.sleep(.5)
                 attempts = 0
-                while attempts < 3:  # Limit the number of attempts
+                while attempts < 3:
                     raw_stock_input = parse_user_speech().upper().strip()
-                    stock = ''.join(raw_stock_input.split())  # Simplify the handling of the input
+                    stock = ''.join(raw_stock_input.split())
                     speak_mainframe(f"Did you say {stock}?")
                     confirmation = parse_user_speech().lower()
                     if 'yes' in confirmation:
-                        stock_info = finance.get_stock_info(stock)
-                        if 'error' in stock_info:
-                            speak_mainframe(f"Error fetching data for {stock}.")
-                        else:
-                            hist = yf.Ticker(stock).history(period="1y")
-                            if not hist.empty:
-                                rsi = finance.calculate_rsi(hist['Close']).iloc[-1]
-                                buy_signal, buy_reason = finance.is_buy_signal(hist, rsi)
-                                sell_signal, sell_reason = finance.is_sell_signal(hist, rsi)
-
-                                # Ensure all numeric outputs have a maximum of one decimal place
-                                stock_update = (f"Stock: {stock_info['symbol']}\n...\n"
-                                                f"Price: {stock_info['price']:.1f}\n...\n"
-                                                f"Change vs LY: {stock_info['change']:.1f}\n...\n"
-                                                f"Percent Change: {stock_info['percent_change']:.1f}%\n...\n"
-                                                f"RSI: {rsi:.1f}\n...\n"
-                                                f"Buy Signal: {'Yes' if buy_signal else 'No'} ({buy_reason})\n...\n"
-                                                f"Sell Signal: {'Yes' if sell_signal else 'No'} ({sell_reason})\n...\n")
-                                speak_mainframe(stock_update)
-                                print(stock_update)
-                            else:
-                                speak_mainframe(f"No historical data available for {stock}.")
+                        stock_reports.handle_single_stock_query(stock)
                         break
                     else:
                         speak_mainframe("I didn't catch that. Could you please spell out the stock ticker again?")
                         attempts += 1
                 if attempts == 3:
                     speak_mainframe("Having trouble recognizing the stock ticker. Let's try something else.")
-                continue
-        
-        # Gemini chat
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'call' and query[2] == 'gemini':
-            speak_mainframe('Starting Gemini chat.')
-            chat = model.start_chat(history=[])
 
-            while True:
-                user_input = parse_user_speech()
-                if not user_input:
-                    continue
-
-                query = user_input.lower().split()
-                if not query:
-                    continue
-
-                if query[0] == activation_word and query[1] == 'terminate' and query[2] == 'chat':
-                    speak_mainframe('Ending Gemini chat.')
-                    break
-                else:
-                    response = chat.send_message(f"{user_input}", stream=True)
-                    if response:  
-                        for chunk in response:
-                            speak_mainframe(chunk.text)
-
-        # # scientific research command
-        # if len(query) > 1 and query[0] == activation_word and query[1] == 'scientific' and query[2] == 'research':
-        #     speak_mainframe(f'What would you like to research?')
-        #     research_query = parse_user_speech().lower()
-        #     print("Research Query:", research_query)  # Debugging print statement
-        #     speak_mainframe(f'Searching {research_query}')
-        #     research = scientific_research(research_query)  # Get the summary
-        #     speak_mainframe(research)  # Speak the summary
-        #     continue
+        if len(query) > 2 and query[0] == activation_word and query[1] == 'call' and query[2] == 'gemini':
+            gemini_chat()  
             
-        
+        # In your main loop
+        if len(query) > 2 and query[0] == activation_word and query[1] == 'custom' and query[2] == 'search':
+            speak_mainframe('Starting search assistant.')
+            CustomSearchEngines.search_chat_bot()
+            speak_mainframe('Search assistant deactivated.')
+    
 # END ###################################################################################################################################
 
 

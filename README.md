@@ -69,20 +69,13 @@ For commercial use of this project, a separate commercial license is required. T
     the user interacts with the app by speaking the activation word (a global constant variable) followed by predetermined phrases.
     
     The current operational phrases are:
-    - "robot, reset robot" to reset the robot
-    - "robot, standby mode" to put the robot on standby
     - "robot, terminate program" to end the program
-    - "robot, talk about yourself" to hear the robot talk about itself
-    - "robot, talk about what you can do" to hear the robot talk about its capabilities
     - "robot, screenshot" to take a screenshot of the screen
     - "robot, take notes" to take notes
     - "robot, recall notes" to recall notes
     - "robot, google search" to search google
-    - "robot, click" to click the mouse
-    - "robot, north {x pixels}" to move the mouse north
-    - "robot, south {x pixels}" to move the mouse south
-    - "robot, east {x pixels}" to move the mouse east
-    - "robot, west {x pixels}" to move the mouse west
+    - "robot, mouse click" to click the mouse
+    - "robot, mouse {direction} {distance}" to move the mouse x pixels in y direction
     - "robot, translate to {language}" to translate to a language
     - "robot, wiki research" to search wikipedia
                 WIKI NOTES:
@@ -181,6 +174,10 @@ For commercial use of this project, a separate commercial license is required. T
     2023-12-30 doenloaded new voices for the speech interface.
     2024-01-01 removed the redundant second parsing attempt in the speech parsing function and simplified the error handling there.
     2024-01-01 removed the obsolete standby and reset code blocks to make space for a better future reset feature.
+    2024-01-01 moved the mouse movement and clicking controls into a more streamlined function.
+    2024-01-01 added verbal password check when the app runs.
+    2024-01-01 moved the gemini chat loop into its own function.
+    2024-01-01 
     
     
 
