@@ -92,7 +92,7 @@ google_documentation_search_engine_id = os.getenv('GOOGLE_DOCUMENTATION_SEARCH_E
 
 # Establish the TTS bot's wake/activation word and script-specific global constants
 activation_word = os.getenv('ACTIVATION_WORD', 'robot')
-password = os.getenv('USER_SELECTED_PASSWORD', 'None')
+password = os.getenv('PASSWORD', 'None')
 speech_queue = queue.Queue()
 
 # Initialize the Google Gemini LLM
@@ -639,10 +639,22 @@ def get_weather_forecast():
     return forecast
 
 def gemini_chat():
-    speak_mainframe('Gemini has entered the chat.')
+    speak_mainframe('OK.')
     time.sleep(1)
     chat = model.start_chat(history=[])
+    
+    prompt_template = '''# System Message # - Gemini, you are in a verbal chat with the user via a 
+    STT / TTS application. Please generate your text output in a way that will sound like natural speech 
+    when it's spoken by the TTS audio synthesizers. Please avoid monologuing or including anything in the output that will 
+    not sound like natural spoken language. After confirming you understand this message, the chat will proceed. Please 
+    confirm your understanding of these instructions by saying "Gemini is online and calibrated."'''
 
+    intro_response = chat.send_message(f'{prompt_template}', stream=True)
+    if intro_response:
+        for chunk in intro_response:
+            speak_mainframe(chunk.text)
+    time.sleep(1)
+    
     while True:
         user_input = parse_user_speech()
         if not user_input:
@@ -656,7 +668,7 @@ def gemini_chat():
             speak_mainframe('Ending Gemini chat.')
             break
         else:
-            response = chat.send_message(user_input, stream=True)
+            response = chat.send_message(f'{user_input}', stream=True)
             if response:
                 for chunk in response:
                     speak_mainframe(chunk.text)
