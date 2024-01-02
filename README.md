@@ -148,11 +148,11 @@ For commercial use of this project, a separate commercial license is required. T
         we need the simplest solution possible to fix this problem.
 
 
-## COMPLETION LOG:
+## COMPLETION LOG / COMMIT MESSAGES:
 
     2023-11-30 added google search, wikipedia search, and wolfram alpha query
     2023-12-01 note taking and note recall added
-    2023-12-01 began threading the speech output to a separate thread so that in the future we can build the ability for the bot to listen for stop or change commands while speaking.
+    2023-12-01 moved speech output to a separate thread so that in the future we can let the bot listen for stop or change commands while speaking.
     2023-12-02 added more user details in the .env file to personalize the output in various functions.
     2023-12-03 speech queue and speech manager have been implemented to prevent the bot from trying to say multiple things at once.
     2023-12-03 wolfram alpha finction improved to consolidate various pods contained in the response from the api call rather than just the first pod.
@@ -178,6 +178,7 @@ For commercial use of this project, a separate commercial license is required. T
     2024-01-01 added verbal password check when the app runs.
     2024-01-01 moved the gemini chat loop into its own function.
     2024-01-01 integrated a google custom search engine and search assistant with LLM analysis of results relevance and LLM guidance for results.
+    2024-01-02 added a prompt template into the gemini chat initialization asking for good output for a tts app.
     
     
 

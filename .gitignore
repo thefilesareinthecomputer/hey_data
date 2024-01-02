@@ -2,6 +2,7 @@ _archive/
 _secrets/
 _tests/
 app_base_knowledge/
+app_databases/
 app_generated_files/
 app_local_models/
 app_source_data/

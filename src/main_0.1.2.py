@@ -43,6 +43,8 @@ import yfinance as yf
 
 # CUSTOM MODULE IMPORTS ##############################################################################################################################
 
+from src_agent_model.chatbot_core import NLPUtils, ChatbotUtils, DatabaseManager
+
 # CONSTANTS ###################################################################################################################################
 
 # Load environment variables and verify the supporting directories exist
@@ -62,8 +64,8 @@ USER_DOWNLOADS_FOLDER = os.getenv('USER_DOWNLOADS_FOLDER')
 PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
 PROJECT_ROOT_DIRECTORY = os.getenv('PROJECT_ROOT_DIRECTORY')
 SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
 ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_archive')
+DATABASES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_databases')
 FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_generated_files')
 LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_local_models')
 NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_base_knowledge')
@@ -72,7 +74,7 @@ SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_source_data')
 SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
 TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_tests')
 UTILITIES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'utilities')
-folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, NOTES_DROP_DIR_PATH, SECRETS_DIR_PATH, SOURCE_DATA_DIR_PATH, SRC_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
+folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, DATABASES_DIR_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, NOTES_DROP_DIR_PATH, SECRETS_DIR_PATH, SOURCE_DATA_DIR_PATH, SRC_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
 for folder in folders_to_create:
     if not os.path.exists(folder):
         os.makedirs(folder)
@@ -136,16 +138,21 @@ class CustomSearchEngines:
     @staticmethod
     def search_chat_bot():
         search_engines = CustomSearchEngines()
-        speak_mainframe("Specify the search engine to use.")
-        input = parse_user_speech()
-        if not input:
-            return None
-        engine_name = input.lower()
-        print(f"Search Assistant Active using {engine_name}.")
-        time.sleep(.5)
-        
+        engine_name = ''
         search_results = [] 
-        
+        chat = model.start_chat(history=[])
+        speak_mainframe("Specify the search engine to use.")
+        while not engine_name:
+            input = parse_user_speech()
+            if input:
+                engine_name = input.lower()
+                print(f"Search Assistant Active using {engine_name}.")
+                time.sleep(.5)
+            if not input:
+                continue
+            else:
+                continue
+                            
         speak_mainframe("Please say what you'd like to search")
         
         while True:
@@ -163,27 +170,59 @@ class CustomSearchEngines:
             
             if results and results.get('items'):
                 for item in results['items']:
-                    title = item.get('title', 'No Title')
-                    link = item.get('link', 'No Link')
-                    snippet = item.get('snippet', 'No Description')
-                    search_results.append(f"Title: {title}\nSnippet: {snippet}\n")
-                    print(f"Title: {title}\nSnippet: {snippet}\nLink: {link}")
-                    
-                chat = model.start_chat(history=[])
+                    search_results.append(item)  # Storing the entire item
+                    print(f"RESULT: {item}\n\n")
 
+                prompt_template = chat.send_message(
+                    '''# System Message # - Gemini, you are in a verbal chat with the user via a 
+                    STT / TTS application. Please generate your text in a way that sounds like natural speech 
+                    when it's spoken by the TTS app. Please avoid monologuing or including anything in the output that will 
+                    not sound like natural spoken language. After confirming you understand this message, the chat will proceed. Please 
+                    confirm your understanding of these instructions by simply saying "Chat loop is open."''', 
+                    stream=True)
+
+                if prompt_template:
+                    for chunk in prompt_template:
+                        speak_mainframe(chunk.text)
+                        time.sleep(.25)
+                    time.sleep(1)
+                    
                 search_analysis = chat.send_message(
                     f'''Hi Gemini. A user who you are working with just leveraged a Google custom 
                     search engine for this query: "{query}". These are the 
-                    search results: {search_results}. Please analyze which result is the most relevant 
-                    to the original query from the user. Also, based on the user's query and the results and
-                    your own internal knowledge, please guide the user in how to solve the problem or answer the question
+                    search results: {search_results}. Please analyze the results, then interpret the true meaning of
+                    the user's query, then also incprporating your own internal knowledge, 
+                    please guide the user in how to solve the problem or answer the question
                     present in their query. If necessary, also guide the user in crafting a more efficient and effective query. 
+                    Please help guide the user in the right direction. 
+                    Your output should be suitable for a verbal chat TTS app that sounds like natural spoken language. 
                     Please keep your answers short, direct, and concise. Thank you!''', 
                     stream=True)
                 
                 if search_analysis:
                     for chunk in search_analysis:
                         speak_mainframe(chunk.text)
+                        time.sleep(.25)
+                    time.sleep(1)
+                    
+                while True:
+                    user_input = parse_user_speech()
+                    
+                    if not user_input:
+                        continue
+                    
+                    query = user_input.lower().split()
+                    
+                    if query[0] == activation_word and query[1] == 'new' and query[2] == 'search':
+                        speak_mainframe("Please say what you'd like to search.")
+                        time.sleep(1)
+                        break
+                    else:
+                        response = chat.send_message(f'{user_input}', stream=True)
+                        if response:
+                            for chunk in response:
+                                speak_mainframe(chunk.text)
+                            time.sleep(1)
                                 
             else:
                 speak_mainframe("No results found or an error occurred.")
@@ -464,6 +503,7 @@ def speech_manager():
 # Speech output voice settings
 def speak_mainframe(text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
     speech_queue.put((text, rate, chunk_size, voice))
+    print(f'{text}\n')
 
 def control_mouse(action, direction=None, distance=0):
     if action == 'click':
@@ -644,13 +684,15 @@ def gemini_chat():
     chat = model.start_chat(history=[])
     
     prompt_template = '''# System Message # - Gemini, you are in a verbal chat with the user via a 
-    STT / TTS application. Please generate your text output in a way that will sound like natural speech 
-    when it's spoken by the TTS audio synthesizers. Please avoid monologuing or including anything in the output that will 
+    STT / TTS application. Please generate your text in a way that sounds like natural speech 
+    when it's spoken by the TTS app. Please avoid monologuing or including anything in the output that will 
     not sound like natural spoken language. After confirming you understand this message, the chat will proceed. Please 
-    confirm your understanding of these instructions by saying "Gemini is online and calibrated."'''
+    confirm your understanding of these instructions by simply saying "Chat loop is open."'''
 
     intro_response = chat.send_message(f'{prompt_template}', stream=True)
     if intro_response:
+        speak_mainframe(f"Hi {USER_PREFERRED_NAME}. ")
+        time.sleep(.25)
         for chunk in intro_response:
             speak_mainframe(chunk.text)
     time.sleep(1)
@@ -672,6 +714,9 @@ def gemini_chat():
             if response:
                 for chunk in response:
                     speak_mainframe(chunk.text)
+                    speak_mainframe(" ")
+                    time.sleep(.1)
+                time.sleep(1)
           
 # MAIN LOOP ###################################################################################################################################
 
