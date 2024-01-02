@@ -55,11 +55,43 @@ import yfinance as yf
 # CONSTANTS ###################################################################################################################################
 
 # bring in the environment variables from the .env file
+# load_dotenv()
+# ACTIVATION_WORD = os.getenv('ACTIVATION_WORD', 'robot')
+# USER_DOWNLOADS_FOLDER = os.getenv('USER_DOWNLOADS_FOLDER')
+# USER_PREFERRED_LANGUAGE = os.getenv('USER_PREFERRED_LANGUAGE', 'en')  # 2-letter lowercase
+# USER_PREFERRED_VOICE = os.getenv('USER_PREFERRED_VOICE', 'Daniel')  # Daniel
+# USER_PREFERRED_NAME = os.getenv('USER_PREFERRED_NAME', 'User')  # Title case
+# USER_SELECTED_PASSWORD = os.getenv('USER_SELECTED_PASSWORD', 'None')  
+# USER_SELECTED_HOME_CITY = os.getenv('USER_SELECTED_HOME_CITY', 'None')  # Title case
+# USER_SELECTED_HOME_COUNTY = os.getenv('USER_SELECTED_HOME_COUNTY', 'None')  # Title case
+# USER_SELECTED_HOME_STATE = os.getenv('USER_SELECTED_HOME_STATE', 'None')  # Title case
+# USER_SELECTED_HOME_COUNTRY = os.getenv('USER_SELECTED_HOME_COUNTRY', 'None')  # 2-letter country code
+# USER_SELECTED_HOME_LAT = os.getenv('USER_SELECTED_HOME_LAT', 'None')  # Float with 6 decimal places
+# USER_SELECTED_HOME_LON = os.getenv('USER_SELECTED_HOME_LON', 'None')  # Float with 6 decimal places 
+# USER_SELECTED_TIMEZONE = os.getenv('USER_SELECTED_TIMEZONE', 'America/Chicago')  # Country/State format
+# USER_STOCK_WATCH_LIST = os.getenv('USER_STOCK_WATCH_LIST', 'None').split(',')  # Comma separated list of stock symbols
+# PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
+
+# # establish relative file paths for the current script
+# SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+# PROJECT_ROOT_DIR_PATH = os.path.dirname(SCRIPT_DIR_PATH)
+# ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_archive')
+# FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_generated_files')
+# LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_local_models')
+# NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_base_knowledge')
+# SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_source_data')
+# TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_tests')
+# UTILITIES_DIR_PATH = os.path.join(SCRIPT_DIR_PATH, 'utilities')
+
+# folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, NOTES_DROP_DIR_PATH, SOURCE_DATA_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
+# for folder in folders_to_create:
+#     if not os.path.exists(folder):
+#         os.makedirs(folder)
+
 load_dotenv()
 ACTIVATION_WORD = os.getenv('ACTIVATION_WORD', 'robot')
-USER_DOWNLOADS_FOLDER = os.getenv('USER_DOWNLOADS_FOLDER')
 USER_PREFERRED_LANGUAGE = os.getenv('USER_PREFERRED_LANGUAGE', 'en')  # 2-letter lowercase
-USER_PREFERRED_VOICE = os.getenv('USER_PREFERRED_VOICE', 'Daniel')  # Daniel
+USER_PREFERRED_VOICE = os.getenv('USER_PREFERRED_VOICE', 'Evan')  # Daniel
 USER_PREFERRED_NAME = os.getenv('USER_PREFERRED_NAME', 'User')  # Title case
 USER_SELECTED_PASSWORD = os.getenv('USER_SELECTED_PASSWORD', 'None')  
 USER_SELECTED_HOME_CITY = os.getenv('USER_SELECTED_HOME_CITY', 'None')  # Title case
@@ -70,23 +102,27 @@ USER_SELECTED_HOME_LAT = os.getenv('USER_SELECTED_HOME_LAT', 'None')  # Float wi
 USER_SELECTED_HOME_LON = os.getenv('USER_SELECTED_HOME_LON', 'None')  # Float with 6 decimal places 
 USER_SELECTED_TIMEZONE = os.getenv('USER_SELECTED_TIMEZONE', 'America/Chicago')  # Country/State format
 USER_STOCK_WATCH_LIST = os.getenv('USER_STOCK_WATCH_LIST', 'None').split(',')  # Comma separated list of stock symbols
+USER_DOWNLOADS_FOLDER = os.getenv('USER_DOWNLOADS_FOLDER')
 PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
-
-# establish relative file paths for the current script
+PROJECT_ROOT_DIRECTORY = os.getenv('PROJECT_ROOT_DIRECTORY')
 SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-PROJECT_ROOT_DIR_PATH = os.path.dirname(SCRIPT_DIR_PATH)
-ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_archive')
-FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_generated_files')
-LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_local_models')
-NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_base_knowledge')
-SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_source_data')
-TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_tests')
-UTILITIES_DIR_PATH = os.path.join(SCRIPT_DIR_PATH, 'utilities')
-
-folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, NOTES_DROP_DIR_PATH, SOURCE_DATA_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
+SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
+ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_archive')
+FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_generated_files')
+LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_local_models')
+NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_base_knowledge')
+SECRETS_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_secrets')
+SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_source_data')
+SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
+TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_tests')
+UTILITIES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'utilities')
+folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, NOTES_DROP_DIR_PATH, SECRETS_DIR_PATH, SOURCE_DATA_DIR_PATH, SRC_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
 for folder in folders_to_create:
     if not os.path.exists(folder):
         os.makedirs(folder)
+
+# # Set the default SSL context for the entire script
+# ssl._create_default_https_context = ssl.create_default_context(cafile=certifi.where())
 
 # Set API keys and other information from environment variables
 open_weather_api_key = os.getenv('OPEN_WEATHER_API_KEY')

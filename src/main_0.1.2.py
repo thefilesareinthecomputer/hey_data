@@ -1,29 +1,18 @@
 
-# IMPORTS ###################################################################################################################################
+# STANDARD IMPORTS ###################################################################################################################################
 
-from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
+from io import BytesIO, StringIO
 from math import radians, cos, sin, asin, sqrt
-from openai import OpenAI
-from pyppeteer import launch # new
-from tqdm import tqdm
-from transformers import MarianMTModel, MarianTokenizer
 from urllib.parse import urlparse, urljoin
-import asyncio # new
-import certifi
+import asyncio
+import base64
+import calendar
 import datetime
-import google.generativeai as genai
 import json
-import numpy as np
 import os
-import pandas as pd
-import pyautogui
-import pytz
 import queue
 import re
-import requests
-import speech_recognition as sr
 import ssl
 import subprocess
 import threading
@@ -31,21 +20,38 @@ import time
 import tkinter as tk
 import traceback
 import webbrowser
+
+# THIRD PARTY IMPORTS ###################################################################################################################################
+
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+from openai import OpenAI
+from PIL import Image
+from pyppeteer import launch
+from tqdm import tqdm
+from transformers import MarianMTModel, MarianTokenizer
+import certifi
+import google.generativeai as genai
+import numpy as np
+import pandas as pd
+import PIL.Image
+import pyautogui
+import pytz
+import requests
+import speech_recognition as sr
 import wikipedia
 import wolframalpha
 import yfinance as yf
 
-# CUSTOM IMPORTS ##############################################################################################################################
-
+# CUSTOM MODULE IMPORTS ##############################################################################################################################
 
 # CONSTANTS ###################################################################################################################################
 
-# bring in the environment variables from the .env file
+# Load environment variables and verify the supporting directories exist
 load_dotenv()
 ACTIVATION_WORD = os.getenv('ACTIVATION_WORD', 'robot')
-USER_DOWNLOADS_FOLDER = os.getenv('USER_DOWNLOADS_FOLDER')
 USER_PREFERRED_LANGUAGE = os.getenv('USER_PREFERRED_LANGUAGE', 'en')  # 2-letter lowercase
-USER_PREFERRED_VOICE = os.getenv('USER_PREFERRED_VOICE', 'Oliver')  # Daniel
+USER_PREFERRED_VOICE = os.getenv('USER_PREFERRED_VOICE', 'Evan')  # Daniel
 USER_PREFERRED_NAME = os.getenv('USER_PREFERRED_NAME', 'User')  # Title case
 USER_SELECTED_PASSWORD = os.getenv('USER_SELECTED_PASSWORD', 'None')  
 USER_SELECTED_HOME_CITY = os.getenv('USER_SELECTED_HOME_CITY', 'None')  # Title case
@@ -56,426 +62,55 @@ USER_SELECTED_HOME_LAT = os.getenv('USER_SELECTED_HOME_LAT', 'None')  # Float wi
 USER_SELECTED_HOME_LON = os.getenv('USER_SELECTED_HOME_LON', 'None')  # Float with 6 decimal places 
 USER_SELECTED_TIMEZONE = os.getenv('USER_SELECTED_TIMEZONE', 'America/Chicago')  # Country/State format
 USER_STOCK_WATCH_LIST = os.getenv('USER_STOCK_WATCH_LIST', 'None').split(',')  # Comma separated list of stock symbols
+USER_DOWNLOADS_FOLDER = os.getenv('USER_DOWNLOADS_FOLDER')
 PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
-
-# establish relative file paths for the current script
+PROJECT_ROOT_DIRECTORY = os.getenv('PROJECT_ROOT_DIRECTORY')
 SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-PROJECT_ROOT_DIR_PATH = os.path.dirname(SCRIPT_DIR_PATH)
-ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_archive')
-FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_generated_files')
-LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_local_models')
-NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_base_knowledge')
-SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_source_data')
-TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_tests')
-UTILITIES_DIR_PATH = os.path.join(SCRIPT_DIR_PATH, 'utilities')
-
-folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, NOTES_DROP_DIR_PATH, SOURCE_DATA_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
+SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
+ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_archive')
+FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_generated_files')
+LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_local_models')
+NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_base_knowledge')
+SECRETS_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_secrets')
+SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_source_data')
+SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
+TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_tests')
+UTILITIES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'utilities')
+folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, NOTES_DROP_DIR_PATH, SECRETS_DIR_PATH, SOURCE_DATA_DIR_PATH, SRC_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
 for folder in folders_to_create:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
 # Set the default SSL context for the entire script
-def create_ssl_context():
-    return ssl.create_default_context(cafile=certifi.where())
+ssl._create_default_https_context = ssl.create_default_context(cafile=certifi.where())
 
-ssl._create_default_https_context = create_ssl_context
-
-# Set API keys and other information from environment variables
+# Set API keys and other sensitive information from environment variables
 open_weather_api_key = os.getenv('OPEN_WEATHER_API_KEY')
 wolfram_app_id = os.getenv('WOLFRAM_APP_ID')
 openai_api_key=os.getenv('OPENAI_API_KEY')
 google_cloud_api_key = os.getenv('GOOGLE_CLOUD_API_KEY')
 google_maps_api_key = os.getenv('GOOGLE_MAPS_API_KEY')
 google_gemini_api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
+google_api_key = os.getenv('GOOGLE_API_KEY')
+google_custom_search_engine_id = os.getenv('GOOGLE_CUSTOM_SEARCH_ENGINE_ID')
 
-# Initialize helper models
+# Initialize external AI models
 client = OpenAI()
 genai.configure(api_key=google_gemini_api_key)
 model = genai.GenerativeModel('gemini-pro')
 
 # Establish the TTS bot's wake/activation word and script-specific global constants
 activation_word = f'{ACTIVATION_WORD}'
+password = f'{USER_SELECTED_PASSWORD}'
 speech_queue = queue.Queue()
-is_actively_speaking = False
-reset_mainframe = False
-standby = False
 
-# Set the terminal output display options
-pd.set_option('display.max_columns', 10)
-pd.set_option('display.max_rows', 150)
-pd.set_option('display.width', None)
-pd.set_option('display.max_colwidth', 35)
-pd.set_option('display.expand_frame_repr', False)
-pd.set_option('display.precision', 1) 
-
-# FUNCTION DEFINITIONS ###################################################################################################################################
-
-# def is_actively_speaking():
-#     global is_actively_speaking
-#     return is_actively_speaking
-
-# # Parsing and recognizing the user's speech input
-# def parse_user_speech():
-#     global standby  # Reference the global standby variable
-    
-#     if standby:
-#         print("Standby mode. Not listening.")
-#         return None
-    
-#     listener = sr.Recognizer()
-    
-#     print('Listening...')
-#     try:
-#         with sr.Microphone() as source:
-#             listener.pause_threshold = 1.5
-#             input_speech = listener.listen(source, timeout=20, phrase_time_limit=8)
-#         print('Processing...')
-#         query = listener.recognize_google(input_speech, language='en_US')
-#         print(f'You said: {query}\n')
-#         return query
-
-#     except sr.WaitTimeoutError:
-#         print('Listening timed out.')
-#         if not standby:
-#             try:
-#                 with sr.Microphone() as source:
-#                     input_speech = listener.listen(source, timeout=20, phrase_time_limit=8)
-#                     print('Processing...')
-#                     query = listener.recognize_google(input_speech, language='en_US')
-#                     print(f'You said: {query}\n')
-#                     return query
-#             except sr.WaitTimeoutError:
-#                 print('Second listening attempt timed out.')
-#             except sr.UnknownValueError:
-#                 print('Second listening attempt resulted in unrecognized speech.')
-#         return None
-
-#     except sr.UnknownValueError:
-#         print('Speech not recognized.')
-#         return None
-
-def parse_user_speech():
-    global standby  # Reference the global standby variable
-    
-    if standby:
-        print("Standby mode. Not listening.")
-        return None
-    
-    listener = sr.Recognizer()
-    
-    def listen_and_recognize():
-        try:
-            with sr.Microphone() as source:
-                listener.pause_threshold = 1.5
-                input_speech = listener.listen(source, timeout=20, phrase_time_limit=8)
-            print('Processing...')
-            return listener.recognize_google(input_speech, language='en_US')
-        except sr.WaitTimeoutError:
-            print('Listening timed out.')
-            return None
-        except sr.UnknownValueError:
-            print('Speech not recognized.')
-            return None
-
-    while True:
-        print('Listening...')
-        try:
-            query = listen_and_recognize()
-            if query is not None:
-                print(f'You said: {query}\n')
-                return query
-
-        except ConnectionResetError:
-            # Handling the connection reset error
-            print("Apologies, the connection was reset. Please re-state your last message.")
-            speak_mainframe("Apologies, the connection was reset. Please re-state your last message.")
-            # No return here, the loop will continue to attempt to listen again
-
-# Managing the flow of the speech output queue
-def speech_manager():
-    while True:
-        if not speech_queue.empty():
-            item = speech_queue.get()
-            if item is not None:
-                text, rate, chunk_size, voice = item
-                if text:
-                    words = text.split()
-                    chunks = [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
-                    for chunk in chunks:
-                        subprocess.call(['say', '-v', voice, '-r', str(rate), chunk])
-                speech_queue.task_done()
-        time.sleep(0.1)
-        
-# Speech output voice settings
-def speak_mainframe(text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
-    speech_queue.put((text, rate, chunk_size, voice))
-
-# # Listen for the user to say "robot, reset robot" to reset the robot
-# def listen_for_reset_command():
-#     global reset_mainframe
-#     listener = sr.Recognizer()
-#     with sr.Microphone() as source:
-#         try:
-#             audio = listener.listen(source, timeout=1, phrase_time_limit=5)
-#             query = listener.recognize_google(audio, language='en_US').lower().split()
-
-#             if query and query[0] == activation_word and query[1] == 'reset' and query[2] == activation_word:
-#                 reset_mainframe = True
-#         except:
-#             pass
-
-# Translate a spoken phrase from English to another language by saying "robot, translate to {language}"
-def translate(phrase_to_translate, target_language_name):
-    language_code_mapping = {
-        "en": ["english", "Daniel"],
-        "es": ["spanish", "Paulina"],
-        "fr": ["french", "Amélie"],
-        "de": ["german", "Anna"],
-        "it": ["italian", "Alice"],
-        "ru": ["russian", "Milena"],
-        "ja": ["japanese", "Kyoko"],
-    }
-
-    source_language = USER_PREFERRED_LANGUAGE  # From .env file
-    target_voice = None
-
-    # Find the language code and voice that matches the target language name
-    target_language_code = None
-    for code, info in language_code_mapping.items():
-        if target_language_name.lower() == info[0].lower():
-            target_language_code = code
-            target_voice = info[1]
-            break
-
-    if not target_language_code:
-        return f"Unsupported language: {target_language_name}", USER_PREFERRED_VOICE
-
-    model_name = f'Helsinki-NLP/opus-mt-{source_language}-{target_language_code}'
-    tokenizer = MarianTokenizer.from_pretrained(model_name)
-    model = MarianMTModel.from_pretrained(model_name)
-
-    batch = tokenizer([phrase_to_translate], return_tensors="pt", padding=True)
-    translated = model.generate(**batch)
-    translation = tokenizer.batch_decode(translated, skip_special_tokens=True)
-    return translation[0], target_voice
-
-# Gathering a summary of a wikipedia page based on user input
-def wikipedia_summary(query = ''):
-    search_results = wikipedia.search(query)
-    if not search_results:
-        print('No results found.')
-    try:
-        wiki_page = wikipedia.page(search_results[0])
-    except wikipedia.DisambiguationError as e:
-        wiki_page = wikipedia.page(e.options[0])
-    print(wiki_page.title)
-    wiki_summary = str(wiki_page.summary)
-    speak_mainframe(wiki_summary)
-
-
-# Querying Wolfram|Alpha based on user input
-def search_wolfram_alpha(query):
-    wolfram_client = wolframalpha.Client(wolfram_app_id)
-    try:
-        response = wolfram_client.query(query)
-        print(f"Response from Wolfram Alpha: {response}")
-
-        # Check if the query was successfully interpreted
-        if not response['@success']:
-            suggestions = response.get('didyoumeans', {}).get('didyoumean', [])
-            if suggestions:
-                # Handle multiple suggestions
-                if isinstance(suggestions, list):
-                    suggestion_texts = [suggestion['#text'] for suggestion in suggestions]
-                else:
-                    suggestion_texts = [suggestions['#text']]
-
-                suggestion_message = " or ".join(suggestion_texts)
-                speak_mainframe(f"Sorry, I couldn't interpret that query. These are the alternate suggestions: {suggestion_message}.")
-            else:
-                speak_mainframe('Sorry, I couldn\'t interpret that query. Please try rephrasing it.')
-
-            return 'Query failed.'
-
-        relevant_pods_titles = [
-            "Result", "Definition", "Overview", "Summary", "Basic information",
-            "Notable facts", "Basic properties", "Notable properties",
-            "Basic definitions", "Notable definitions", "Basic examples",
-            "Notable examples", "Basic forms", "Notable forms",
-            "Detailed Information", "Graphical Representations", "Historical Data",
-            "Statistical Information", "Comparative Data", "Scientific Data",
-            "Geographical Information", "Cultural Information", "Economic Data",
-            "Mathematical Proofs and Derivations", "Physical Constants",
-            "Measurement Conversions", "Prediction and Forecasting", "Interactive Pods"]
-
-        # Filtering and summarizing relevant pods
-        answer = []
-        for pod in response.pods:
-            if pod.title in relevant_pods_titles and hasattr(pod, 'text') and pod.text:
-                answer.append(f"{pod.title}: {pod.text}")
-
-        # Create a summarized response
-        response_text = ' '.join(answer)
-        if response_text:
-            speak_mainframe(response_text)
-        else:
-            speak_mainframe("I found no information in the specified categories.")
-
-        # Asking user for interest in other pods
-        for pod in response.pods:
-            if pod.title not in relevant_pods_titles:
-                speak_mainframe(f"Do you want to hear more about {pod.title}? Say 'yes' or 'no'.")
-                user_input = parse_user_speech().lower()
-                if user_input == 'yes' and hasattr(pod, 'text') and pod.text:
-                    speak_mainframe(pod.text)
-                    continue
-                elif user_input == 'no':
-                    break
-
-        return response_text
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        speak_mainframe('An error occurred while processing the query.')
-        return f"An error occurred: {e}"
-
-# Get a spoken weather forecast from openweathermap for the next 4 days by day part based on user defined home location
-def get_local_four_day_hourly_weather_forecast():
-    appid = f'{open_weather_api_key}'
-
-    # Fetching coordinates from environment variables
-    lat = USER_SELECTED_HOME_LAT
-    lon = USER_SELECTED_HOME_LON
-
-    # OpenWeatherMap API endpoint for 4-day hourly forecast
-    url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={appid}"
-
-    response = requests.get(url)
-    print("Response status:", response.status_code)
-    if response.status_code != 200:
-        return "Failed to retrieve weather data."
-
-    data = response.json()
-    print("Data received:", data)
-
-    # Process forecast data
-    forecast = ""
-    timezone = pytz.timezone(USER_SELECTED_TIMEZONE)
-    now = datetime.now(timezone)
-    periods = [(now + timedelta(days=i)).replace(hour=h, minute=0, second=0, microsecond=0) for i in range(4) for h in [6, 12, 18, 0]]
-
-    for i in range(0, len(periods), 4):
-        day_forecasts = []
-        for j in range(4):
-            start, end = periods[i + j], periods[i + j + 1] if j < 3 else periods[i] + timedelta(days=1)
-            period_forecast = [f for f in data['list'] if start <= datetime.fromtimestamp(f['dt'], tz=timezone) < end]
-            
-            if period_forecast:
-                avg_temp_kelvin = sum(f['main']['temp'] for f in period_forecast) / len(period_forecast)
-                avg_temp_fahrenheit = (avg_temp_kelvin - 273.15) * 9/5 + 32  # Convert from Kelvin to Fahrenheit
-                descriptions = set(f['weather'][0]['description'] for f in period_forecast)
-                time_label = ["morning", "afternoon", "evening", "night"][j]
-                day_forecasts.append(f"{time_label}: average temperature {avg_temp_fahrenheit:.1f}°F, conditions: {', '.join(descriptions)}")
-
-        if day_forecasts:
-            forecast_date = periods[i].strftime('%Y-%m-%d')
-            # Convert forecast_date to weekday format aka "Monday", etc.
-            forecast_date = datetime.strptime(forecast_date, '%Y-%m-%d').strftime('%A')
-            forecast += f"\n{forecast_date}: {'; '.join(day_forecasts)}."
-
-    return forecast
-
-# def talk_to_chatgpt(query):
-#     assistant = client.beta.assistants.create(
-#         name="Math Tutor",
-#         instructions="You are a personal assistant. Help the user with their Python program.",
-#         tools=[{"type": "code_interpreter"}],
-#         model="gpt-3.5-turbo-instruct"
-#     )
-    
-#     thread = client.beta.threads.create()
-    
-#     message = client.beta.threads.messages.create(
-#         thread_id=thread.id,
-#         role="user",
-#         content=f"{query}"
-#     )
-    
-#     run = client.beta.threads.runs.create(
-#         thread_id=thread.id,
-#         assistant_id=assistant.id,
-#         instructions=f"Please address the user as {USER_PREFERRED_NAME}. The user has a premium account."
-#     )
-    
-#     run = client.beta.threads.runs.retrieve(
-#         thread_id=thread.id,
-#         run_id=run.id
-#     )
-
-#     messages = client.beta.threads.messages.list(
-#         thread_id=thread.id
-#     )
-    
-#     print(messages)
-
-# Conduct research focusing on predetermined reliable science websites (INCOMPLETE / NOT YET FUNCTIONAL)
-def scientific_research(query):
-    science_websites = ['https://www.nih.gov/',
-                       'https://www.semanticscholar.org/',
-                       'https://www.medlineplus.gov/',
-                       'https://www.mayoclinic.org/',
-                       'https://arxiv.org/',
-                       'https://blog.scienceopen.com/',
-                       'https://plos.org/',
-                       'https://osf.io/preprints/psyarxiv',
-                       'https://zenodo.org/',
-                       'https://www.ncbi.nlm.nih.gov/pmc',
-                       'https://www.safemedication.com/',
-                       'https://www.health.harvard.edu/',
-                       'https://pubmed.ncbi.nlm.nih.gov/',
-                       'https://www.nlm.nih.gov/',
-                       'https://clinicaltrials.gov/',
-                       'https://www.amjmed.com/',
-                       'https://www.nejm.org/',
-                       'https://www.science.gov/',
-                       'https://www.science.org/',
-                       'https://www.nature.com/',
-                       'https://scholar.google.com/',
-                       'https://www.cell.com/',
-                       'https://www.mayoclinic.org/', 
-                       'https://www.cdc.gov/', 
-                       'https://www.drugs.com/', 
-                       'https://www.nhs.uk/', 
-                       'https://www.medicinenet.com/', 
-                       'https://www.health.harvard.edu/', 
-                       'https://doaj.org/',
-                       ]
-    research_summary = []
-    # scrape the websites for relevent search results from each site above and append them to the research_summary list
-    for site in science_websites:
-        # scrape the site for search results and append them to the research_summary list in the form of a list of strings
-        pass
+# CLASS DEFINITIONS ###################################################################################################################################
 
 # Conducts various targeted stock market reports such as discounts, recommendations, etc. based on user defined watch list
 class Finance:
     def __init__(self, user_watch_list):
         self.user_watch_list = user_watch_list
         self.stock_data = None
-
-    # # Fetching data for a single stock symbol
-    # def get_stock_info(self, symbol):
-    #     stock = yf.Ticker(symbol)
-    #     hist = stock.history(period="1d")
-    #     if not hist.empty:
-    #         latest_data = hist.iloc[-1]
-    #         return {
-    #             'symbol': symbol,
-    #             'price': latest_data['Close'],
-    #             'change': latest_data['Close'] - latest_data['Open'],
-    #             'percent_change': ((latest_data['Close'] - latest_data['Open']) / latest_data['Open']) * 100
-    #         }
-    #     else:
-    #         return {'symbol': symbol, 'error': 'No data available'}
     
     def fetch_all_stock_data(self):
         try:
@@ -540,17 +175,6 @@ class Finance:
 
         industry_avg_pe = self.get_industry_avg_pe(symbol)
         return pe_ratio < industry_avg_pe
-
-    # def calculate_rsi(self, data, window=14):
-    #     """Calculate the relative strength index (RSI) of the stock to assess oversold/overbought conditions."""
-    #     delta = data.diff()
-    #     gain = pd.Series(np.where(delta > 0, delta, 0))
-    #     loss = pd.Series(np.where(delta < 0, -delta, 0))
-    #     avg_gain = gain.rolling(window=window).mean()
-    #     avg_loss = loss.rolling(window=window).mean()
-    #     rs = avg_gain / avg_loss
-    #     rsi = 100 - (100 / (1 + rs))
-    #     return rsi
     
     def calculate_rsi(self, data, window=14):
         delta = data.diff()
@@ -681,6 +305,260 @@ class Finance:
                     report_line = f"{symbol}: Yearly Change: {year_change:.1f}%, Discount: {discount_from_high:.1f}%\n...\n"
                     discounted_stocks_report.append(report_line)
         return '\n'.join(discounted_stocks_report) if discounted_stocks_report else "No discounted stocks found meeting the criteria."
+    
+# FUNCTION DEFINITIONS ###################################################################################################################################
+
+# Main speech_recognition function
+def parse_user_speech():
+    listener = sr.Recognizer()
+    print('Listening...')
+    try:
+        with sr.Microphone() as source:
+            listener.pause_threshold = 1.5
+            input_speech = listener.listen(source, timeout=20, phrase_time_limit=8)
+        print('Processing...')
+        query = listener.recognize_google(input_speech, language='en_US')
+        print(f'You said: {query}\n')
+        return query
+
+    except sr.WaitTimeoutError:
+        print('Listening timed out. Please try again.')
+        return None
+
+    except sr.UnknownValueError:
+        print('Speech not recognized. Please try again.')
+        return None
+
+# Managing the flow of the speech output queue
+def speech_manager():
+    while True:
+        if not speech_queue.empty():
+            item = speech_queue.get()
+            if item is not None:
+                text, rate, chunk_size, voice = item
+                if text:
+                    words = text.split()
+                    chunks = [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
+                    for chunk in chunks:
+                        subprocess.call(['say', '-v', voice, '-r', str(rate), chunk])
+                speech_queue.task_done()
+        time.sleep(0.1)
+        
+# Speech output voice settings
+def speak_mainframe(text, rate=195, chunk_size=1000, voice=USER_PREFERRED_VOICE):
+    speech_queue.put((text, rate, chunk_size, voice))
+
+def control_mouse(action, direction=None, distance=0):
+    if action == 'click':
+        pyautogui.click()
+    elif action == 'move':
+        if direction == 'north':
+            pyautogui.move(0, -distance, duration=0.1)
+        elif direction == 'south':
+            pyautogui.move(0, distance, duration=0.1)
+        elif direction == 'west':
+            pyautogui.move(-distance, 0, duration=0.1)
+        elif direction == 'east':
+            pyautogui.move(distance, 0, duration=0.1)
+            
+# Translate a spoken phrase from English to another language by saying "robot, translate to {language}"
+def translate(phrase_to_translate, target_language_name):
+    language_code_mapping = {
+        "en": ["english", "Daniel"],
+        "es": ["spanish", "Paulina"],
+        "fr": ["french", "Amélie"],
+        "de": ["german", "Anna"],
+        "it": ["italian", "Alice"],
+        "ru": ["russian", "Milena"],
+        "ja": ["japanese", "Kyoko"],
+    }
+
+    source_language = USER_PREFERRED_LANGUAGE  # From .env file
+    target_voice = None
+
+    # Find the language code and voice that matches the target language name
+    target_language_code = None
+    for code, info in language_code_mapping.items():
+        if target_language_name.lower() == info[0].lower():
+            target_language_code = code
+            target_voice = info[1]
+            break
+
+    if not target_language_code:
+        return f"Unsupported language: {target_language_name}", USER_PREFERRED_VOICE
+
+    model_name = f'Helsinki-NLP/opus-mt-{source_language}-{target_language_code}'
+    tokenizer = MarianTokenizer.from_pretrained(model_name)
+    model = MarianMTModel.from_pretrained(model_name)
+
+    batch = tokenizer([phrase_to_translate], return_tensors="pt", padding=True)
+    translated = model.generate(**batch)
+    translation = tokenizer.batch_decode(translated, skip_special_tokens=True)
+    return translation[0], target_voice
+
+# Gathering a summary of a wikipedia page based on user input
+def wikipedia_summary(query = ''):
+    search_results = wikipedia.search(query)
+    if not search_results:
+        print('No results found.')
+    try:
+        wiki_page = wikipedia.page(search_results[0])
+    except wikipedia.DisambiguationError as e:
+        wiki_page = wikipedia.page(e.options[0])
+    print(wiki_page.title)
+    wiki_summary = str(wiki_page.summary)
+    speak_mainframe(wiki_summary)
+
+# Querying Wolfram|Alpha based on user input
+def search_wolfram_alpha(query):
+    wolfram_client = wolframalpha.Client(wolfram_app_id)
+    try:
+        response = wolfram_client.query(query)
+        print(f"Response from Wolfram Alpha: {response}")
+
+        # Check if the query was successfully interpreted
+        if not response['@success']:
+            suggestions = response.get('didyoumeans', {}).get('didyoumean', [])
+            if suggestions:
+                # Handle multiple suggestions
+                if isinstance(suggestions, list):
+                    suggestion_texts = [suggestion['#text'] for suggestion in suggestions]
+                else:
+                    suggestion_texts = [suggestions['#text']]
+
+                suggestion_message = " or ".join(suggestion_texts)
+                speak_mainframe(f"Sorry, I couldn't interpret that query. These are the alternate suggestions: {suggestion_message}.")
+            else:
+                speak_mainframe('Sorry, I couldn\'t interpret that query. Please try rephrasing it.')
+
+            return 'Query failed.'
+
+        relevant_pods_titles = [
+            "Result", "Definition", "Overview", "Summary", "Basic information",
+            "Notable facts", "Basic properties", "Notable properties",
+            "Basic definitions", "Notable definitions", "Basic examples",
+            "Notable examples", "Basic forms", "Notable forms",
+            "Detailed Information", "Graphical Representations", "Historical Data",
+            "Statistical Information", "Comparative Data", "Scientific Data",
+            "Geographical Information", "Cultural Information", "Economic Data",
+            "Mathematical Proofs and Derivations", "Physical Constants",
+            "Measurement Conversions", "Prediction and Forecasting", "Interactive Pods"]
+
+        # Filtering and summarizing relevant pods
+        answer = []
+        for pod in response.pods:
+            if pod.title in relevant_pods_titles and hasattr(pod, 'text') and pod.text:
+                answer.append(f"{pod.title}: {pod.text}")
+
+        # Create a summarized response
+        response_text = ' '.join(answer)
+        if response_text:
+            speak_mainframe(response_text)
+        else:
+            speak_mainframe("I found no information in the specified categories.")
+
+        # Asking user for interest in other pods
+        for pod in response.pods:
+            if pod.title not in relevant_pods_titles:
+                speak_mainframe(f"Do you want to hear more about {pod.title}? Say 'yes' or 'no'.")
+                user_input = parse_user_speech().lower()
+                if user_input == 'yes' and hasattr(pod, 'text') and pod.text:
+                    speak_mainframe(pod.text)
+                    continue
+                elif user_input == 'no':
+                    break
+
+        return response_text
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        speak_mainframe('An error occurred while processing the query.')
+        return f"An error occurred: {e}"
+
+# Get a spoken weather forecast from openweathermap for the next 4 days by day part based on user defined home location
+def get_local_four_day_hourly_weather_forecast():
+    appid = f'{open_weather_api_key}'
+
+    # Fetching coordinates from environment variables
+    lat = USER_SELECTED_HOME_LAT
+    lon = USER_SELECTED_HOME_LON
+
+    # OpenWeatherMap API endpoint for 4-day hourly forecast
+    url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={appid}"
+
+    response = requests.get(url)
+    print("Response status:", response.status_code)
+    if response.status_code != 200:
+        return "Failed to retrieve weather data."
+
+    data = response.json()
+    print("Data received:", data)
+
+    # Process forecast data
+    forecast = ""
+    timezone = pytz.timezone(USER_SELECTED_TIMEZONE)
+    now = datetime.now(timezone)
+    periods = [(now + timedelta(days=i)).replace(hour=h, minute=0, second=0, microsecond=0) for i in range(4) for h in [6, 12, 18, 0]]
+
+    for i in range(0, len(periods), 4):
+        day_forecasts = []
+        for j in range(4):
+            start, end = periods[i + j], periods[i + j + 1] if j < 3 else periods[i] + timedelta(days=1)
+            period_forecast = [f for f in data['list'] if start <= datetime.fromtimestamp(f['dt'], tz=timezone) < end]
+            
+            if period_forecast:
+                avg_temp_kelvin = sum(f['main']['temp'] for f in period_forecast) / len(period_forecast)
+                avg_temp_fahrenheit = (avg_temp_kelvin - 273.15) * 9/5 + 32  # Convert from Kelvin to Fahrenheit
+                descriptions = set(f['weather'][0]['description'] for f in period_forecast)
+                time_label = ["morning", "afternoon", "evening", "night"][j]
+                day_forecasts.append(f"{time_label}: average temperature {avg_temp_fahrenheit:.1f}°F, conditions: {', '.join(descriptions)}")
+
+        if day_forecasts:
+            forecast_date = periods[i].strftime('%Y-%m-%d')
+            # Convert forecast_date to weekday format aka "Monday", etc.
+            forecast_date = datetime.strptime(forecast_date, '%Y-%m-%d').strftime('%A')
+            forecast += f"\n{forecast_date}: {'; '.join(day_forecasts)}."
+
+    return forecast
+
+# Conduct research focusing on predetermined reliable science websites (INCOMPLETE / NOT YET FUNCTIONAL)
+def scientific_research(query):
+    science_websites = [
+        'https://arxiv.org/',
+        'https://blog.scienceopen.com/',
+        'https://clinicaltrials.gov/',
+        'https://doaj.org/',
+        'https://osf.io/preprints/psyarxiv',
+        'https://plos.org/',
+        'https://pubmed.ncbi.nlm.nih.gov/',
+        'https://scholar.google.com/',
+        'https://www.amjmed.com/',
+        'https://www.cdc.gov/',
+        'https://www.cell.com/',
+        'https://www.drugs.com/',
+        'https://www.health.harvard.edu/',
+        'https://www.health.harvard.edu/',
+        'https://www.mayoclinic.org/',
+        'https://www.mayoclinic.org/',
+        'https://www.medicinenet.com/',
+        'https://www.medlineplus.gov/',
+        'https://www.nature.com/',
+        'https://www.ncbi.nlm.nih.gov/pmc',
+        'https://www.nejm.org/',
+        'https://www.nhs.uk/',
+        'https://www.nih.gov/',
+        'https://www.nlm.nih.gov/',
+        'https://www.safemedication.com/',
+        'https://www.science.gov/',
+        'https://www.science.org/',
+        'https://www.semanticscholar.org/',
+        'https://zenodo.org/',
+        ]
+    research_summary = []
+    # scrape the websites for relevent search results from each site above and append them to the research_summary list
+    for site in science_websites:
+        # scrape the site for search results and append them to the research_summary list in the form of a list of strings
+        pass
 
 # MAIN LOOP ###################################################################################################################################
 
@@ -689,11 +567,6 @@ if __name__ == '__main__':
     threading.Thread(target=speech_manager, daemon=True).start()
     speak_mainframe(f'{activation_word} online.')
     
-    # # Initialize and start the GUI
-    # root = tk.Tk()
-    # app = MyGUI(root, speech_queue, is_actively_speaking)
-    # root.mainloop()
-    
     while True:
         user_input = parse_user_speech()
         if not user_input:
@@ -701,32 +574,6 @@ if __name__ == '__main__':
 
         query = user_input.lower().split()
         if not query:
-            continue
-        
-        # we should simplify thos to just clear the queue and not reset the robot
-        if reset_mainframe:
-            # Reset the robot and start listening again
-            reset_mainframe = False
-            speak_mainframe(f'{activation_word} reset.')
-            continue
-        
-        # Wakes from standby mode if the user says the activation word
-        if standby:
-            if query and query[0] == activation_word:
-                standby = False
-                speak_mainframe(f'{activation_word} back online.')
-            continue
-
-        # reset robot
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'reset' and query[2] == activation_word:
-            speak_mainframe('Heard, resetting.')
-            reset_mainframe = True
-            continue
-        
-        # standby
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'standby' and query[2] == 'mode':
-            speak_mainframe('Mainframe going on standby.')
-            standby = True
             continue
 
         # end program
@@ -800,43 +647,13 @@ if __name__ == '__main__':
             webbrowser.open(url, new=1)
             continue
 
-        # click
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'click':
-            # Perform a click at the current cursor position
-            pyautogui.click()
-            continue
-
-        # move up
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'north':
-            direction = query[1]
-            # Remove commas and convert to an integer
-            distance = int(query[2].replace(',', ''))  
-            pyautogui.move(0, -distance, duration=0.1)
-            continue
-
-        # move down
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'south':
-            direction = query[1]
-            # Remove commas and convert to an integer
-            distance = int(query[2].replace(',', ''))  
-            pyautogui.move(0, distance, duration=0.1) 
-            continue
-
-        # move left
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'west':
-            direction = query[1]
-            # Remove commas and convert to an integer
-            distance = int(query[2].replace(',', ''))  
-            pyautogui.move(-distance, 0, duration=0.1)
-            continue
-
-        # move right
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'east':
-            direction = query[1]
-            # Remove commas and convert to an integer
-            distance = int(query[2].replace(',', ''))  
-            pyautogui.move(distance, 0, duration=0.1)
-            continue
+        # Mouse control
+        if len(query) > 2 and query[0] == activation_word and query[1] == 'mouse':
+            if query[2] == 'click':
+                control_mouse('click')
+            elif query[2] in ['north', 'south', 'west', 'east'] and len(query) > 3 and query[3].isdigit():
+                distance = int(query[3].replace(',', ''))
+                control_mouse('move', query[2], distance)
 
         # translate
         if len(query) > 1 and query[0] == activation_word and query[1] == 'translate' and query[2] == 'to':
@@ -970,26 +787,6 @@ if __name__ == '__main__':
                     if response:  
                         for chunk in response:
                             speak_mainframe(chunk.text)
-                            
-        # # chat gpt command - we should change this to enter a stateful loop with a break command when the user wants to talk to chatgpt
-        # if len(query) > 1 and query[0] == activation_word and query[1] == 'chat' and query[2] == 'gpt':
-        #     speak_mainframe('Initializing ChatGPT. Say "end chat" to exit.')
-        #     chatgpt = client
-
-        #     while True:
-        #         speak_mainframe('I am listening...')
-        #         chat_query = parse_user_speech().lower()
-
-        #         # Check if 'end' and 'chat' are consecutive words in the query
-        #         if 'end' in chat_query and 'chat' in chat_query and chat_query.index('end') + 1 == chat_query.index('chat'):
-        #             speak_mainframe('Ending ChatGPT session.')
-        #             break
-
-        #         chat_response = chatgpt.ask_chatgpt(' '.join(chat_query))
-        #         print(f'ChatGPT: {chat_response}')
-        #         speak_mainframe(chat_response)
-                
-        #     continue
 
         # # scientific research command
         # if len(query) > 1 and query[0] == activation_word and query[1] == 'scientific' and query[2] == 'research':

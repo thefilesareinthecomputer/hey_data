@@ -138,6 +138,8 @@ For commercial use of this project, a separate commercial license is required. T
         i need debugging advice and direction please.    
     integrate it with the phomemo printer to print notes.
     add the ability to conduct legal research with websites like casetext, lexisnexis, westlaw, docketbird, pacer, bloomberg law, bna, fastcase, bestlaw, case text, casecheck, case notebook.
+    add oauth2 for authentication to google cloud API services with pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib.
+
 
 
 ## CURRENT SPRINT DETAILS:
@@ -176,6 +178,9 @@ For commercial use of this project, a separate commercial license is required. T
     2023-12-21 fixed a bug where the speech recognizer was retuurning 'None' vs None for unrecognized speech input.
     2023-12-22 installed auto py to exe and docker in anticipation of building a standalone app (tbd on containerization choice).
     2023-12-25 moved the activation word from hard-coded 'robot' into a user-defined variable in the .env file.
+    2023-12-30 doenloaded new voices for the speech interface.
+    2024-01-01 removed the redundant second parsing attempt in the speech parsing function and simplified the error handling there.
+    2024-01-01 removed the obsolete standby and reset code blocks to make space for a better future reset feature.
     
     
 

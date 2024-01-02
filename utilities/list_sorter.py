@@ -1,6 +1,4 @@
-
-
-
+'''takes a python list and prints an alphabetically sorted version'''
 
 science_websites = [
     'https://arxiv.org/',

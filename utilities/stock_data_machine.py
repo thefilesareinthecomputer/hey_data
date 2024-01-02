@@ -1,3 +1,6 @@
+'''this script generates reports about the historical company data and also historical time series 
+performance analysis of all stocks in the user's watch list'''
+
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import certifi
@@ -12,16 +15,29 @@ PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
 USER_STOCK_WATCH_LIST = os.getenv('USER_STOCK_WATCH_LIST', 'None').split(',')  # Comma separated list of stock symbols
 valid_tickers = [ticker for ticker in USER_STOCK_WATCH_LIST if ticker != 'None']
 
+PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
+PROJECT_ROOT_DIRECTORY = os.getenv('PROJECT_ROOT_DIRECTORY')
 SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-SRC_DIR_PATH = os.path.dirname(SCRIPT_DIR_PATH)
-PROJECT_ROOT_DIR_PATH = os.path.dirname(SRC_DIR_PATH)
-ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_archive')
-FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_generated_files')
-LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_local_models')
-NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_base_knowledge')
-SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_source_data')
-TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_tests')
-UTILITIES_DIR_PATH = os.path.join(SCRIPT_DIR_PATH, 'utilities')
+SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
+ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_archive')
+FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_generated_files')
+LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_local_models')
+NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_base_knowledge')
+SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_source_data')
+SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
+TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_tests')
+UTILITIES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'utilities')
+
+# SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+# SRC_DIR_PATH = os.path.dirname(SCRIPT_DIR_PATH)
+# PROJECT_ROOT_DIR_PATH = os.path.dirname(SRC_DIR_PATH)
+# ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_archive')
+# FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_generated_files')
+# LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_local_models')
+# NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_base_knowledge')
+# SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_source_data')
+# TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_tests')
+# UTILITIES_DIR_PATH = os.path.join(SCRIPT_DIR_PATH, 'utilities')
 
 now = datetime.now()
 
