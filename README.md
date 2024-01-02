@@ -177,7 +177,7 @@ For commercial use of this project, a separate commercial license is required. T
     2024-01-01 moved the mouse movement and clicking controls into a more streamlined function.
     2024-01-01 added verbal password check when the app runs.
     2024-01-01 moved the gemini chat loop into its own function.
-    2024-01-01 
+    2024-01-01 integrated a google custom search engine and search assistant with LLM analysis of results relevance and LLM guidance for results.
     
     
 
