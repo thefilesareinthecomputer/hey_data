@@ -179,6 +179,7 @@ For commercial use of this project, a separate commercial license is required. T
     2024-01-01 moved the gemini chat loop into its own function.
     2024-01-01 integrated a google custom search engine and search assistant with LLM analysis of results relevance and LLM guidance for results.
     2024-01-02 added a prompt template into the gemini chat initialization asking for good output for a tts app.
+    2024-01-02 added some additional prompt template steps into the search assistant chatbot.
     
     
 

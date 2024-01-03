@@ -2,6 +2,7 @@
 # STANDARD IMPORTS ###################################################################################################################################
 
 from datetime import datetime, timedelta
+from difflib import get_close_matches
 from io import BytesIO, StringIO
 from math import radians, cos, sin, asin, sqrt
 from urllib.parse import urlparse, urljoin
@@ -43,8 +44,6 @@ import yfinance as yf
 
 # CUSTOM MODULE IMPORTS ##############################################################################################################################
 
-from src_agent_model.chatbot_core import NLPUtils, ChatbotUtils, DatabaseManager
-
 # CONSTANTS ###################################################################################################################################
 
 # Load environment variables and verify the supporting directories exist
@@ -68,13 +67,13 @@ ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_archive')
 DATABASES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_databases')
 FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_generated_files')
 LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_local_models')
-NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_base_knowledge')
+BASE_KNOWLEDGE_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_base_knowledge')
 SECRETS_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_secrets')
 SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_source_data')
 SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
 TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_tests')
 UTILITIES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'utilities')
-folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, DATABASES_DIR_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, NOTES_DROP_DIR_PATH, SECRETS_DIR_PATH, SOURCE_DATA_DIR_PATH, SRC_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
+folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, DATABASES_DIR_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, BASE_KNOWLEDGE_DIR_PATH, SECRETS_DIR_PATH, SOURCE_DATA_DIR_PATH, SRC_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
 for folder in folders_to_create:
     if not os.path.exists(folder):
         os.makedirs(folder)
@@ -188,12 +187,13 @@ class CustomSearchEngines:
                     time.sleep(1)
                     
                 search_analysis = chat.send_message(
-                    f'''Hi Gemini. A user who you are working with just leveraged a Google custom 
-                    search engine for this query: "{query}". These are the 
-                    search results: {search_results}. Please analyze the results, then interpret the true meaning of
-                    the user's query, then also incprporating your own internal knowledge, 
-                    please guide the user in how to solve the problem or answer the question
-                    present in their query. If necessary, also guide the user in crafting a more efficient and effective query. 
+                    f'''Hi Gemini. The user just engaged a Google custom 
+                    search engine with this query: "{query}". 
+                    These are the search results: {search_results}. 
+                    Please analyze the results while interpreting the true meaning of 
+                    the user's query, then also apply your own internal knowledge. 
+                    Please guide the user in how to solve the problem or answer the question in their query. 
+                    If necessary, also guide the user in crafting a more efficient and effective query. 
                     Please help guide the user in the right direction. 
                     Your output should be suitable for a verbal chat TTS app that sounds like natural spoken language. 
                     Please keep your answers short, direct, and concise. Thank you!''', 
@@ -775,7 +775,7 @@ if __name__ == '__main__':
             speak_mainframe('OK, go ahead.')
             time.sleep(.5)
             new_note_text = parse_user_speech().lower()
-            with open(f'{NOTES_DROP_DIR_PATH}/notes_{new_note_subject}.txt', 'a') as f:
+            with open(f'{BASE_KNOWLEDGE_DIR_PATH}/notes_{new_note_subject}.txt', 'a') as f:
                 f.write(f'{today}, {new_note_text}' + '\n')
             speak_mainframe('Saved.')
             time.sleep(.5)
@@ -785,14 +785,14 @@ if __name__ == '__main__':
         if len(query) > 1 and query[0] == activation_word and query[1] == 'recall' and query[2] == 'notes':
             subject_pattern = r'notes_(\w+)\.txt'
             subjects = []
-            for file in os.listdir(NOTES_DROP_DIR_PATH):
+            for file in os.listdir(BASE_KNOWLEDGE_DIR_PATH):
                 if file.startswith('notes_'):
                     subject = re.search(subject_pattern, file).group(1)
                     subjects.append(subject)
             speak_mainframe(f'These subjects are present in your notes: {subjects}. Please specify the subject of the note you want to recall.')
             time.sleep(1)
             desired_subject = parse_user_speech().lower().replace(' ', '_')
-            with open(f'{NOTES_DROP_DIR_PATH}/notes_{desired_subject}.txt', 'r') as f:
+            with open(f'{BASE_KNOWLEDGE_DIR_PATH}/notes_{desired_subject}.txt', 'r') as f:
                 note_contents = f.read()
                 note = []
                 for row in note_contents.split('\n'):  # Split each row into a list of words and begin speaking on the 3rd word of each row

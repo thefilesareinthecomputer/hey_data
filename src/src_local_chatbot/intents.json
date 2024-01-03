@@ -1,0 +1,72 @@
+{
+    "intents": [
+{
+  "tag": "greeting",
+  "patterns": ["hello there",
+    "hey how is it going",
+    "hi my name is",
+    "hello", "hi",
+    "hey nice to meet you"],
+  "responses": ["Hi there. What can I help you with?",
+    "Hello. Standing by.",
+    "Hi. How's it going?",
+    "Hello. Start by saying something like 'Google search x y z', or 'wiki summary' or 'call gemini'.", 
+    "Hey. What are we up to?", 
+    "Aloha.",
+    "Hey. What's up?"],
+  "action": ""
+},
+{
+  "tag": "unrecognized",
+  "patterns": ["", "", "", "", "", ""],
+  "responses": ["I don't understand. Can you re-phrase? Otherwise say 'tell me what you can do'", 
+    "I don't understand. Try again please or say 'tell me what you can do'.", 
+    "I don't know. Maybe if you try saying it differently or say 'tell me what you can do'.", 
+    "I don't know what that means, sorry. Say 'tell me what you can do' for a list of options.", 
+    "Not sure. Say 'tell me what you can do' for other ideas.", 
+    "I don't understand. Say 'tell me what you can do' for the topics I can speak about."],
+  "action": "# maybe print a menu"
+},
+{
+  "tag": "stock market",
+  "patterns": ["load stock data", 
+    "upload the stock data", 
+    "download my stock information", 
+    "get the stock data info", 
+    "get our stock market change information", 
+    "please get the stock market reports"],
+  "responses": ["Ok, good to go.", 
+    "Got it, all set.", 
+    "Heard. Now what?.", 
+    "All done.", 
+    "Good to go.", 
+    "Done."],
+  "action": "# trigger the stocks class to load data then pass it to a global variable so we can include it in llm prompts and/or give the llm search access"
+},
+{
+  "tag": "capabilities",
+  "patterns": ["tell me what do you know", 
+    "tell me which questions do you understand", 
+    "tell me what you can do", 
+    "what do you know how to do", 
+    "what kind of things do you know", 
+    "what questions do you understand"],
+  "responses": ["These are the questions, answers, and functions I have available:", 
+    "These are the prompts, replies, and code I have available:", 
+    "These are the semantics and code I have available:", "These are the phrases, responses, and code functions I have available:", "This is the foundation of my reasoning abilities:", "This is the logic I use:"],
+  "action": "# print a list of functions from the readme or the documentation"
+},
+{
+  "tag": "get_smarter",
+  "patterns": ["get smarter", 
+    "i want you to get smarter", 
+    "learn from your memories", 
+    "re train yourself",
+    "refresh your training data",
+    "re load your training data",
+    "learn from the past"],
+  "responses": ["OK", "Done", "Will do", "Good idea"],
+  "action": "# call the get_smarter function"
+}
+    ]
+}
