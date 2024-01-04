@@ -1,0 +1,9 @@
+Hi there. Please help review the neural network below and help the user understand its architecture.
+
+The user needs a full explanation of which aspects of artificial neural network theory are applied in the neural network architecture below.
+
+Some context is provided about the use case and implementation of this neural network.
+
+Details
+Framework: tensorflow
+Use case: used in a 'training.py' module that trains a model based on a JSON file called 'intents'json' which looks like this:

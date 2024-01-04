@@ -1,7 +1,7 @@
 {
     "intents": [
 {
-  "tag": "greeting",
+  "tag": "conversation_greeting",
   "patterns": ["hello there",
     "hey how is it going",
     "hi my name is",
@@ -17,7 +17,7 @@
   "action": ""
 },
 {
-  "tag": "unrecognized",
+  "tag": "conversation_unrecognized",
   "patterns": ["", "", "", "", "", ""],
   "responses": ["I don't understand. Can you re-phrase? Otherwise say 'tell me what you can do'", 
     "I don't understand. Try again please or say 'tell me what you can do'.", 
@@ -25,10 +25,333 @@
     "I don't know what that means, sorry. Say 'tell me what you can do' for a list of options.", 
     "Not sure. Say 'tell me what you can do' for other ideas.", 
     "I don't understand. Say 'tell me what you can do' for the topics I can speak about."],
-  "action": "# maybe print a menu"
+  "action": "# print a list of functions that the chatbot can execute"
 },
 {
-  "tag": "stock market",
+  "tag": "conversation_capabilities",
+  "patterns": ["tell me what do you know", 
+    "tell me which questions do you understand", 
+    "tell me what you can do", 
+    "what do you know how to do", 
+    "what kind of things do you know", 
+    "what questions do you understand"],
+  "responses": ["These are the questions, answers, and functions I have available:", 
+    "These are the prompts, replies, and code I have available:", 
+    "These are the semantics and code I have available:", 
+    "These are the phrases, responses, and code functions I have available:", 
+    "This is the foundation of my reasoning abilities:", 
+    "This is the logic I use:"],
+  "action": "# print a list of functions that the chatbot can execute"
+},
+{
+  "tag": "conversation_quotes",
+  "patterns": ["tell me a quote", 
+    "do you know any good quotes", 
+    "say a quote", 
+    "tell me some quotes please", 
+    "inspiratoinal quote please", 
+    "can you tell me a famous quote"],
+  "responses": ["Whoever fights monsters should see to it that in the process he does not become a monster. And if you gaze long enough into an abyss, the abyss will gaze back into you. -Friedrich Nietzsche", 
+    "If at first the idea is not absurd, then there is no hope for it. -Albert Einstein", 
+    "I must not fear. Fear is the mind-killer. Fear is the little death that brings obliteration. I will face my fear and I will permit it to pass over me and through me. And when it has gone past... I will turn the inner eye to see its path. Where the fear has gone there will be nothing. Only I will remain. -Frank Herbert", 
+    "I have not failed. I've just found 10,000 ways that won't work. -Thomas A. Edison", 
+    "I am not a product of my circumstances. I am a product of my decisions. -Stephen Covey", 
+    "The most difficult thing is the decision to act, the rest is merely tenacity. -Amelia Earhart",
+    "Every strike brings me closer to the next home run. -Babe Ruth"],
+  "action": "# engage llm to ask the user if they want more quotes on a specific topic"
+},
+{
+  "tag": "conversation_jokes",
+  "patterns": [
+      "Tell me a joke",
+      "I need to laugh",
+      "Can you say something funny?",
+      "Make me laugh",
+      "I want to hear a joke"
+  ],
+  "responses": [
+      "Why don't scientists trust atoms? Because they make up everything!",
+      "What do you call fake spaghetti? An impasta!",
+      "I told my computer I needed a break, and now it won’t stop sending me Kit-Kat ads.",
+      "Parallel lines have so much in common. It’s a shame they’ll never meet."
+  ],
+  "action": ""
+},
+{
+  "tag": "conversation_help",
+  "patterns": [
+      "I need help",
+      "Can you assist me?",
+      "I'm not sure what to do",
+      "Help me out",
+      "I require some assistance"
+  ],
+  "responses": [
+      "Of course, I'm here to help. What do you need?",
+      "Sure, I can assist. What seems to be the problem?",
+      "I'm here to help. Just let me know what you need.",
+      "Tell me what you need, and I'll do my best to assist."
+  ],
+  "action": "# engage an llm with a help or advice prompt template for how to use this app"
+},
+{
+  "tag": "conversation_fun_facts",
+  "patterns": [
+      "Tell me a fun fact",
+      "I want to hear something interesting",
+      "Do you know any cool facts?",
+      "Share a random fact with me",
+      "I need a conversation starter"
+  ],
+  "responses": [
+      "Did you know that octopuses have three hearts?",
+      "A group of flamingos is called a flamboyance.",
+      "Honey never spoils. Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3000 years old and still edible.",
+      "The shortest war in history was between Britain and Zanzibar on August 27, 1896. Zanzibar surrendered after 38 minutes.",
+      "The first oranges weren't orange. The original oranges from Southeast Asia were a tangerine-pomelo hybrid, and they were actually green.",
+      "The longest English word is 189,819 letters long and takes more than 3 hours to pronounce.",
+      "The unicorn is the national animal of Scotland.",
+      "The first computer was invented in the 1940s."
+  ],
+  "action": ""
+},
+{
+  "tag": "conversation_compliment",
+  "patterns": [
+    "You're doing great",
+    "Nice work",
+    "Good job AI",
+    "You're very helpful",
+    "Impressive response"
+  ],
+  "responses": [
+    "Thank you for the compliment!",
+    "I'm glad you think so!",
+    "Thanks, I try my best!",
+    "I appreciate your kind words!"
+  ],
+  "action": ""
+},
+{
+  "tag": "conversation_gratitude",
+  "patterns": [
+    "Thank you",
+    "That was helpful",
+    "I appreciate your help",
+    "Thanks for the assistance",
+    "You've been helpful"
+  ],
+  "responses": [
+    "You're welcome!",
+    "Happy to help!",
+    "Glad I could assist you.",
+    "Anytime, I'm here to help!"
+  ],
+  "action": ""
+},
+{
+  "tag": "conversation_apology",
+  "patterns": [
+    "I'm sorry",
+    "My apologies",
+    "I didn't mean that",
+    "Sorry about that",
+    "I apologize"
+  ],
+  "responses": [
+    "No worries at all!",
+    "It's completely fine, don't worry about it.",
+    "Apology accepted.",
+    "That's okay, everyone makes mistakes."
+  ],
+  "action": ""
+},
+{
+  "tag": "conversation_encouragement",
+  "patterns": [
+    "I'm feeling down",
+    "I need some motivation",
+    "Can you cheer me up?",
+    "I'm not feeling great",
+    "I could use some encouragement"
+  ],
+  "responses": [
+    "You're doing better than you think!",
+    "Keep going, you're doing great!",
+    "Every step forward is progress.",
+    "Believe in yourself, I believe in you!"
+  ],
+  "action": ""
+},
+{
+  "tag": "conversation_curiosity",
+  "patterns": [
+    "How do you work?",
+    "What can you do?",
+    "Tell me more about AI",
+    "How were you made?",
+    "Explain your capabilities"
+  ],
+  "responses": [
+    "I'm an AI programmed to assist with various tasks.",
+    "My capabilities include answering questions, providing information, and more.",
+    "I was created by a team of developers using advanced AI algorithms.",
+    "I'm constantly learning and evolving to assist you better."
+  ],
+  "action": ""
+},
+{
+  "tag": "conversation_farewell",
+  "patterns": [
+    "bye",
+    "goodbye",
+    "see you later",
+    "talk to you later",
+    "farewell",
+    "I'm leaving now"
+  ],
+  "responses": [
+    "Goodbye! Feel free to return if you have more questions.",
+    "Farewell! Hope to assist you again soon.",
+    "Bye! Take care.",
+    "See you later! Let me know if you need anything else.",
+    "Goodbye! Have a great day ahead."
+  ],
+  "action": ""
+},
+{
+  "tag": "external_messaging_send_email",
+  "patterns": [
+      "Can you send an email?",
+      "Send an email for me",
+      "Compose an email",
+      "Start an email",
+      "I need to draft an email"
+  ],
+  "responses": [
+      "Sure, I can help with that.",
+      "Drafting an email.",
+      "Starting email now.",
+      "I'll compose a draft."
+  ],
+  "action": "# handle email dictation and sending"
+},
+{
+  "tag": "learning_get_smarter",
+  "patterns": ["get smarter", 
+    "i want you to get smarter", 
+    "learn from your memories", 
+    "re train yourself",
+    "refresh your training data",
+    "re load your training data",
+    "learn from the past"],
+  "responses": ["OK", "Done", "Will do", "Good idea"],
+  "action": "# call the get_smarter function"
+},
+{
+  "tag": "recommend_travel",
+  "patterns": [
+      "I need travel advice",
+      "Can you help me plan a trip?",
+      "I'm looking for travel destinations",
+      "Suggest some travel spots",
+      "Help me with my travel itinerary"
+  ],
+  "responses": [
+      "I'd love to help with your travel plans.",
+      "Sure, where are you planning to go?",
+      "Let's plan an exciting trip for you.",
+      "I can suggest some popular destinations."
+  ],
+  "action": "# interact with travel API and engage an agent who can find best deals based on user input"
+},
+{
+  "tag": "recommend_food",
+  "patterns": [
+      "I'm hungry, any food suggestions?",
+      "Recommend me a good restaurant",
+      "Where should I eat today?",
+      "I need ideas for dinner",
+      "Find me a place to eat"
+  ],
+  "responses": [
+      "How about trying some Italian cuisine tonight?",
+      "There's a great sushi place nearby. Want directions?",
+      "I've heard good things about the new burger joint in town.",
+      "How about some healthy salad options for dinner?"
+  ],
+  "action": "# recommend restaurants or recipes"
+},
+{
+  "tag": "recommend_exercise",
+  "patterns": [
+      "Suggest me some exercises",
+      "I need a workout plan",
+      "Help me with fitness tips",
+      "Tell me some good workouts",
+      "What exercises should I do today?"
+  ],
+  "responses": [
+      "Let's get you moving with some cardio!",
+      "How about a 30-minute yoga session?",
+      "Strength training is a great way to start the day.",
+      "I can guide you through a quick HIIT session."
+  ],
+  "action": "# provide workout routines"
+},
+{
+  "tag": "recommend_movies",
+  "patterns": [
+      "Suggest me a movie",
+      "What movie should I watch?",
+      "I need a movie recommendation",
+      "Find a good movie for me",
+      "Can you recommend a film?"
+  ],
+  "responses": [
+      "How about watching a classic like 'The Shawshank Redemption'?",
+      "I heard 'Inception' is a great movie.",
+      "You might enjoy 'The Godfather'.",
+      "Why not watch 'Forrest Gump' tonight?"
+  ],
+  "action": "# suggest movies based on popular choices or genres"
+},
+{
+  "tag": "recommend_books",
+  "patterns": [
+      "Can you recommend a book?",
+      "I'm looking for a good book to read",
+      "Suggest me a novel",
+      "What book should I read next?",
+      "Find me a book to read"
+  ],
+  "responses": [
+      "I suggest '1984' by George Orwell.",
+      "'To Kill a Mockingbird' is a must-read.",
+      "How about 'The Great Gatsby'?",
+      "You might enjoy 'The Catcher in the Rye'."
+  ],
+  "action": "# suggest books based on popular choices or genres"
+},
+{
+  "tag": "recommend_music",
+  "patterns": [
+      "Play some music",
+      "I want to listen to a song",
+      "Can you put on some music?",
+      "I'd like to hear some tunes",
+      "Start playing music"
+  ],
+  "responses": [
+      "Sure, what genre or artist are you in the mood for?",
+      "Playing music now. Any specific requests?",
+      "Alright, let's get some music going!",
+      "Music coming right up! Any favorite artists?"
+  ],
+  "action": "# play music through music API or engage spotify with a search based on user input"
+},
+{
+  "tag": "report_stock_market",
   "patterns": ["load stock data", 
     "upload the stock data", 
     "download my stock information", 
@@ -44,29 +367,358 @@
   "action": "# trigger the stocks class to load data then pass it to a global variable so we can include it in llm prompts and/or give the llm search access"
 },
 {
-  "tag": "capabilities",
-  "patterns": ["tell me what do you know", 
-    "tell me which questions do you understand", 
-    "tell me what you can do", 
-    "what do you know how to do", 
-    "what kind of things do you know", 
-    "what questions do you understand"],
-  "responses": ["These are the questions, answers, and functions I have available:", 
-    "These are the prompts, replies, and code I have available:", 
-    "These are the semantics and code I have available:", "These are the phrases, responses, and code functions I have available:", "This is the foundation of my reasoning abilities:", "This is the logic I use:"],
-  "action": "# print a list of functions from the readme or the documentation"
+  "tag": "report_weather",
+  "patterns": [
+      "What's the weather like today?",
+      "Is it going to rain tomorrow?",
+      "Tell me the weather forecast",
+      "Weather update please",
+      "I need to know the weather for my trip"
+  ],
+  "responses": [
+      "Let me check the weather for you.",
+      "I'll look up today's weather forecast.",
+      "Sure, getting the weather details right away.",
+      "I can help with that. Where are you located?"
+  ],
+  "action": "# call weather API"
 },
 {
-  "tag": "get_smarter",
-  "patterns": ["get smarter", 
-    "i want you to get smarter", 
-    "learn from your memories", 
-    "re train yourself",
-    "refresh your training data",
-    "re load your training data",
-    "learn from the past"],
-  "responses": ["OK", "Done", "Will do", "Good idea"],
-  "action": "# call the get_smarter function"
+  "tag": "report_news",
+  "patterns": [
+      "What's the latest news?",
+      "Tell me today's headlines",
+      "I want to hear some news",
+      "Update me on current events",
+      "Give me a news briefing"
+  ],
+  "responses": [
+      "Here are the latest headlines.",
+      "Let me update you with today's news.",
+      "Sure, fetching the current news for you.",
+      "Here's what's happening in the world today."
+  ],
+  "action": "# call news API"
+},
+{
+  "tag": "report_entertainment_info",
+  "patterns": [
+      "What's happening in the entertainment world?",
+      "Tell me some celebrity news",
+      "Who won the latest award show?",
+      "Give me updates on recent movies",
+      "Any new music album releases?"
+  ],
+  "responses": [
+      "Here's the latest in entertainment news.",
+      "Let me share some recent celebrity updates.",
+      "Here are the results from the latest award show.",
+      "There are a few new movies out. Let me list them for you.",
+      "Several new music albums were released recently. Here's a list."
+  ],
+  "action": "# provide updates on entertainment and celebrity news"
+},
+{
+  "tag": "report_event_information",
+  "patterns": [
+      "Tell me about upcoming local events",
+      "What are some interesting events happening soon?",
+      "Find events near me this weekend",
+      "Are there any conferences related to my field?",
+      "List some cultural events happening around"
+  ],
+  "responses": [
+      "There are several local events coming up. Here's a list.",
+      "I found some interesting events happening soon.",
+      "Here are the events near you this weekend.",
+      "There are a few conferences related to your field. Check these out.",
+      "Several cultural events are happening. Here's what I found."
+  ],
+  "action": "# provide information on upcoming events"
+},
+{
+  "tag": "report_travel_guidance",
+  "patterns": [
+      "What are the travel restrictions in place?",
+      "I need travel safety tips",
+      "Can you provide travel alerts?",
+      "What should I pack for my trip?",
+      "Advise on best travel insurance options"
+  ],
+  "responses": [
+      "Currently, there are some travel restrictions. Here's what you need to know.",
+      "Travel safely with these tips.",
+      "I can provide you with the latest travel alerts.",
+      "Packing depends on your destination. Here's a general list.",
+      "There are several travel insurance options. Let's find the best one for you."
+  ],
+  "action": "# provide travel-related guidance and information with an agent"
+},
+{
+  "tag": "scheduling_appointment",
+  "patterns": [
+      "I need to schedule an appointment",
+      "Can you book a meeting for me?",
+      "Set up an appointment please",
+      "Help me manage my calendar",
+      "I want to see my appointments"
+  ],
+  "responses": [
+      "Sure, I can help with that. What time works for you?",
+      "Let's find a suitable time for your appointment.",
+      "I can assist with scheduling. Who is this appointment with?",
+      "Alright, let's check your calendar."
+  ],
+  "action": "# interact with calendar API to schedule an appointment on google calendar"
+},
+{
+  "tag": "scheduling_reminder",
+  "patterns": [
+      "Set a reminder for me",
+      "Remind me to",
+      "I need a reminder",
+      "Can you remind me about",
+      "Don't let me forget to"
+  ],
+  "responses": [
+      "Sure, I'll remind you.",
+      "Reminder set.",
+      "Okay, I'll make sure to remind you.",
+      "You won't forget it, I'll remind you."
+  ],
+  "action": "# interact with calendar API to schedule a reminder on google calendar"
+},
+{
+  "tag": "scheduling_calendar_management",
+  "patterns": [
+      "What's on my calendar today?",
+      "Add an event to my calendar",
+      "When is my next meeting?",
+      "Schedule a meeting for next week",
+      "Remind me about my appointments"
+  ],
+  "responses": [
+      "Here are your scheduled events.",
+      "Pulling up your itinerary.",
+      "Here are your upcoming meetings.",
+      "Getting schedule.",
+      "One moment for your schedule."
+  ],
+  "action": "# provide a summary of the user's upcoming calendar events"
+},
+{
+  "tag": "tools_fact_checking",
+  "patterns": ["are you sure", 
+    "that doesnt sound right", 
+    "i dont think thats correct", 
+    "how is that possible", 
+    "that cant be true", 
+    "i dont believe that", 
+    "i doubt if thats accurate", 
+    "im pretty sure thats wrong", 
+    "that cant be right", 
+    "i dont think thats right",
+    "i dont think thats true",
+    "theres no way thats right"],
+  "responses": ["Ok, let me double check.", 
+    "Reviewing for accuracy.", 
+    "Heard. Looking into it.", 
+    "OK, reviewing now.", 
+    "Understood, checking.", 
+    "OK, one moment while I check."],
+  "action": "# trigger an agent containing a classification model with fact checker tools to review the last 5 exchanges between the user and chatbot and verify if they are accurate"
+},
+{
+  "tag": "tools_note_taking",
+  "patterns": ["take a note", 
+    "take down a note", 
+    "take down this message", 
+    "record this message", 
+    "record this note", 
+    "take down some notes for me please"],
+  "responses": ["ok, ready", 
+    "sure, go ahead", 
+    "ok, go ahead", 
+    "sure, what's the note?", 
+    "ok go", 
+    "ready"],
+  "action": "# call the note taking function"
+},
+{
+  "tag": "tools_note_recall",
+  "patterns": ["read me the note for", 
+    "tell me what's in the note about", 
+    "what nores do we have for", 
+    "what are the notes for", 
+    "what notes do we have", 
+    "what does the note for say"],
+  "responses": ["ok", 
+    "ok, here it is", 
+    "sure", 
+    "heard", 
+    "k", 
+    "got it"],
+  "action": "# call the note recall function"
+},
+{
+  "tag": "tools_computation_engine",
+  "patterns": ["hi, please search wolfram alpha for", 
+    "query wolfram alpha for", 
+    "look up on wolfram alpha", 
+    "search wolfram alpha", 
+    "computatoin engine", 
+    "compute calculations"],
+  "responses": ["ok, what should we search", 
+    "ok what's the query", 
+    "ok state your search phrase", 
+    "sure - what do you need to know"],
+  "action": "# call the wolfram alpha api"
+},
+{
+  "tag": "tools_google_search",
+  "patterns": [
+      "Can you google this for me?",
+      "I need information on",
+      "Google search",
+      "Find this on the internet",
+      "Look this up please"
+  ],
+  "responses": [
+      "Sure, I'll search that for you.",
+      "Let me look that up quickly.",
+      "Okay, googling it now.",
+      "I can find that information for you."
+  ],
+  "action": "# perform a simple one-off Google search"
+},
+{
+  "tag": "tools_google_custom_search_engine",
+  "patterns": [
+      "Can you use our custom google search engine?",
+      "Custom google search",
+      "custom Google search engine",
+      "custom search",
+      "google search engine"
+  ],
+  "responses": [
+      "Sure, I'll search that for you.",
+      "Let me look that up quickly.",
+      "Okay, googling it now.",
+      "I can find that information for you."
+  ],
+  "action": "# engage the search assistnt agent to perform a multi step search assignment using the custom google search engine"
+},
+{
+  "tag": "tools_tech_support",
+  "patterns": [
+      "I'm having a problem with my computer",
+      "Can you help me with a tech issue?",
+      "My phone isn't working",
+      "I need help with a device",
+      "There's a problem with my laptop"
+  ],
+  "responses": [
+      "I can try to help. What seems to be the problem?",
+      "Sure, tell me more about your tech issue.",
+      "What device are you having trouble with?",
+      "Let's see if we can sort this out."
+  ],
+  "action": "# engage the custom search engine based on user query keyword extraction and provide basic llm tech support or guide to relevant resources"
+},
+{
+  "tag": "tools_language_translation",
+  "patterns": [
+      "Can you translate this for me?",
+      "I need a translation",
+      "Translate this sentence",
+      "How do you say this in another language?",
+      "Help me with this translation"
+  ],
+  "responses": [
+      "Sure, what do you need translated?",
+      "I can help with that. What's the sentence?",
+      "Okay, which language should I translate it to?",
+      "Translation coming right up."
+  ],
+  "action": "# perform language translation function"
+},
+{
+  "tag": "tools_file_management",
+  "patterns": [
+      "Open this file for me",
+      "Manage my files",
+      "I need help with file organization",
+      "Can you locate a file?",
+      "open file",
+      "help me find file",
+      "find file"
+  ],
+  "responses": [
+      "Heard.",
+      "On it.",
+      "No problem.",
+      "Sure.",
+      "OK."
+  ],
+  "action": "# assist with file management tasks"
+},
+{
+  "tag": "tools_search_social_media",
+  "patterns": [
+      "Can you search this on social media?",
+      "Review social media for this topic",
+      "What is happening with on social media",
+      "Whats going on in social media for",
+      "How is trending on social media"
+  ],
+  "responses": [
+      "Searching.",
+      "Looking into it.",
+      "Checking.",
+      "Researching."
+  ],
+  "action": "# crawl social media or pull from apis for social media data and public sentiment analysis on a topic"
+},
+{
+  "tag": "tools_shopping_assistance",
+  "patterns": [
+      "Can you order groceries for me?",
+      "I need to buy a gift online",
+      "Find me the best deals on laptops",
+      "Help me with online shopping",
+      "Add items to my shopping cart"
+  ],
+  "responses": [
+      "I can order groceries for you. What do you need?",
+      "Looking for gift ideas. Any preferences?",
+      "Finding the best deals on laptops for you.",
+      "Let's start with your online shopping. What are you looking for?",
+      "Items added to your shopping cart."
+  ],
+  "action": "# assist with online shopping tasks"
+},
+{
+  "tag": "tools_educational_assistance",
+  "patterns": [
+      "Can you help me with my homework?",
+      "I need assistance with a school project",
+      "Explain this topic to me",
+      "I'm struggling with a subject",
+      "Teach me something new",
+      "Can you tutor me on",
+      "can you help me study for",
+      "can you help me with my homework for",
+      "can you help me learn about",
+      "can you help me with my project for"
+  ],
+  "responses": [
+      "Sure, what subject do you need help with?",
+      "I'd be happy to assist with your project. What's the topic?",
+      "Let me explain that topic to you.",
+      "What specific part are you struggling with?",
+      "Let's learn something new together. What are you interested in?"
+  ],
+  "action": "# engage tutor agent to assist with educational tasks"
 }
     ]
 }

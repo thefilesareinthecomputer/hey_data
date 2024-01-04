@@ -70,9 +70,9 @@ model.add(tf.keras.layers.Dense(64, activation='relu'))
 model.add(tf.keras.layers.Dropout(0.5))
 model.add(tf.keras.layers.Dense(len(train_y[0]), activation='softmax'))
 
-sgd = tf.keras.optimizers.SGD(lr=0.01, momentum=0.9, nesterov=True)
+sgd = tf.keras.optimizers.legacy.SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
 model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
 
 hist = model.fit(train_x, train_y, epochs=200, batch_size=5, verbose=1)
-model.save(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_model.h5', hist)
+model.save(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_model.keras', hist)
 print("Done!")

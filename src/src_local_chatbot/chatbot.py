@@ -16,10 +16,9 @@ SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 lemmmatizer = WordNetLemmatizer()
 intents = json.loads(open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/intents.json').read())
-
 words = pickle.load(open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/words.pkl', 'rb'))
 classes = pickle.load(open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/classes.pkl', 'rb'))
-model = tf.keras.models.load_model(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_model.h5')
+model = tf.keras.models.load_model(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_model.keras')
 
 def clean_up_sentence(sentence):
     sentence_words = nltk.word_tokenize(sentence)
