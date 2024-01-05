@@ -183,7 +183,7 @@ For commercial use of this project, a separate commercial license is required. T
     2024-01-03 re-built the neural nine chatbot that uses intents.json and modernized the tensorflow imports in the training module.
     2024-01-04 implemented function calling and stt audio recognition and tts bot output for the neural network based chatbot.
     2024-01-04 implemented a function that generates an intent json object for any message interaction the bot doesn't recognize.
-    2024-01-04 triggered the bot to re-train itself with the new data at the top of the chatbot_app script before every chat run.
+    2024-01-04 imported and called the chatbot_training module at the top of the chatbot_app module.
     
     
 

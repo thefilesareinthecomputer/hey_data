@@ -3,9 +3,7 @@
 
 # STANDARD IMPORTS
 from datetime import datetime, timedelta
-from difflib import get_close_matches
 from io import BytesIO, StringIO
-from math import radians, cos, sin, asin, sqrt
 from urllib.parse import urlparse, urljoin
 import asyncio
 import base64

@@ -1,158 +1,5 @@
 # chatbot_app_with_tools.py
 
-'''
-
-########## SYSTEM MESSAGE ##########
-# Hi there! Today you'll be helping the user write some new code.
-# The user will direct which code you should write and how, then the user will execute it in their environment.
-# Language: python
-# Version: 3.11.4
-# Project: adding additional features to a chatbot_app.py module of a chatbot app.
-# requirement: move the ChatBotApp and ChatBotTools into classes (already done).
-# requirement: implement function calling into the chatbot_app.py module, so that the chatbot can execute functions when they are clled by their corresponding matches from the chatbot_intents.json file which currently only contains placeholder comments in the action field rather than actual functions or function names.
-# instructions: generate the python code required to meet these requirements so the user can add it to the module below.
-# instructions: make sure all your code is complete and will work for the user in their environment.
-# instructions: don't use any placeholders in your code, make sure it is all complete and ready to go.
-# instructions: if you don't have enough info and need to ask the user a question, just ask it in the chat.
-# instructions: explain to the user how/where to implement the code, but primarily focus on writing the code.
-
-########## ASSOCIATED CODE FOR CONTEXT ##########
-
-# JSON training data example from the chatbot_intents.json file:
-
-{
-    "intents": [
-{
-  "tag": "conversation_unrecognized",
-  "patterns": [""],
-  "responses": ["I don't understand. Can you re-phrase your question? Otherwise say 'tell me what you can do'", 
-    "I don't understand. Try again please or say 'tell me what you can do'.", 
-    "I don't know. Maybe if you try saying it differently or say 'tell me what you can do'.", 
-    "I don't know what that means, sorry. Say 'tell me what you can do' for a list of options.", 
-    "Not sure. Say 'tell me what you can do' for other ideas.", 
-    "I don't understand. Say 'tell me what you can do' for the topics I can speak about."],
-  "action": "# when the bot says one of the 'i dont know' messages, trigger a function to generate a new JSON intent object for the last user / bot interaction message pair (using an agent to generate a set of analagous questions and a set of analagous appropriate responses), then append that intent to a dictionary called intents in the log file called 'chatbot_unrecognized_message_intents.json' that will be used as ongoing ci/cd fine-tuning training data to train the ai to recognize new messages"
-},
-{
-  "tag": "conversation_greeting",
-  "patterns": ["hello there",
-    "hey how is it going",
-    "hi my name is",
-    "hello", "hi",
-    "hey nice to meet you"],
-  "responses": ["Hi there. What can I help you with?",
-    "Hello. Standing by.",
-    "Hi. How's it going?",
-    "Hello. Start by saying something like 'Google search x y z', or 'wiki summary' or 'call gemini'.", 
-    "Hey. What are we up to?", 
-    "Aloha.",
-    "Hey. What's up?"],
-  "action": "# once the ai has an avatar we can have it wave or smile here"
-},
-{
-  "tag": "conversation_capabilities",
-  "patterns": ["tell me what do you know", 
-    "tell me which questions do you understand", 
-    "tell me what you can do", 
-    "what do you know how to do", 
-    "what kind of things do you know", 
-    "what questions do you understand"],
-  "responses": ["These are the questions, answers, and functions I have available:", 
-    "These are the prompts, replies, and code I have available:", 
-    "These are the semantics and code I have available:", 
-    "These are the phrases, responses, and code functions I have available:", 
-    "This is the foundation of my reasoning abilities:", 
-    "This is the logic I use:"],
-  "action": "# print a list of functions that the chatbot can execute"
-}
-    ]
-}
-
-# Neural network architecture in the chatbot_training.py module:
-
-from dotenv import load_dotenv
-import json
-import os
-import pickle
-import random
-
-from nltk.stem import WordNetLemmatizer
-import numpy as np
-import nltk
-import tensorflow as tf
-
-load_dotenv()
-PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
-PROJECT_ROOT_DIRECTORY = os.getenv('PROJECT_ROOT_DIRECTORY')
-SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-
-lemmatizer = WordNetLemmatizer()
-
-intents = json.loads(open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_intents.json').read())
-
-words = []
-classes = []
-documents = []
-ignore_letters = ['?', '!', '.', ',']
-
-for intent in intents['intents']:
-    for pattern in intent['patterns']:
-        word_list = nltk.word_tokenize(pattern)
-        words.extend(word_list)
-        documents.append((word_list, intent['tag']))
-        
-        if intent['tag'] not in classes:
-            classes.append(intent['tag'])
-            
-words = [lemmatizer.lemmatize(word) for word in words if word not in ignore_letters]
-words = sorted(set(words))
-
-classes = sorted(set(classes))
-
-pickle.dump(words, open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_words.pkl', 'wb'))
-pickle.dump(classes, open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_classes.pkl', 'wb'))
-
-training = []
-output_empty = [0] * len(classes)
-
-for document in documents:
-    bag = []
-    word_patterns = document[0]
-    word_patterns = [lemmatizer.lemmatize(word.lower()) for word in word_patterns]
-    
-    for word in words:
-        bag.append(1) if word in word_patterns else bag.append(0)
-        
-    output_row = list(output_empty)
-    output_row[classes.index(document[1])] = 1
-    
-    training.append([bag, output_row])
-
-# Shuffle the training data
-random.shuffle(training)
-
-# Split the training data into X and Y
-train_x = np.array([item[0] for item in training])
-train_y = np.array([item[1] for item in training])
-
-model = tf.keras.Sequential()
-model.add(tf.keras.layers.Dense(128, input_shape=(len(train_x[0]), ), activation='relu'))
-model.add(tf.keras.layers.Dropout(0.5))
-model.add(tf.keras.layers.Dense(64, activation='relu'))
-model.add(tf.keras.layers.Dropout(0.5))
-model.add(tf.keras.layers.Dense(len(train_y[0]), activation='softmax'))
-
-sgd = tf.keras.optimizers.legacy.SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
-model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
-
-hist = model.fit(train_x, train_y, epochs=200, batch_size=5, verbose=1)
-model.save(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_model.keras', hist)
-print("Done!")
-
-# chatbot_app.py module (the one we are currently working on):
-
-'''
-
 # IMPORTS ###################################################################################################################################
 
 # standard imports
@@ -163,16 +10,19 @@ import os
 import pickle
 import queue
 import random
+import re
 import ssl
 import subprocess
 import threading
 import time
 # third party imports
 from nltk.stem import WordNetLemmatizer
+from transformers import pipeline, T5ForConditionalGeneration, T5Tokenizer
 import certifi
 import google.generativeai as genai
 import numpy as np
 import nltk
+import pyautogui
 import requests
 import speech_recognition as sr
 import tensorflow as tf
@@ -231,6 +81,7 @@ print('API keys and other sensitive information loaded from environment variable
 # Establish the TTS bot's wake/activation word and script-specific global constants
 activation_word = os.getenv('ACTIVATION_WORD', 'robot')
 password = os.getenv('PASSWORD', 'None')
+exit_words = os.getenv('EXIT_WORDS', 'None').split(',')
 print(f'Activation word is {activation_word}\n\n')
 
 # Initialize the Google Gemini LLM
@@ -388,7 +239,7 @@ class ChatBotApp:
                     if not query:
                         continue
                     
-                    if len(query) > 1 and query[0] == activation_word and query[1] == 'terminate' and query[2] == 'program':
+                    if len(query) > 1 and query[0] == activation_word and query[1] in exit_words:
                         SpeechToTextTextToSpeechIO.speak_mainframe('Shutting down.')
                         time.sleep(.5)
                         break
@@ -405,6 +256,9 @@ class ChatBotApp:
                                             
 class ChatBotTools:
     def __init__(self):
+        self.tokenizer = T5Tokenizer.from_pretrained('t5-small')
+        self.model = T5ForConditionalGeneration.from_pretrained('t5-small')
+        self.summarizer = pipeline("summarization", model=self.model, tokenizer=self.tokenizer)
         self.user_input = None  
         
     def set_user_input(self, input_text):
@@ -414,7 +268,7 @@ class ChatBotTools:
     def run_greeting_code(self):
         '''This is a placeholder test function that will be called by the chatbot when the user says hello'''
         print('### TEST ### You said:', self.user_input)
-        
+
     def generate_json_intent(self):
         '''Generate a JSON intent for unrecognized interactions and save it to a chatbot_unrecognized_message_intents.json log file. 
         Placeholder - needs a model to generate the text for the empty fields in this response intent. 
@@ -437,10 +291,50 @@ class ChatBotTools:
         except FileNotFoundError:
             with open(unrecognized_file_path, 'w') as file:
                 json.dump({"intents": [new_intent]}, file, indent=4)
+               
+    # def generate_variations(self, text):
+    #     summaries = self.summarizer(text, max_length=45, min_length=15, do_sample=False)
+    #     return [summary['summary_text'] for summary in summaries]
+     
+    # def generate_json_intent(self):
+    #     print("UNRECOGNIZED INPUT: writing new intent to chatbot_unrecognized_message_intents.json")
+
+    #     json_gen_prompt = '''# System Message Start # - Gemini, ONLY GENERATE ONE SHORT SENTENCE FOR EACH PROMPT ACCORDING TO THE USER INSTRUCTIONS. KEEP EACH SENTENCE TO UNDER 10 WORDS, IDEALLY CLOSER TO 5. - # System Message End #'''
+    #     # Generate an initial response using Gemini
+    #     initial_reply = gemini_model.generate_content(f"{json_gen_prompt}. // Please provide a response to: {self.user_input}")
+    #     initial_reply.resolve()
+    #     bot_reply = initial_reply.text
+
+    #     # Generate variations of user input and bot reply
+    #     user_input_variations = self.generate_variations(self.user_input)
+    #     bot_reply_variations = self.generate_variations(bot_reply)
+
+    #     # Simple function name generation
+    #     json_function_name = re.sub(r'\W+', '', self.user_input).lower() + '_function'
+
+    #     new_intent = {
+    #         "tag": f"unrecognized_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+    #         "patterns": [self.user_input] + user_input_variations,
+    #         "responses": [bot_reply] + bot_reply_variations,
+    #         "action": json_function_name
+    #     }
+
+    #     print(new_intent)
+
+    #     try:
+    #         with open(unrecognized_file_path, 'r+') as file:
+    #             data = json.load(file)
+    #             data["intents"].append(new_intent)
+    #             file.seek(0)
+    #             json.dump(data, file, indent=4)
+    #             print('New intent written to chatbot_unrecognized_message_intents.json\n')
+    #     except FileNotFoundError:
+    #         with open(unrecognized_file_path, 'w') as file:
+    #             json.dump({"intents": [new_intent]}, file, indent=4)
 
     @staticmethod
     def gemini_chat():
-        SpeechToTextTextToSpeechIO.speak_mainframe('OK.')
+        SpeechToTextTextToSpeechIO.speak_mainframe('Initializing...')
         chat = gemini_model.start_chat(history=[])
         
         prompt_template = '''# System Message # - Gemini, you are in a verbal chat with the user via a 
@@ -451,9 +345,9 @@ class ChatBotTools:
 
         intro_response = chat.send_message(f'{prompt_template}', stream=True)
         if intro_response:
-            SpeechToTextTextToSpeechIO.speak_mainframe(f"Hi {USER_PREFERRED_NAME}. ")
             for chunk in intro_response:
                 SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                time.sleep(0.1)
         
         while True:
             user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
@@ -464,8 +358,8 @@ class ChatBotTools:
             if not query:
                 continue
 
-            if query[0] == activation_word and query[1] == 'terminate' and query[2] == 'chat':
-                SpeechToTextTextToSpeechIO.speak_mainframe('Ending Gemini chat.')
+            if query[0] in exit_words:
+                SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
                 break
             
             else:
@@ -473,7 +367,203 @@ class ChatBotTools:
                 if response:
                     for chunk in response:
                         SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
-                
+                        time.sleep(0.1)
+
+    @classmethod
+    def control_mouse(cls):
+        SpeechToTextTextToSpeechIO.speak_mainframe('Mouse control activated.')
+        direction_map = {
+            'north': (0, -1),
+            'south': (0, 1),
+            'west': (-1, 0),
+            'east': (1, 0),
+            'up': (0, -1),
+            'down': (0, 1),
+            'left': (-1, 0),
+            'right': (1, 0)
+        }
+        while True:
+            user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+            if not user_input:
+                continue
+            query = user_input.lower().split()
+            if not query:
+                continue
+            if len(query) > 0 and query[0] in exit_words:
+                SpeechToTextTextToSpeechIO.speak_mainframe('Exiting mouse control.')
+                break
+            if query[0] == 'click':
+                pyautogui.click()
+            elif query[0] in ['move', 'mouse', 'go'] and len(query) > 2 and query[1] in direction_map and query[2].isdigit():
+                move_distance = int(query[2])  # Convert to integer
+                direction_vector = direction_map[query[1]]
+                pyautogui.move(direction_vector[0] * move_distance, direction_vector[1] * move_distance, duration=0.1)
+            
+# Translate a spoken phrase from English to another language by saying "robot, translate to {language}"
+def translate(phrase_to_translate, target_language_name):
+    language_code_mapping = {
+        "en": ["english", "Daniel"],
+        "es": ["spanish", "Paulina"],
+        "fr": ["french", "Amélie"],
+        "de": ["german", "Anna"],
+        "it": ["italian", "Alice"],
+        "ru": ["russian", "Milena"],
+        "ja": ["japanese", "Kyoko"],
+    }
+
+    source_language = USER_PREFERRED_LANGUAGE  # From .env file
+    target_voice = None
+
+    # Find the language code and voice that matches the target language name
+    target_language_code = None
+    for code, info in language_code_mapping.items():
+        if target_language_name.lower() == info[0].lower():
+            target_language_code = code
+            target_voice = info[1]
+            break
+
+    if not target_language_code:
+        return f"Unsupported language: {target_language_name}", USER_PREFERRED_VOICE
+
+    model_name = f'Helsinki-NLP/opus-mt-{source_language}-{target_language_code}'
+    tokenizer = MarianTokenizer.from_pretrained(model_name)
+    model = MarianMTModel.from_pretrained(model_name)
+
+    batch = tokenizer([phrase_to_translate], return_tensors="pt", padding=True)
+    translated = model.generate(**batch)
+    translation = tokenizer.batch_decode(translated, skip_special_tokens=True)
+    return translation[0], target_voice
+
+# Gathering a summary of a wikipedia page based on user input
+def wiki_summary(query = ''):
+    search_results = wikipedia.search(query)
+    if not search_results:
+        print('No results found.')
+    try:
+        wiki_page = wikipedia.page(search_results[0])
+    except wikipedia.DisambiguationError as e:
+        wiki_page = wikipedia.page(e.options[0])
+    print(wiki_page.title)
+    wiki_summary = str(wiki_page.summary)
+    speak_mainframe(wiki_summary)
+
+# Querying Wolfram|Alpha based on user input
+def wolfram_alpha(query):
+    wolfram_client = wolframalpha.Client(wolfram_app_id)
+    try:
+        response = wolfram_client.query(query)
+        print(f"Response from Wolfram Alpha: {response}")
+
+        # Check if the query was successfully interpreted
+        if not response['@success']:
+            suggestions = response.get('didyoumeans', {}).get('didyoumean', [])
+            if suggestions:
+                # Handle multiple suggestions
+                if isinstance(suggestions, list):
+                    suggestion_texts = [suggestion['#text'] for suggestion in suggestions]
+                else:
+                    suggestion_texts = [suggestions['#text']]
+
+                suggestion_message = " or ".join(suggestion_texts)
+                speak_mainframe(f"Sorry, I couldn't interpret that query. These are the alternate suggestions: {suggestion_message}.")
+            else:
+                speak_mainframe('Sorry, I couldn\'t interpret that query. Please try rephrasing it.')
+
+            return 'Query failed.'
+
+        relevant_pods_titles = [
+            "Result", "Definition", "Overview", "Summary", "Basic information",
+            "Notable facts", "Basic properties", "Notable properties",
+            "Basic definitions", "Notable definitions", "Basic examples",
+            "Notable examples", "Basic forms", "Notable forms",
+            "Detailed Information", "Graphical Representations", "Historical Data",
+            "Statistical Information", "Comparative Data", "Scientific Data",
+            "Geographical Information", "Cultural Information", "Economic Data",
+            "Mathematical Proofs and Derivations", "Physical Constants",
+            "Measurement Conversions", "Prediction and Forecasting", "Interactive Pods"]
+
+        # Filtering and summarizing relevant pods
+        answer = []
+        for pod in response.pods:
+            if pod.title in relevant_pods_titles and hasattr(pod, 'text') and pod.text:
+                answer.append(f"{pod.title}: {pod.text}")
+
+        # Create a summarized response
+        response_text = ' '.join(answer)
+        if response_text:
+            speak_mainframe(response_text)
+        else:
+            speak_mainframe("I found no information in the specified categories.")
+
+        # Asking user for interest in other pods
+        for pod in response.pods:
+            if pod.title not in relevant_pods_titles:
+                speak_mainframe(f"Do you want to hear more about {pod.title}? Say 'yes' or 'no'.")
+                user_input = parse_user_speech().lower()
+                if user_input == 'yes' and hasattr(pod, 'text') and pod.text:
+                    speak_mainframe(pod.text)
+                    continue
+                elif user_input == 'no':
+                    break
+
+        return response_text
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        speak_mainframe('An error occurred while processing the query.')
+        return f"An error occurred: {e}"
+
+# Get a spoken weather forecast from openweathermap for the next 4 days by day part based on user defined home location
+def get_weather_forecast():
+    appid = f'{open_weather_api_key}'
+
+    # Fetching coordinates from environment variables
+    lat = USER_SELECTED_HOME_LAT
+    lon = USER_SELECTED_HOME_LON
+
+    # OpenWeatherMap API endpoint for 4-day hourly forecast
+    url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={appid}"
+
+    response = requests.get(url)
+    print("Response status:", response.status_code)
+    if response.status_code != 200:
+        return "Failed to retrieve weather data."
+
+    data = response.json()
+    print("Data received:", data)
+
+    # Process forecast data
+    forecast = ""
+    timezone = pytz.timezone(USER_SELECTED_TIMEZONE)
+    now = datetime.now(timezone)
+    periods = [(now + timedelta(days=i)).replace(hour=h, minute=0, second=0, microsecond=0) for i in range(4) for h in [6, 12, 18, 0]]
+
+    for i in range(0, len(periods), 4):
+        day_forecasts = []
+        for j in range(4):
+            start, end = periods[i + j], periods[i + j + 1] if j < 3 else periods[i] + timedelta(days=1)
+            period_forecast = [f for f in data['list'] if start <= datetime.fromtimestamp(f['dt'], tz=timezone) < end]
+            
+            if period_forecast:
+                avg_temp_kelvin = sum(f['main']['temp'] for f in period_forecast) / len(period_forecast)
+                avg_temp_fahrenheit = (avg_temp_kelvin - 273.15) * 9/5 + 32  # Convert from Kelvin to Fahrenheit
+                descriptions = set(f['weather'][0]['description'] for f in period_forecast)
+                time_label = ["morning", "afternoon", "evening", "night"][j]
+                day_forecasts.append(f"{time_label}: average temperature {avg_temp_fahrenheit:.1f}°F, conditions: {', '.join(descriptions)}")
+
+        if day_forecasts:
+            forecast_date = periods[i].strftime('%Y-%m-%d')
+            # Convert forecast_date to weekday format aka "Monday", etc.
+            forecast_date = datetime.strptime(forecast_date, '%Y-%m-%d').strftime('%A')
+            forecast += f"\n{forecast_date}: {'; '.join(day_forecasts)}."
+
+    return forecast
+
+
+
+
+
+
 if __name__ == '__main__':
     threading.Thread(target=SpeechToTextTextToSpeechIO.speech_manager, daemon=True).start()
     chatbot_app = ChatBotApp()
@@ -485,7 +575,194 @@ if __name__ == '__main__':
     
     
     
+
+
+
+
+
+
+'''
+
+########## SYSTEM MESSAGE ##########
+# Hi there! Today you'll be helping the user write some new code.
+# The user will direct which code you should write and how, then the user will execute it in their environment.
+# Language: python
+# Version: 3.11.4
+# Project: adding additional features to a chatbot_app.py module of a chatbot app.
+# requirement: move the ChatBotApp and ChatBotTools into classes (already done).
+# requirement: implement function calling into the chatbot_app.py module, so that the chatbot can execute functions when they are clled by their corresponding matches from the chatbot_intents.json file which currently only contains placeholder comments in the action field rather than actual functions or function names.
+# instructions: generate the python code required to meet these requirements so the user can add it to the module below.
+# instructions: make sure all your code is complete and will work for the user in their environment.
+# instructions: don't use any placeholders in your code, make sure it is all complete and ready to go.
+# instructions: if you don't have enough info and need to ask the user a question, just ask it in the chat.
+# instructions: explain to the user how/where to implement the code, but primarily focus on writing the code.
+
+########## ASSOCIATED CODE FOR CONTEXT ##########
+
+# JSON training data example from the chatbot_intents.json file:
+
+{
+    "intents": [
+{
+  "tag": "conversation_unrecognized",
+  "patterns": [""],
+  "responses": ["I don't understand. Can you re-phrase your question? Otherwise say 'tell me what you can do'", 
+    "I don't understand. Try again please or say 'tell me what you can do'.", 
+    "I don't know. Maybe if you try saying it differently or say 'tell me what you can do'.", 
+    "I don't know what that means, sorry. Say 'tell me what you can do' for a list of options.", 
+    "Not sure. Say 'tell me what you can do' for other ideas.", 
+    "I don't understand. Say 'tell me what you can do' for the topics I can speak about."],
+  "action": "# when the bot says one of the 'i dont know' messages, trigger a function to generate a new JSON intent object for the last user / bot interaction message pair (using an agent to generate a set of analagous questions and a set of analagous appropriate responses), then append that intent to a dictionary called intents in the log file called 'chatbot_unrecognized_message_intents.json' that will be used as ongoing ci/cd fine-tuning training data to train the ai to recognize new messages"
+},
+{
+  "tag": "conversation_greeting",
+  "patterns": ["hello there",
+    "hey how is it going",
+    "hi my name is",
+    "hello", "hi",
+    "hey nice to meet you"],
+  "responses": ["Hi there. What can I help you with?",
+    "Hello. Standing by.",
+    "Hi. How's it going?",
+    "Hello. Start by saying something like 'Google search x y z', or 'wiki summary' or 'call gemini'.", 
+    "Hey. What are we up to?", 
+    "Aloha.",
+    "Hey. What's up?"],
+  "action": "# once the ai has an avatar we can have it wave or smile here"
+},
+{
+  "tag": "conversation_capabilities",
+  "patterns": ["tell me what do you know", 
+    "tell me which questions do you understand", 
+    "tell me what you can do", 
+    "what do you know how to do", 
+    "what kind of things do you know", 
+    "what questions do you understand"],
+  "responses": ["These are the questions, answers, and functions I have available:", 
+    "These are the prompts, replies, and code I have available:", 
+    "These are the semantics and code I have available:", 
+    "These are the phrases, responses, and code functions I have available:", 
+    "This is the foundation of my reasoning abilities:", 
+    "This is the logic I use:"],
+  "action": "# print a list of functions that the chatbot can execute"
+}
+    ]
+}
+
+# Neural network architecture in the chatbot_training.py module:
+
+from dotenv import load_dotenv
+import json
+import os
+import pickle
+import random
+
+from nltk.stem import WordNetLemmatizer
+import numpy as np
+import nltk
+import tensorflow as tf
+
+load_dotenv()
+PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
+PROJECT_ROOT_DIRECTORY = os.getenv('PROJECT_ROOT_DIRECTORY')
+SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+
+lemmatizer = WordNetLemmatizer()
+
+intents = json.loads(open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_intents.json').read())
+
+words = []
+classes = []
+documents = []
+ignore_letters = ['?', '!', '.', ',']
+
+for intent in intents['intents']:
+    for pattern in intent['patterns']:
+        word_list = nltk.word_tokenize(pattern)
+        words.extend(word_list)
+        documents.append((word_list, intent['tag']))
+        
+        if intent['tag'] not in classes:
+            classes.append(intent['tag'])
+            
+words = [lemmatizer.lemmatize(word) for word in words if word not in ignore_letters]
+words = sorted(set(words))
+
+classes = sorted(set(classes))
+
+pickle.dump(words, open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_words.pkl', 'wb'))
+pickle.dump(classes, open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_classes.pkl', 'wb'))
+
+training = []
+output_empty = [0] * len(classes)
+
+for document in documents:
+    bag = []
+    word_patterns = document[0]
+    word_patterns = [lemmatizer.lemmatize(word.lower()) for word in word_patterns]
     
+    for word in words:
+        bag.append(1) if word in word_patterns else bag.append(0)
+        
+    output_row = list(output_empty)
+    output_row[classes.index(document[1])] = 1
+    
+    training.append([bag, output_row])
+
+# Shuffle the training data
+random.shuffle(training)
+
+# Split the training data into X and Y
+train_x = np.array([item[0] for item in training])
+train_y = np.array([item[1] for item in training])
+
+model = tf.keras.Sequential()
+model.add(tf.keras.layers.Dense(128, input_shape=(len(train_x[0]), ), activation='relu'))
+model.add(tf.keras.layers.Dropout(0.5))
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.5))
+model.add(tf.keras.layers.Dense(len(train_y[0]), activation='softmax'))
+
+sgd = tf.keras.optimizers.legacy.SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
+model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+
+hist = model.fit(train_x, train_y, epochs=200, batch_size=5, verbose=1)
+model.save(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_model.keras', hist)
+print("Done!")
+
+# chatbot_app.py module (the one we are currently working on):
+
+'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
 # # Main class for custom search engines in Google Cloud, etc. and a static method which engages a chatbot wrapper around the engines
 # class CustomSearchEngines:

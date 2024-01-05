@@ -546,6 +546,13 @@
   "action": "gemini_chat"
 },
 {
+  "tag": "tools_control_mouse",
+  "patterns": ["move the mouse", 
+    "control the mouse"],
+  "responses": ["Ok."],
+  "action": "control_mouse"
+},
+{
   "tag": "tools_fact_checking",
   "patterns": ["are you sure about that", 
     "that doesnt sound right", 
@@ -581,7 +588,7 @@
     "sure, what's the note?", 
     "ok go", 
     "ready"],
-  "action": "# call the note taking function"
+  "action": "take_notes"
 },
 {
   "tag": "tools_note_recall",
@@ -597,7 +604,7 @@
     "heard", 
     "k", 
     "got it"],
-  "action": "# call the note recall function"
+  "action": "recall_notes"
 },
 {
   "tag": "tools_computation_engine",
@@ -611,15 +618,17 @@
     "ok what's the query", 
     "ok state your search phrase", 
     "sure - what do you need to know"],
-  "action": "# call the wolfram alpha api"
+  "action": "wolfram_alpha_search"
 },
 {
-  "tag": "tools_google_search",
+  "tag": "tools_basic_google_search",
   "patterns": [
       "Can you google this for me?",
       "I need information on",
       "Google search",
       "Find this on the internet",
+      "web search",
+      "internet search",
       "Look this up please"
   ],
   "responses": [
@@ -628,15 +637,15 @@
       "Okay, googling it now.",
       "I can find that information for you."
   ],
-  "action": "# perform a simple one-off Google search"
+  "action": "basic_google_search"
 },
 {
   "tag": "tools_google_custom_search_engine",
   "patterns": [
       "Can you use our custom google search engine?",
-      "Custom google search",
+      "Custom google search engine",
       "custom Google search engine",
-      "custom search",
+      "custom search engine",
       "google search engine"
   ],
   "responses": [
@@ -645,7 +654,7 @@
       "Okay, googling it now.",
       "I can find that information for you."
   ],
-  "action": "# engage the search assistnt agent to perform a multi step search assignment using the custom google search engine"
+  "action": "custom_search_engine_assistant"
 },
 {
   "tag": "tools_tech_support",
