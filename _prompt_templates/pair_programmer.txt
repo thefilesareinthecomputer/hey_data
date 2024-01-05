@@ -1,0 +1,143 @@
+'''
+
+########## SYSTEM MESSAGE ##########
+# Hi there! Today you'll be helping the user write some new code.
+# The user will direct which code you should write and how, then the user will execute it in their environment.
+# Language: python
+# Version: 3.11.4
+# Project: adding additional features to a chatbot that is trained to reply to input with this json data and neural network:
+
+# JSON training data example:
+
+{
+    "intents": [
+{
+  "tag": "conversation_unrecognized",
+  "patterns": [""],
+  "responses": ["I don't understand. Can you re-phrase your question? Otherwise say 'tell me what you can do'", 
+    "I don't understand. Try again please or say 'tell me what you can do'.", 
+    "I don't know. Maybe if you try saying it differently or say 'tell me what you can do'.", 
+    "I don't know what that means, sorry. Say 'tell me what you can do' for a list of options.", 
+    "Not sure. Say 'tell me what you can do' for other ideas.", 
+    "I don't understand. Say 'tell me what you can do' for the topics I can speak about."],
+  "action": "# when the bot says one of the 'i dont know' messages, trigger a function to generate a new JSON intent object for the last user / bot interaction message pair (using an agent to generate a set of analagous questions and a set of analagous appropriate responses), then append that intent to a dictionary called intents in the log file called 'chatbot_unrecognized_message_intents.json' that will be used as ongoing ci/cd fine-tuning training data to train the ai to recognize new messages"
+},
+{
+  "tag": "conversation_greeting",
+  "patterns": ["hello there",
+    "hey how is it going",
+    "hi my name is",
+    "hello", "hi",
+    "hey nice to meet you"],
+  "responses": ["Hi there. What can I help you with?",
+    "Hello. Standing by.",
+    "Hi. How's it going?",
+    "Hello. Start by saying something like 'Google search x y z', or 'wiki summary' or 'call gemini'.", 
+    "Hey. What are we up to?", 
+    "Aloha.",
+    "Hey. What's up?"],
+  "action": "# once the ai has an avatar we can have it wave or smile here"
+},
+{
+  "tag": "conversation_capabilities",
+  "patterns": ["tell me what do you know", 
+    "tell me which questions do you understand", 
+    "tell me what you can do", 
+    "what do you know how to do", 
+    "what kind of things do you know", 
+    "what questions do you understand"],
+  "responses": ["These are the questions, answers, and functions I have available:", 
+    "These are the prompts, replies, and code I have available:", 
+    "These are the semantics and code I have available:", 
+    "These are the phrases, responses, and code functions I have available:", 
+    "This is the foundation of my reasoning abilities:", 
+    "This is the logic I use:"],
+  "action": "# print a list of functions that the chatbot can execute"
+}
+    ]
+}
+
+# Neural network architecture:
+
+from dotenv import load_dotenv
+import json
+import os
+import pickle
+import random
+
+from nltk.stem import WordNetLemmatizer
+import numpy as np
+import nltk
+import tensorflow as tf
+
+load_dotenv()
+PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
+PROJECT_ROOT_DIRECTORY = os.getenv('PROJECT_ROOT_DIRECTORY')
+SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+
+lemmatizer = WordNetLemmatizer()
+
+intents = json.loads(open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_intents.json').read())
+
+words = []
+classes = []
+documents = []
+ignore_letters = ['?', '!', '.', ',']
+
+for intent in intents['intents']:
+    for pattern in intent['patterns']:
+        word_list = nltk.word_tokenize(pattern)
+        words.extend(word_list)
+        documents.append((word_list, intent['tag']))
+        
+        if intent['tag'] not in classes:
+            classes.append(intent['tag'])
+            
+words = [lemmatizer.lemmatize(word) for word in words if word not in ignore_letters]
+words = sorted(set(words))
+
+classes = sorted(set(classes))
+
+pickle.dump(words, open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_words.pkl', 'wb'))
+pickle.dump(classes, open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_classes.pkl', 'wb'))
+
+training = []
+output_empty = [0] * len(classes)
+
+for document in documents:
+    bag = []
+    word_patterns = document[0]
+    word_patterns = [lemmatizer.lemmatize(word.lower()) for word in word_patterns]
+    
+    for word in words:
+        bag.append(1) if word in word_patterns else bag.append(0)
+        
+    output_row = list(output_empty)
+    output_row[classes.index(document[1])] = 1
+    
+    training.append([bag, output_row])
+
+# Shuffle the training data
+random.shuffle(training)
+
+# Split the training data into X and Y
+train_x = np.array([item[0] for item in training])
+train_y = np.array([item[1] for item in training])
+
+model = tf.keras.Sequential()
+model.add(tf.keras.layers.Dense(128, input_shape=(len(train_x[0]), ), activation='relu'))
+model.add(tf.keras.layers.Dropout(0.5))
+model.add(tf.keras.layers.Dense(64, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.5))
+model.add(tf.keras.layers.Dense(len(train_y[0]), activation='softmax'))
+
+sgd = tf.keras.optimizers.legacy.SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
+model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+
+hist = model.fit(train_x, train_y, epochs=200, batch_size=5, verbose=1)
+model.save(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_model.keras', hist)
+print("Done!")
+
+# Chatbot module:
+
+'''

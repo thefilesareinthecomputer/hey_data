@@ -180,6 +180,10 @@ For commercial use of this project, a separate commercial license is required. T
     2024-01-01 integrated a google custom search engine and search assistant with LLM analysis of results relevance and LLM guidance for results.
     2024-01-02 added a prompt template into the gemini chat initialization asking for good output for a tts app.
     2024-01-02 added some additional prompt template steps into the search assistant chatbot.
+    2024-01-03 re-built the neural nine chatbot that uses intents.json and modernized the tensorflow imports in the training module.
+    2024-01-04 implemented function calling and stt audio recognition and tts bot output for the neural network based chatbot.
+    2024-01-04 implemented a function that generates an intent json object for any message interaction the bot doesn't recognize.
+    2024-01-04 triggered the bot to re-train itself with the new data at the top of the chatbot_app script before every chat run.
     
     
 

@@ -1,0 +1,46 @@
+{
+    "intents": [
+        {
+            "tag": "unrecognized_20240104152141",
+            "patterns": [
+                "bingo boingo"
+            ],
+            "responses": [
+                "I don't understand. Can you re-phrase your question?"
+            ],
+            "action": ""
+        },
+        {
+            "tag": "unrecognized_20240104163555",
+            "patterns": [
+                "hgttttt"
+            ],
+            "responses": "",
+            "action": ""
+        },
+        {
+            "tag": "unrecognized_20240104163616",
+            "patterns": [
+                "blaaaahhgggggggg"
+            ],
+            "responses": "",
+            "action": ""
+        },
+        {
+            "tag": "unrecognized_20240104192813",
+            "patterns": [
+                "robot High"
+            ],
+            "responses": "",
+            "action": ""
+        },
+        {
+            "tag": "unrecognized_20240104200231",
+            "patterns": [
+                "robot call Gemini"
+            ],
+            "responses": "",
+            "action": ""
+        }
+    ]
+}

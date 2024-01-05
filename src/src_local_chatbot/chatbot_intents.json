@@ -1,6 +1,16 @@
 {
     "intents": [
 {
+  "tag": "conversation_unrecognized",
+  "patterns": [""],
+  "responses": ["I don't understand. Can you re-phrase your question? Otherwise say 'tell me what you can do'", 
+    "I don't understand. Try again please or say 'tell me what you can do'.", 
+    "I don't know what that means, sorry. Say 'tell me what you can do' for a list of options.", 
+    "Not sure. Say 'tell me what you can do' for other ideas.", 
+    "I don't understand. Say 'tell me what you can do' for the topics I can speak about."],
+  "action": "generate_json_intent"
+},
+{
   "tag": "conversation_greeting",
   "patterns": ["hello there",
     "hey how is it going",
@@ -14,18 +24,7 @@
     "Hey. What are we up to?", 
     "Aloha.",
     "Hey. What's up?"],
-  "action": ""
-},
-{
-  "tag": "conversation_unrecognized",
-  "patterns": ["", "", "", "", "", ""],
-  "responses": ["I don't understand. Can you re-phrase? Otherwise say 'tell me what you can do'", 
-    "I don't understand. Try again please or say 'tell me what you can do'.", 
-    "I don't know. Maybe if you try saying it differently or say 'tell me what you can do'.", 
-    "I don't know what that means, sorry. Say 'tell me what you can do' for a list of options.", 
-    "Not sure. Say 'tell me what you can do' for other ideas.", 
-    "I don't understand. Say 'tell me what you can do' for the topics I can speak about."],
-  "action": "# print a list of functions that the chatbot can execute"
+  "action": "run_greeting_code"
 },
 {
   "tag": "conversation_capabilities",
@@ -199,6 +198,29 @@
     "I'm constantly learning and evolving to assist you better."
   ],
   "action": ""
+},
+{
+  "tag": "conversation_swearing",
+  "patterns": [
+    "what the fuck",
+    "this is fucking bullshit",
+    "what the fuck is this shit",
+    "god fucking damn it",
+    "motherfucking son of a bitch",
+    "stupid piece of shit",
+    "cunt dick bitch jackass dickhead asshole retard fuckhead cocksucker shitbag bitchass fucker"
+  ],
+  "responses": [
+    "You seem frustrated.",
+    "Stressed out?",
+    "You mad bro?",
+    "Take a deep breath.",
+    "Quit being a wet blanket",
+    "Nobody wants to hear that shit",
+    "Hey, tell it to your therapist",
+    "lol"
+  ],
+  "action": "# recommend a guided meditation or breathing exercise"
 },
 {
   "tag": "conversation_farewell",
@@ -507,8 +529,25 @@
   "action": "# provide a summary of the user's upcoming calendar events"
 },
 {
+  "tag": "tools_gemini_chat",
+  "patterns": ["call gemini", 
+    "google gemini", 
+    "chat with gemini", 
+    "talk to gemini", 
+    "activate gemini", 
+    "i dont believe that", 
+    "i doubt if thats accurate", 
+    "im pretty sure thats wrong", 
+    "that cant be right", 
+    "i dont think thats right",
+    "i dont think thats true",
+    "theres no way thats right"],
+  "responses": ["Ok."],
+  "action": "gemini_chat"
+},
+{
   "tag": "tools_fact_checking",
-  "patterns": ["are you sure", 
+  "patterns": ["are you sure about that", 
     "that doesnt sound right", 
     "i dont think thats correct", 
     "how is that possible", 

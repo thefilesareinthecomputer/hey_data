@@ -1,6 +1,7 @@
 
-# STANDARD IMPORTS ###################################################################################################################################
+# IMPORTS ###################################################################################################################################
 
+# STANDARD IMPORTS
 from datetime import datetime, timedelta
 from difflib import get_close_matches
 from io import BytesIO, StringIO
@@ -22,9 +23,7 @@ import time
 import tkinter as tk
 import traceback
 import webbrowser
-
-# THIRD PARTY IMPORTS ###################################################################################################################################
-
+# THIRD PARTY IMPORTS
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from nltk.stem import WordNetLemmatizer
@@ -45,8 +44,7 @@ import speech_recognition as sr
 import wikipedia
 import wolframalpha
 import yfinance as yf
-
-# CUSTOM MODULE IMPORTS ##############################################################################################################################
+# LOCAL IMPORTS
 
 # CONSTANTS ###################################################################################################################################
 
@@ -102,7 +100,7 @@ speech_queue = queue.Queue()
 
 # Initialize the Google Gemini LLM
 genai.configure(api_key=google_gemini_api_key)
-gemini_model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-pro')
 
 # CLASS DEFINITIONS ###################################################################################################################################
 
@@ -143,7 +141,7 @@ class CustomSearchEngines:
         search_engines = CustomSearchEngines()
         engine_name = ''
         search_results = [] 
-        chat = gemini_model.start_chat(history=[])
+        chat = model.start_chat(history=[])
         speak_mainframe("Specify the search engine to use.")
         while not engine_name:
             input = parse_user_speech()
@@ -230,241 +228,6 @@ class CustomSearchEngines:
                                 
             else:
                 speak_mainframe("No results found or an error occurred.")
-        
-# Conducts various targeted stock market reports such as discounts, recommendations, etc. based on user defined watch list
-class StockReports:
-    def __init__(self, user_watch_list):
-        self.user_watch_list = user_watch_list
-        self.stock_data = None
-    
-    def handle_single_stock_query(self, stock):
-        try:
-            # Fetch data directly for the requested stock
-            stock_data = yf.Ticker(stock)
-
-            # Check if the ticker is valid and has historical data
-            hist = stock_data.history(period="1y")
-            if hist.empty:
-                raise ValueError(f"No historical data available for {stock}")
-
-            rsi = self.calculate_rsi(hist['Close']).iloc[-1]
-            buy_signal, buy_reason = self.is_buy_signal(hist, rsi, stock)
-            sell_signal, sell_reason = self.is_sell_signal(hist, rsi, stock)
-
-            stock_info = {
-                'symbol': stock,
-                'price': hist['Close'].iloc[-1],
-                'change': hist['Close'].iloc[-1] - hist['Open'].iloc[-1],
-                'percent_change': ((hist['Close'].iloc[-1] - hist['Open'].iloc[-1]) / hist['Open'].iloc[-1]) * 100
-            }
-
-            stock_update = (f"Stock: {stock_info['symbol']}\n...\n"
-                            f"Price: {stock_info['price']:.1f}\n...\n"
-                            f"Change vs LY: {stock_info['change']:.1f}\n...\n"
-                            f"Percent Change: {stock_info['percent_change']:.1f}%\n...\n"
-                            f"RSI: {rsi:.1f}\n...\n"
-                            f"Buy Signal: {'Yes' if buy_signal else 'No'} ({buy_reason})\n...\n"
-                            f"Sell Signal: {'Yes' if sell_signal else 'No'} ({sell_reason})\n...\n")
-            speak_mainframe(stock_update)
-            print(stock_update)
-        except ValueError as e:
-            speak_mainframe(str(e))
-        except Exception as e:
-            speak_mainframe(f"Error fetching data for {stock}: {e}")
-                
-    def fetch_all_stock_data(self):
-        try:
-            self.stock_data = yf.download(self.user_watch_list, period="1d")
-        except Exception as e:
-            print(f"Error fetching data: {e}")
-
-    def get_stock_info(self, symbol):
-        if self.stock_data is None:
-            self.fetch_all_stock_data()
-
-        if symbol not in self.stock_data.columns.levels[1]:
-            return {'symbol': symbol, 'error': 'No data available'}
-
-        latest_data = self.stock_data[symbol].iloc[-1]
-        if latest_data.isnull().any():
-            return {'symbol': symbol, 'error': 'No data available'}
-
-        return {
-            'symbol': symbol,
-            'price': latest_data['Close'],
-            'change': latest_data['Close'] - latest_data['Open'],
-            'percent_change': ((latest_data['Close'] - latest_data['Open']) / latest_data['Open']) * 100
-        }
-
-    def stock_market_report(self, symbols=None):
-        if symbols is None:
-            symbols = self.user_watch_list
-        stock_data_list = []
-        for symbol in symbols:
-            if symbol and symbol != 'None':
-                stock_data = self.get_stock_info(symbol)
-                if 'error' not in stock_data:
-                    stock_data_list.append(stock_data)
-        sorted_stocks = sorted(stock_data_list, key=lambda x: abs(x['percent_change']), reverse=True)
-        significant_changes = [data for data in sorted_stocks if abs(data['percent_change']) > 1]  # Threshold for significant change
-        if not significant_changes:
-            return "Most stocks haven't seen much movement. Here are the ones that are seeing the most action:"
-        report = ["Here are the stocks with the most action:"]
-        for data in significant_changes:
-            change_type = "gained" if data['percent_change'] > 0 else "lost"
-            report_line = f"{data['symbol']} has {change_type} {abs(data['percent_change']):.1f}%\n...\n"
-            report.append(report_line)
-        return '\n'.join(report)
-
-    def get_industry_avg_pe(self, symbol):
-        industry_average_pe = 25  # Default placeholder value
-        return industry_average_pe
-
-    def calculate_pe_ratio(self, symbol):
-        stock = yf.Ticker(symbol)
-        pe_ratio = stock.info.get('trailingPE')
-
-        if pe_ratio is None:  # If trailing P/E is not available, try forward P/E
-            pe_ratio = stock.info.get('forwardPE')
-
-        return pe_ratio
-
-    def is_undervalued(self, symbol, pe_ratio):
-        if pe_ratio is None:
-            return False  # If PE ratio data is not available, return False
-
-        industry_avg_pe = self.get_industry_avg_pe(symbol)
-        return pe_ratio < industry_avg_pe
-    
-    def calculate_rsi(self, data, window=14):
-        delta = data.diff()
-        gain = np.where(delta > 0, delta, 0)
-        loss = np.where(delta < 0, -delta, 0)
-
-        avg_gain = pd.Series(gain).rolling(window=window).mean()
-        avg_loss = pd.Series(loss).rolling(window=window).mean()
-
-        rs = avg_gain / avg_loss
-        rsi = 100 - (100 / (1 + rs))
-        return rsi
-
-    def calculate_yearly_change(self, hist, years):
-        """Calculate the percentage change over a specified number of years."""
-        if len(hist) > 0:
-            year_start = hist.iloc[0]['Close']
-            year_end = hist.iloc[-1]['Close']
-            return ((year_end - year_start) / year_start) * 100
-        return 0
-
-    def calculate_period_change(self, hist, period='1M'):
-        """Calculate the percentage change over a specified recent period."""
-        if len(hist) > 0:
-            period_hist = None
-            if period == '1M':
-                period_hist = hist.loc[hist.index >= (hist.index.max() - pd.DateOffset(months=1))]
-            elif period == '3M':
-                period_hist = hist.loc[hist.index >= (hist.index.max() - pd.DateOffset(months=3))]
-            if period_hist is not None and not period_hist.empty:
-                period_start = period_hist.iloc[0]['Close']
-                period_end = period_hist.iloc[-1]['Close']
-                return ((period_end - period_start) / period_start) * 100
-        return 0
-
-    def is_buy_signal(self, hist, rsi, symbol):
-        year_change = self.calculate_yearly_change(hist, 1)
-        recent_change = self.calculate_period_change(hist, '1M')
-        ma50 = hist['Close'].rolling(window=50).mean().iloc[-1]
-        pe_ratio = self.calculate_pe_ratio(symbol)
-
-        if pe_ratio is not None:
-            undervalued = self.is_undervalued(symbol, pe_ratio)
-        else:
-            undervalued = False  # If PE ratio data is not available, consider it not undervalued
-
-        if (year_change > 5 and recent_change > 2 and 
-            hist['Close'].iloc[-1] > ma50 and rsi < 70 and undervalued):
-            reasons = []
-            if year_change > 5: reasons.append(f"Yearly growth: {year_change:.1f}%. ...")
-            if recent_change > 2: reasons.append(f"Monthly growth {recent_change:.1f}%. ...")
-            if hist['Close'].iloc[-1] > ma50: reasons.append("Above 50-day average. ...")
-            if rsi < 70: reasons.append(f"RSI: {rsi:.1f}. ...")
-            if undervalued: reasons.append(f"P/E ratio: {pe_ratio:.1f}. ...")
-            return True, " and ".join(reasons)
-        return False, ""
-
-    def is_sell_signal(self, hist, rsi, symbol):
-        year_change = self.calculate_yearly_change(hist, 1)
-        ma50 = hist['Close'].rolling(window=50).mean().iloc[-1]
-        pe_ratio = self.calculate_pe_ratio(symbol)
-        industry_avg_pe = self.get_industry_avg_pe(symbol)
-
-        # Check if pe_ratio is not None before comparing
-        overvalued = False
-        if pe_ratio is not None:
-            overvalued = pe_ratio > industry_avg_pe * 1.2  # Assuming overvalued if 20% higher than industry average
-
-        if (year_change < 0 or hist['Close'].iloc[-1] < ma50 or rsi > 70 or overvalued):
-            reasons = []
-            if year_change < 0: reasons.append(f"Yearly loss {year_change:.1f}%. ...")
-            if hist['Close'].iloc[-1] < ma50: reasons.append("Below 50-day average. ...")
-            if rsi > 70: reasons.append(f"RSI: {rsi:.1f}. ...")
-            if overvalued: reasons.append(f"P/E ratio: {pe_ratio:.1f}. ...")
-            return True, " or ".join(reasons)
-        return False, ""
-
-    def find_stock_recommendations(self):
-        buy_recommendations = []
-        sell_recommendations = []
-        hold_recommendations = []
-        for symbol in self.user_watch_list:
-            if symbol == 'None':
-                continue
-            stock = yf.Ticker(symbol)
-            hist = stock.history(period="1y")
-            if not hist.empty:
-                rsi = self.calculate_rsi(hist['Close']).iloc[-1]
-                # Pass the 'symbol' argument to is_buy_signal and is_sell_signal
-                buy_signal, buy_reason = self.is_buy_signal(hist, rsi, symbol)
-                sell_signal, sell_reason = self.is_sell_signal(hist, rsi, symbol)
-                report_line = f"{symbol}: Recommendation: "
-                if buy_signal:
-                    buy_recommendations.append(report_line + f"Buy. WHY: ... {buy_reason}\n...\n")
-                elif sell_signal:
-                    sell_recommendations.append(report_line + f"Sell. WHY: ... {sell_reason}\n...\n")
-                else:
-                    hold_recommendations.append(report_line + "Hold\n...\n")
-        categorized_recommendations = (
-            ["\nBuy Recommendations:\n"] + buy_recommendations +
-            ["\nSell Recommendations:\n"] + sell_recommendations +
-            ["\nHold Recommendations:\n"] + hold_recommendations
-        )
-        return '\n'.join(categorized_recommendations) if any([buy_recommendations, sell_recommendations, hold_recommendations]) else "No recommendations available."
-
-    def find_discounted_stocks(self):
-        discounted_stocks_report = []
-        for symbol in self.user_watch_list:
-            if symbol == 'None':  # Skip if the symbol is 'None'
-                continue
-            stock = yf.Ticker(symbol)
-            hist = stock.history(period="1y")
-            if not hist.empty:
-                year_start = hist.iloc[0]['Close']  # Yearly change calculation
-                year_end = hist.iloc[-1]['Close']
-                year_change = ((year_end - year_start) / year_start) * 100
-                recent_high = hist['Close'].max()  # Discount from high calculation
-                current_price = year_end
-                discount_from_high = ((recent_high - current_price) / recent_high) * 100
-                ma50 = hist['Close'].rolling(window=50).mean().iloc[-1]  # Moving averages calculation
-                ma200 = hist['Close'].rolling(window=200).mean().iloc[-1]
-                rsi = self.calculate_rsi(hist['Close']).iloc[-1]  # RSI calculation
-                # Volume trend (optional)
-                volume_increase = hist['Volume'].iloc[-1] > hist['Volume'].mean()  # Volume trend (optional)
-                # Criteria check
-                if (year_change > 5 and 3 <= discount_from_high <= 25 and
-                    (current_price > ma50 or current_price > ma200) and rsi < 40):
-                    report_line = f"{symbol}: Yearly Change: {year_change:.1f}%, Discount: {discount_from_high:.1f}%\n...\n"
-                    discounted_stocks_report.append(report_line)
-        return '\n'.join(discounted_stocks_report) if discounted_stocks_report else "No discounted stocks found meeting the criteria."
 
 # FUNCTION DEFINITIONS ###################################################################################################################################
 
@@ -685,7 +448,7 @@ def get_weather_forecast():
 def gemini_chat():
     speak_mainframe('OK.')
     time.sleep(1)
-    chat = gemini_model.start_chat(history=[])
+    chat = model.start_chat(history=[])
     
     prompt_template = '''# System Message # - Gemini, you are in a verbal chat with the user via a 
     STT / TTS application. Please generate your text in a way that sounds like natural speech 
@@ -869,47 +632,6 @@ if __name__ == '__main__':
             print("Weather forecast:", weather_forecast)
             speak_mainframe(f'Weather forecast for {USER_SELECTED_HOME_CITY}, {USER_SELECTED_HOME_STATE}: {weather_forecast}')
             continue
-
-        # stock market reports
-        if len(query) > 1 and query[0] == activation_word and query[1] == 'stock' and query[2] == 'report':
-            today = datetime.today().strftime('%Y%m%d %H%M%S')         
-            speak_mainframe('Discounts, recommendations, yesterday, or single?')
-            answer = parse_user_speech()
-            if not answer:
-                continue
-            focus = answer.lower().split()
-            if 'discounts' in focus:
-                discounts_update = stock_reports.find_discounted_stocks()
-                speak_mainframe(discounts_update)
-                print(discounts_update)
-                continue
-            if 'recommendations' in focus:
-                recs_update = stock_reports.find_stock_recommendations()
-                speak_mainframe(recs_update)
-                print(recs_update)
-                continue
-            if 'yesterday' in focus:
-                portfolio_update = stock_reports.stock_market_report()
-                speak_mainframe(portfolio_update)
-                print(portfolio_update)
-                continue
-            if 'single' in focus:
-                speak_mainframe('Please spell the stock ticker.')
-                time.sleep(.5)
-                attempts = 0
-                while attempts < 3:
-                    raw_stock_input = parse_user_speech().upper().strip()
-                    stock = ''.join(raw_stock_input.split())
-                    speak_mainframe(f"Did you say {stock}?")
-                    confirmation = parse_user_speech().lower()
-                    if 'yes' in confirmation:
-                        stock_reports.handle_single_stock_query(stock)
-                        break
-                    else:
-                        speak_mainframe("I didn't catch that. Could you please spell out the stock ticker again?")
-                        attempts += 1
-                if attempts == 3:
-                    speak_mainframe("Having trouble recognizing the stock ticker. Let's try something else.")
 
         if len(query) > 2 and query[0] == activation_word and query[1] == 'call' and query[2] == 'gemini':
             gemini_chat()  
