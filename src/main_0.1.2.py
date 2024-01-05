@@ -98,6 +98,7 @@ google_documentation_search_engine_id = os.getenv('GOOGLE_DOCUMENTATION_SEARCH_E
 # Establish the TTS bot's wake/activation word and script-specific global constants
 activation_word = os.getenv('ACTIVATION_WORD', 'robot')
 password = os.getenv('PASSWORD', 'None')
+exit_words = os.getenv('EXIT_WORDS', 'None').split(',')
 speech_queue = queue.Queue()
 
 # Initialize the Google Gemini LLM

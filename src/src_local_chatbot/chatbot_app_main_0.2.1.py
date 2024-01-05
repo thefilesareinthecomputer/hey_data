@@ -5,6 +5,7 @@
 # standard imports
 from datetime import datetime
 from dotenv import load_dotenv
+import inspect
 import json
 import os
 import pickle
@@ -12,6 +13,7 @@ import queue
 import random
 import re
 import ssl
+import sys
 import subprocess
 import threading
 import time
@@ -27,8 +29,8 @@ import requests
 import speech_recognition as sr
 import tensorflow as tf
 # local imports
-from chatbot_training import train_chatbot_model
-train_chatbot_model()
+# from chatbot_training import train_chatbot_model
+# train_chatbot_model()
 
 # CONSTANTS ###################################################################################################################################
 
@@ -337,13 +339,14 @@ class ChatBotTools:
         SpeechToTextTextToSpeechIO.speak_mainframe('Initializing...')
         chat = gemini_model.start_chat(history=[])
         
-        prompt_template = '''# System Message # - Gemini, you are in a verbal chat with the user via a 
-        STT / TTS application. Please generate your text in a way that sounds like natural speech 
-        when it's spoken by the TTS app. Please avoid monologuing or including anything in the output that will 
+        prompt_template = '''Gemini, you are in a verbal chat with the user via a 
+        STT / TTS application. Please generate text that sounds like natural speech 
+        rather than written text. Please avoid monologuing or including anything in the output that will 
         not sound like natural spoken language. After confirming you understand this message, the chat will proceed. Please 
-        confirm your understanding of these instructions by simply saying "Chat loop is open."'''
+        confirm your understanding of these instructions by simply saying "Chat loop is open" and then await another prompt from the user. ## wait for user input after you acknowledge this message ##'''
 
         intro_response = chat.send_message(f'{prompt_template}', stream=True)
+        
         if intro_response:
             for chunk in intro_response:
                 SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
@@ -362,6 +365,27 @@ class ChatBotTools:
                 SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
                 break
             
+            if query[0] == 'diagnostics':
+                SpeechToTextTextToSpeechIO.speak_mainframe('Running diagnostics.')
+                diagnostic_summary = ChatBotTools.summarize_module(sys.modules[__name__])
+                print(f'DIAGNOSTIC SUMMARY: \n\n{diagnostic_summary}\n\n')
+                prompt = f'''### SYSTEM MESSAGE ### Gemini, the user is currently speaking to you from within their TTS / STT app. 
+                Here is a summary of the classes and functions in their Python codebase: 
+                \n {diagnostic_summary}\n
+                ### SYSTEM MESSAGE ### Gemini, please provide your interpretation of this codebase - strengths, opportunities for improvement, 
+                design principles that have been applied, etc. Also try to interpret the skill level of this codebase's developer, and 
+                provide helpful advice for them and how they can improve. Provide your quick summary and then await further instructions. 
+                ## wait for user input after you acknowledge this message ##'''
+                diagnostic_response = chat.send_message(f'{prompt}', stream=True)
+                if diagnostic_response:
+                    for chunk in diagnostic_response:
+                        SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                        time.sleep(0.1)
+                        print(chunk.text)
+                        print('\n')
+                    time.sleep(1)
+                continue
+                                             
             else:
                 response = chat.send_message(f'{user_input}', stream=True)
                 if response:
@@ -398,166 +422,225 @@ class ChatBotTools:
                 move_distance = int(query[2])  # Convert to integer
                 direction_vector = direction_map[query[1]]
                 pyautogui.move(direction_vector[0] * move_distance, direction_vector[1] * move_distance, duration=0.1)
+
+    @staticmethod
+    def summarize_module(module):
+        summary = {
+            'classes': {},
+            'functions': {},
+        }
+
+        # Get all classes in the module
+        classes = inspect.getmembers(module, inspect.isclass)
+        for cls_name, cls_obj in classes:
+            if cls_obj.__module__ == module.__name__:
+                cls_summary = {
+                    'docstring': inspect.getdoc(cls_obj),
+                    'methods': {},
+                    'class_methods': {},
+                    'static_methods': {},
+                    'source_code': inspect.getsource(cls_obj)
+                }
+
+                # Get all methods of the class
+                methods = inspect.getmembers(cls_obj, inspect.isfunction)
+                for method_name, method_obj in methods:
+                    cls_summary['methods'][method_name] = {
+                        'docstring': inspect.getdoc(method_obj),
+                        'source_code': inspect.getsource(method_obj)
+                    }
+
+                # Get class methods and static methods
+                for name, obj in cls_obj.__dict__.items():
+                    if isinstance(obj, staticmethod):
+                        cls_summary['static_methods'][name] = {
+                            'docstring': inspect.getdoc(obj),
+                            'source_code': inspect.getsource(obj.__func__)
+                        }
+                    elif isinstance(obj, classmethod):
+                        cls_summary['class_methods'][name] = {
+                            'docstring': inspect.getdoc(obj),
+                            'source_code': inspect.getsource(obj.__func__)
+                        }
+
+                summary['classes'][cls_name] = cls_summary
+
+        # Get all functions in the module
+        functions = inspect.getmembers(module, inspect.isfunction)
+        for func_name, func_obj in functions:
+            if func_obj.__module__ == module.__name__:
+                summary['functions'][func_name] = {
+                    'docstring': inspect.getdoc(func_obj),
+                    'source_code': inspect.getsource(func_obj)
+                }
+
+        return summary
+
+
+
+
+
+
+
+# # Translate a spoken phrase from English to another language by saying "robot, translate to {language}"
+# def translate(phrase_to_translate, target_language_name):
+#     language_code_mapping = {
+#         "en": ["english", "Daniel"],
+#         "es": ["spanish", "Paulina"],
+#         "fr": ["french", "Amélie"],
+#         "de": ["german", "Anna"],
+#         "it": ["italian", "Alice"],
+#         "ru": ["russian", "Milena"],
+#         "ja": ["japanese", "Kyoko"],
+#     }
+
+#     source_language = USER_PREFERRED_LANGUAGE  # From .env file
+#     target_voice = None
+
+#     # Find the language code and voice that matches the target language name
+#     target_language_code = None
+#     for code, info in language_code_mapping.items():
+#         if target_language_name.lower() == info[0].lower():
+#             target_language_code = code
+#             target_voice = info[1]
+#             break
+
+#     if not target_language_code:
+#         return f"Unsupported language: {target_language_name}", USER_PREFERRED_VOICE
+
+#     model_name = f'Helsinki-NLP/opus-mt-{source_language}-{target_language_code}'
+#     tokenizer = MarianTokenizer.from_pretrained(model_name)
+#     model = MarianMTModel.from_pretrained(model_name)
+
+#     batch = tokenizer([phrase_to_translate], return_tensors="pt", padding=True)
+#     translated = model.generate(**batch)
+#     translation = tokenizer.batch_decode(translated, skip_special_tokens=True)
+#     return translation[0], target_voice
+
+# # Gathering a summary of a wikipedia page based on user input
+# def wiki_summary(query = ''):
+#     search_results = wikipedia.search(query)
+#     if not search_results:
+#         print('No results found.')
+#     try:
+#         wiki_page = wikipedia.page(search_results[0])
+#     except wikipedia.DisambiguationError as e:
+#         wiki_page = wikipedia.page(e.options[0])
+#     print(wiki_page.title)
+#     wiki_summary = str(wiki_page.summary)
+#     speak_mainframe(wiki_summary)
+
+# # Querying Wolfram|Alpha based on user input
+# def wolfram_alpha(query):
+#     wolfram_client = wolframalpha.Client(wolfram_app_id)
+#     try:
+#         response = wolfram_client.query(query)
+#         print(f"Response from Wolfram Alpha: {response}")
+
+#         # Check if the query was successfully interpreted
+#         if not response['@success']:
+#             suggestions = response.get('didyoumeans', {}).get('didyoumean', [])
+#             if suggestions:
+#                 # Handle multiple suggestions
+#                 if isinstance(suggestions, list):
+#                     suggestion_texts = [suggestion['#text'] for suggestion in suggestions]
+#                 else:
+#                     suggestion_texts = [suggestions['#text']]
+
+#                 suggestion_message = " or ".join(suggestion_texts)
+#                 speak_mainframe(f"Sorry, I couldn't interpret that query. These are the alternate suggestions: {suggestion_message}.")
+#             else:
+#                 speak_mainframe('Sorry, I couldn\'t interpret that query. Please try rephrasing it.')
+
+#             return 'Query failed.'
+
+#         relevant_pods_titles = [
+#             "Result", "Definition", "Overview", "Summary", "Basic information",
+#             "Notable facts", "Basic properties", "Notable properties",
+#             "Basic definitions", "Notable definitions", "Basic examples",
+#             "Notable examples", "Basic forms", "Notable forms",
+#             "Detailed Information", "Graphical Representations", "Historical Data",
+#             "Statistical Information", "Comparative Data", "Scientific Data",
+#             "Geographical Information", "Cultural Information", "Economic Data",
+#             "Mathematical Proofs and Derivations", "Physical Constants",
+#             "Measurement Conversions", "Prediction and Forecasting", "Interactive Pods"]
+
+#         # Filtering and summarizing relevant pods
+#         answer = []
+#         for pod in response.pods:
+#             if pod.title in relevant_pods_titles and hasattr(pod, 'text') and pod.text:
+#                 answer.append(f"{pod.title}: {pod.text}")
+
+#         # Create a summarized response
+#         response_text = ' '.join(answer)
+#         if response_text:
+#             speak_mainframe(response_text)
+#         else:
+#             speak_mainframe("I found no information in the specified categories.")
+
+#         # Asking user for interest in other pods
+#         for pod in response.pods:
+#             if pod.title not in relevant_pods_titles:
+#                 speak_mainframe(f"Do you want to hear more about {pod.title}? Say 'yes' or 'no'.")
+#                 user_input = parse_user_speech().lower()
+#                 if user_input == 'yes' and hasattr(pod, 'text') and pod.text:
+#                     speak_mainframe(pod.text)
+#                     continue
+#                 elif user_input == 'no':
+#                     break
+
+#         return response_text
+
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
+#         speak_mainframe('An error occurred while processing the query.')
+#         return f"An error occurred: {e}"
+
+# # Get a spoken weather forecast from openweathermap for the next 4 days by day part based on user defined home location
+# def get_weather_forecast():
+#     appid = f'{open_weather_api_key}'
+
+#     # Fetching coordinates from environment variables
+#     lat = USER_SELECTED_HOME_LAT
+#     lon = USER_SELECTED_HOME_LON
+
+#     # OpenWeatherMap API endpoint for 4-day hourly forecast
+#     url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={appid}"
+
+#     response = requests.get(url)
+#     print("Response status:", response.status_code)
+#     if response.status_code != 200:
+#         return "Failed to retrieve weather data."
+
+#     data = response.json()
+#     print("Data received:", data)
+
+#     # Process forecast data
+#     forecast = ""
+#     timezone = pytz.timezone(USER_SELECTED_TIMEZONE)
+#     now = datetime.now(timezone)
+#     periods = [(now + timedelta(days=i)).replace(hour=h, minute=0, second=0, microsecond=0) for i in range(4) for h in [6, 12, 18, 0]]
+
+#     for i in range(0, len(periods), 4):
+#         day_forecasts = []
+#         for j in range(4):
+#             start, end = periods[i + j], periods[i + j + 1] if j < 3 else periods[i] + timedelta(days=1)
+#             period_forecast = [f for f in data['list'] if start <= datetime.fromtimestamp(f['dt'], tz=timezone) < end]
             
-# Translate a spoken phrase from English to another language by saying "robot, translate to {language}"
-def translate(phrase_to_translate, target_language_name):
-    language_code_mapping = {
-        "en": ["english", "Daniel"],
-        "es": ["spanish", "Paulina"],
-        "fr": ["french", "Amélie"],
-        "de": ["german", "Anna"],
-        "it": ["italian", "Alice"],
-        "ru": ["russian", "Milena"],
-        "ja": ["japanese", "Kyoko"],
-    }
+#             if period_forecast:
+#                 avg_temp_kelvin = sum(f['main']['temp'] for f in period_forecast) / len(period_forecast)
+#                 avg_temp_fahrenheit = (avg_temp_kelvin - 273.15) * 9/5 + 32  # Convert from Kelvin to Fahrenheit
+#                 descriptions = set(f['weather'][0]['description'] for f in period_forecast)
+#                 time_label = ["morning", "afternoon", "evening", "night"][j]
+#                 day_forecasts.append(f"{time_label}: average temperature {avg_temp_fahrenheit:.1f}°F, conditions: {', '.join(descriptions)}")
 
-    source_language = USER_PREFERRED_LANGUAGE  # From .env file
-    target_voice = None
+#         if day_forecasts:
+#             forecast_date = periods[i].strftime('%Y-%m-%d')
+#             # Convert forecast_date to weekday format aka "Monday", etc.
+#             forecast_date = datetime.strptime(forecast_date, '%Y-%m-%d').strftime('%A')
+#             forecast += f"\n{forecast_date}: {'; '.join(day_forecasts)}."
 
-    # Find the language code and voice that matches the target language name
-    target_language_code = None
-    for code, info in language_code_mapping.items():
-        if target_language_name.lower() == info[0].lower():
-            target_language_code = code
-            target_voice = info[1]
-            break
-
-    if not target_language_code:
-        return f"Unsupported language: {target_language_name}", USER_PREFERRED_VOICE
-
-    model_name = f'Helsinki-NLP/opus-mt-{source_language}-{target_language_code}'
-    tokenizer = MarianTokenizer.from_pretrained(model_name)
-    model = MarianMTModel.from_pretrained(model_name)
-
-    batch = tokenizer([phrase_to_translate], return_tensors="pt", padding=True)
-    translated = model.generate(**batch)
-    translation = tokenizer.batch_decode(translated, skip_special_tokens=True)
-    return translation[0], target_voice
-
-# Gathering a summary of a wikipedia page based on user input
-def wiki_summary(query = ''):
-    search_results = wikipedia.search(query)
-    if not search_results:
-        print('No results found.')
-    try:
-        wiki_page = wikipedia.page(search_results[0])
-    except wikipedia.DisambiguationError as e:
-        wiki_page = wikipedia.page(e.options[0])
-    print(wiki_page.title)
-    wiki_summary = str(wiki_page.summary)
-    speak_mainframe(wiki_summary)
-
-# Querying Wolfram|Alpha based on user input
-def wolfram_alpha(query):
-    wolfram_client = wolframalpha.Client(wolfram_app_id)
-    try:
-        response = wolfram_client.query(query)
-        print(f"Response from Wolfram Alpha: {response}")
-
-        # Check if the query was successfully interpreted
-        if not response['@success']:
-            suggestions = response.get('didyoumeans', {}).get('didyoumean', [])
-            if suggestions:
-                # Handle multiple suggestions
-                if isinstance(suggestions, list):
-                    suggestion_texts = [suggestion['#text'] for suggestion in suggestions]
-                else:
-                    suggestion_texts = [suggestions['#text']]
-
-                suggestion_message = " or ".join(suggestion_texts)
-                speak_mainframe(f"Sorry, I couldn't interpret that query. These are the alternate suggestions: {suggestion_message}.")
-            else:
-                speak_mainframe('Sorry, I couldn\'t interpret that query. Please try rephrasing it.')
-
-            return 'Query failed.'
-
-        relevant_pods_titles = [
-            "Result", "Definition", "Overview", "Summary", "Basic information",
-            "Notable facts", "Basic properties", "Notable properties",
-            "Basic definitions", "Notable definitions", "Basic examples",
-            "Notable examples", "Basic forms", "Notable forms",
-            "Detailed Information", "Graphical Representations", "Historical Data",
-            "Statistical Information", "Comparative Data", "Scientific Data",
-            "Geographical Information", "Cultural Information", "Economic Data",
-            "Mathematical Proofs and Derivations", "Physical Constants",
-            "Measurement Conversions", "Prediction and Forecasting", "Interactive Pods"]
-
-        # Filtering and summarizing relevant pods
-        answer = []
-        for pod in response.pods:
-            if pod.title in relevant_pods_titles and hasattr(pod, 'text') and pod.text:
-                answer.append(f"{pod.title}: {pod.text}")
-
-        # Create a summarized response
-        response_text = ' '.join(answer)
-        if response_text:
-            speak_mainframe(response_text)
-        else:
-            speak_mainframe("I found no information in the specified categories.")
-
-        # Asking user for interest in other pods
-        for pod in response.pods:
-            if pod.title not in relevant_pods_titles:
-                speak_mainframe(f"Do you want to hear more about {pod.title}? Say 'yes' or 'no'.")
-                user_input = parse_user_speech().lower()
-                if user_input == 'yes' and hasattr(pod, 'text') and pod.text:
-                    speak_mainframe(pod.text)
-                    continue
-                elif user_input == 'no':
-                    break
-
-        return response_text
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        speak_mainframe('An error occurred while processing the query.')
-        return f"An error occurred: {e}"
-
-# Get a spoken weather forecast from openweathermap for the next 4 days by day part based on user defined home location
-def get_weather_forecast():
-    appid = f'{open_weather_api_key}'
-
-    # Fetching coordinates from environment variables
-    lat = USER_SELECTED_HOME_LAT
-    lon = USER_SELECTED_HOME_LON
-
-    # OpenWeatherMap API endpoint for 4-day hourly forecast
-    url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={appid}"
-
-    response = requests.get(url)
-    print("Response status:", response.status_code)
-    if response.status_code != 200:
-        return "Failed to retrieve weather data."
-
-    data = response.json()
-    print("Data received:", data)
-
-    # Process forecast data
-    forecast = ""
-    timezone = pytz.timezone(USER_SELECTED_TIMEZONE)
-    now = datetime.now(timezone)
-    periods = [(now + timedelta(days=i)).replace(hour=h, minute=0, second=0, microsecond=0) for i in range(4) for h in [6, 12, 18, 0]]
-
-    for i in range(0, len(periods), 4):
-        day_forecasts = []
-        for j in range(4):
-            start, end = periods[i + j], periods[i + j + 1] if j < 3 else periods[i] + timedelta(days=1)
-            period_forecast = [f for f in data['list'] if start <= datetime.fromtimestamp(f['dt'], tz=timezone) < end]
-            
-            if period_forecast:
-                avg_temp_kelvin = sum(f['main']['temp'] for f in period_forecast) / len(period_forecast)
-                avg_temp_fahrenheit = (avg_temp_kelvin - 273.15) * 9/5 + 32  # Convert from Kelvin to Fahrenheit
-                descriptions = set(f['weather'][0]['description'] for f in period_forecast)
-                time_label = ["morning", "afternoon", "evening", "night"][j]
-                day_forecasts.append(f"{time_label}: average temperature {avg_temp_fahrenheit:.1f}°F, conditions: {', '.join(descriptions)}")
-
-        if day_forecasts:
-            forecast_date = periods[i].strftime('%Y-%m-%d')
-            # Convert forecast_date to weekday format aka "Monday", etc.
-            forecast_date = datetime.strptime(forecast_date, '%Y-%m-%d').strftime('%A')
-            forecast += f"\n{forecast_date}: {'; '.join(day_forecasts)}."
-
-    return forecast
+#     return forecast
 
 
 

@@ -131,6 +131,22 @@
             ],
             "responses": "",
             "action": ""
+        },
+        {
+            "tag": "unrecognized_20240105122708",
+            "patterns": [
+                "robot Shanghai Green Bay Packers"
+            ],
+            "responses": "",
+            "action": ""
+        },
+        {
+            "tag": "unrecognized_20240105125755",
+            "patterns": [
+                "robot call AI"
+            ],
+            "responses": "",
+            "action": ""
         }
     ]
 }

@@ -150,40 +150,42 @@ For commercial use of this project, a separate commercial license is required. T
 
 ## COMPLETION LOG / COMMIT MESSAGES:
 
-    2023-11-30 added google search, wikipedia search, and wolfram alpha query
-    2023-12-01 note taking and note recall added
-    2023-12-01 moved speech output to a separate thread so that in the future we can let the bot listen for stop or change commands while speaking.
-    2023-12-02 added more user details in the .env file to personalize the output in various functions.
-    2023-12-03 speech queue and speech manager have been implemented to prevent the bot from trying to say multiple things at once.
-    2023-12-03 wolfram alpha finction improved to consolidate various pods contained in the response from the api call rather than just the first pod.
-    2023-12-03 screenshot function added.
-    2023-12-03 verbal translation function added.
-    2023-12-03 verbal translation function improved to output the translated text in the corresponding accent of the target language.
-    2023-12-03 added the youtube search function.
-    2023-12-04 finalized the spoken 4 day weather forecast function.
-    2023-12-08 added the initial 'voice to move cursor' and 'voice to click functions' via pyautogui.
-    2023-12-09 added stock report function.
-    2023-12-09 added stock recommendation function.
-    2023-12-10 moved all stock functions into a finance class.
-    2023-12-20 began testing chat functionality with gemini rather than chatgpt with good success.
-    2023-12-21 simplified the none handling in the main loop.
-    2023-12-21 added the ability to enter a chat sub-loop with gemini chatbot by saying "robot, call gemini".
-    2023-12-21 fixed a bug where the speech recognizer was retuurning 'None' vs None for unrecognized speech input.
-    2023-12-22 installed auto py to exe and docker in anticipation of building a standalone app (tbd on containerization choice).
-    2023-12-25 moved the activation word from hard-coded 'robot' into a user-defined variable in the .env file.
-    2023-12-30 doenloaded new voices for the speech interface.
-    2024-01-01 removed the redundant second parsing attempt in the speech parsing function and simplified the error handling there.
-    2024-01-01 removed the obsolete standby and reset code blocks to make space for a better future reset feature.
-    2024-01-01 moved the mouse movement and clicking controls into a more streamlined function.
-    2024-01-01 added verbal password check when the app runs.
-    2024-01-01 moved the gemini chat loop into its own function.
-    2024-01-01 integrated a google custom search engine and search assistant with LLM analysis of results relevance and LLM guidance for results.
-    2024-01-02 added a prompt template into the gemini chat initialization asking for good output for a tts app.
-    2024-01-02 added some additional prompt template steps into the search assistant chatbot.
-    2024-01-03 re-built the neural nine chatbot that uses intents.json and modernized the tensorflow imports in the training module.
-    2024-01-04 implemented function calling and stt audio recognition and tts bot output for the neural network based chatbot.
-    2024-01-04 implemented a function that generates an intent json object for any message interaction the bot doesn't recognize.
-    2024-01-04 imported and called the chatbot_training module at the top of the chatbot_app module.
+    0.1.1 - 2023-11-30 added google search, wikipedia search, and wolfram alpha query
+    0.1.1 - 2023-12-01 note taking and note recall added
+    0.1.1 - 2023-12-01 moved speech output to a separate thread so that in the future the bot can listen while speaking.
+    0.1.1 - 2023-12-02 added more user details in the .env file to personalize the output in various functions.
+    0.1.1 - 2023-12-03 speech queue and speech manager have been implemented to prevent the bot from trying to say multiple things at once.
+    0.1.1 - 2023-12-03 wolfram alpha finction improved to consolidate specified pods from the api call rather than just the first pod.
+    0.1.1 - 2023-12-03 screenshot function added.
+    0.1.1 - 2023-12-03 verbal translation function added.
+    0.1.1 - 2023-12-03 verbal translation function improved with native accents for translated speech.
+    0.1.1 - 2023-12-03 added the youtube search function.
+    0.1.1 - 2023-12-04 finalized the spoken 4 day weather forecast function.
+    0.1.1 - 2023-12-08 added the initial 'voice to move cursor' and 'voice to click functions' via pyautogui.
+    0.1.1 - 2023-12-09 added stock report function.
+    0.1.1 - 2023-12-09 added stock recommendation function.
+    0.1.1 - 2023-12-10 moved all stock functions into a finance class.
+    0.1.1 - 2023-12-20 began testing chat functionality with gemini rather than chatgpt with good success.
+    0.1.1 - 2023-12-21 simplified the none handling in the main loop.
+    0.1.1 - 2023-12-21 added the ability to enter a chat sub-loop with gemini chatbot by saying "robot, call gemini".
+    0.1.1 - 2023-12-21 fixed a bug where the speech recognizer was retuurning 'None' vs None for unrecognized speech input.
+    0.1.1 - 2023-12-22 installed auto py to exe and docker in anticipation of building a standalone app (tbd on containerization choice).
+    0.1.1 - 2023-12-25 moved the activation word from hard-coded 'robot' into a user-defined variable in the .env file.
+    0.1.1 - 2023-12-30 downloaded new voices for the speech interface.
+    0.1.2 - 2024-01-01 removed the redundant second parsing attempt in the speech parsing function and simplified the error handling there.
+    0.1.2 - 2024-01-01 removed the obsolete standby and reset code blocks to make space for a better future reset feature.
+    0.1.2 - 2024-01-01 moved the mouse movement and clicking controls into a more streamlined function.
+    0.1.2 - 2024-01-01 added verbal password check when the app runs.
+    0.1.2 - 2024-01-01 moved the gemini chat loop into its own function.
+    0.1.2 - 2024-01-01 integrated a google custom search engine and LLM search assistant agent with brief analysis of results.
+    0.1.2 - 2024-01-02 added a prompt template into the gemini chat initialization asking for good output for a tts app.
+    0.1.2 - 2024-01-02 added some additional prompt template steps into the search assistant chatbot.
+    0.2.1 - 2024-01-03 re-built the neural nine chatbot that uses intents.json and modernized the tensorflow imports in the training module.
+    0.2.1 - 2024-01-04 implemented function calling and stt audio recognition and tts bot output for the neural network based chatbot.
+    0.2.1 - 2024-01-04 implemented a function that generates an intent json object for any message interaction the bot doesn't recognize.
+    0.2.1 - 2024-01-04 imported and called the chatbot_training module at the top of the chatbot_app module.
+    0.2.1 - 2024-01-05 improved mouse control function (responds to up down left right + north south east west) after migrating to v 0.2.1.
+    0.2.1 - 2024-01-05 added a function to run diagnostics on the codebase with inspect and then call in the llm as a pair programmer copilot.
     
     
 
