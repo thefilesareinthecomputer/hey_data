@@ -19,7 +19,7 @@ import threading
 import time
 # third party imports
 from nltk.stem import WordNetLemmatizer
-from transformers import pipeline, T5ForConditionalGeneration, T5Tokenizer
+from transformers import MarianMTModel, MarianTokenizer, pipeline, T5ForConditionalGeneration, T5Tokenizer
 import certifi
 import google.generativeai as genai
 import numpy as np
@@ -210,6 +210,8 @@ class ChatBotApp:
         return return_list
 
     def get_response(self, intents_list, chatbot_tools):
+        if not intents_list:  # Check if intents_list is empty
+            return "Sorry, what?"
         tag = intents_list[0]['intent']
         list_of_intents = self.intents['intents']
         result = None
@@ -260,7 +262,7 @@ class ChatBotTools:
     def __init__(self):
         self.tokenizer = T5Tokenizer.from_pretrained('t5-small')
         self.model = T5ForConditionalGeneration.from_pretrained('t5-small')
-        self.summarizer = pipeline("summarization", model=self.model, tokenizer=self.tokenizer)
+        self.summarizer = pipeline("summarization", model=self.model, legacy=False, tokenizer=self.tokenizer)
         self.user_input = None  
         
     def set_user_input(self, input_text):
@@ -271,69 +273,124 @@ class ChatBotTools:
         '''This is a placeholder test function that will be called by the chatbot when the user says hello'''
         print('### TEST ### You said:', self.user_input)
 
-    def generate_json_intent(self):
-        '''Generate a JSON intent for unrecognized interactions and save it to a chatbot_unrecognized_message_intents.json log file. 
-        Placeholder - needs a model to generate the text for the empty fields in this response intent. 
-        The model will need to generate a set of statements that are analagous to the user input and also a set of analagous appropriate responses. 
-        Eventually we will also want to call in a code generation model to generate the code that will be triggered when this intent is called by the user input (if it's obvious enough to generate automatically).
-        Once the automated intents generation for unrecognized input is up and running and tested, we will include it in the chatbot_training.py module and blend it with the static training data to create the foundation for a ci/cd pipeline for the chatbot. 
-        Then, we will trigger the bot to retrain itself at the end of every conversation so that it will automatically learn how to respond to unknown interactions between every conversation. '''
-        new_intent = {
-            "tag": f"unrecognized_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-            "patterns": [self.user_input],
-            "responses": "",
-            "action": ""
-        }
-        try:
-            with open(unrecognized_file_path, 'r+') as file:
-                data = json.load(file)
-                data["intents"].append(new_intent)
-                file.seek(0)
-                json.dump(data, file, indent=4)
-        except FileNotFoundError:
-            with open(unrecognized_file_path, 'w') as file:
-                json.dump({"intents": [new_intent]}, file, indent=4)
-               
-    # def generate_variations(self, text):
-    #     summaries = self.summarizer(text, max_length=45, min_length=15, do_sample=False)
-    #     return [summary['summary_text'] for summary in summaries]
-     
     # def generate_json_intent(self):
-    #     print("UNRECOGNIZED INPUT: writing new intent to chatbot_unrecognized_message_intents.json")
-
-    #     json_gen_prompt = '''# System Message Start # - Gemini, ONLY GENERATE ONE SHORT SENTENCE FOR EACH PROMPT ACCORDING TO THE USER INSTRUCTIONS. KEEP EACH SENTENCE TO UNDER 10 WORDS, IDEALLY CLOSER TO 5. - # System Message End #'''
-    #     # Generate an initial response using Gemini
-    #     initial_reply = gemini_model.generate_content(f"{json_gen_prompt}. // Please provide a response to: {self.user_input}")
-    #     initial_reply.resolve()
-    #     bot_reply = initial_reply.text
-
-    #     # Generate variations of user input and bot reply
-    #     user_input_variations = self.generate_variations(self.user_input)
-    #     bot_reply_variations = self.generate_variations(bot_reply)
-
-    #     # Simple function name generation
-    #     json_function_name = re.sub(r'\W+', '', self.user_input).lower() + '_function'
-
+    #     '''Generate a JSON intent for unrecognized interactions and save it to a chatbot_unrecognized_message_intents.json log file. 
+    #     Placeholder - needs a model to generate the text for the empty fields in this response intent. 
+    #     The model will need to generate a set of statements that are analagous to the user input and also a set of analagous appropriate responses. 
+    #     Eventually we will also want to call in a code generation model to generate the code that will be triggered when this intent is called by the user input (if it's obvious enough to generate automatically).
+    #     Once the automated intents generation for unrecognized input is up and running and tested, we will include it in the chatbot_training.py module and blend it with the static training data to create the foundation for a ci/cd pipeline for the chatbot. 
+    #     Then, we will trigger the bot to retrain itself at the end of every conversation so that it will automatically learn how to respond to unknown interactions between every conversation. '''
     #     new_intent = {
     #         "tag": f"unrecognized_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-    #         "patterns": [self.user_input] + user_input_variations,
-    #         "responses": [bot_reply] + bot_reply_variations,
-    #         "action": json_function_name
+    #         "patterns": [self.user_input],
+    #         "responses": "",
+    #         "action": ""
     #     }
-
-    #     print(new_intent)
-
     #     try:
     #         with open(unrecognized_file_path, 'r+') as file:
     #             data = json.load(file)
     #             data["intents"].append(new_intent)
     #             file.seek(0)
     #             json.dump(data, file, indent=4)
-    #             print('New intent written to chatbot_unrecognized_message_intents.json\n')
     #     except FileNotFoundError:
     #         with open(unrecognized_file_path, 'w') as file:
     #             json.dump({"intents": [new_intent]}, file, indent=4)
+               
+    def generate_variations(self, text):
+        summaries = self.summarizer(text, max_length=45, min_length=15, do_sample=False)
+        return [summary['summary_text'] for summary in summaries]
+     
+    def generate_json_intent(self):
+        print("UNRECOGNIZED INPUT: writing new intent to chatbot_unrecognized_message_intents.json")
 
+        json_gen_prompt = '''# System Message Start # - Gemini, ONLY GENERATE ONE SHORT SENTENCE FOR EACH PROMPT ACCORDING TO THE USER INSTRUCTIONS. KEEP EACH SENTENCE TO UNDER 10 WORDS, IDEALLY CLOSER TO 5. - # System Message End #'''
+        # Generate an initial response using Gemini
+        initial_reply = gemini_model.generate_content(f"{json_gen_prompt}. // Please provide a response to: {self.user_input}")
+        initial_reply.resolve()
+        bot_reply = initial_reply.text
+
+        # Generate variations of user input and bot reply
+        user_input_variations = self.generate_variations(self.user_input)
+        bot_reply_variations = self.generate_variations(bot_reply)
+
+        # Simple function name generation
+        json_function_name = re.sub(r'\W+', '', self.user_input).lower() + '_function'
+
+        new_intent = {
+            "tag": f"unrecognized_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "patterns": [self.user_input] + user_input_variations,
+            "responses": [bot_reply] + bot_reply_variations,
+            "action": json_function_name
+        }
+
+        print(f"\nAttempting to write to:\n", unrecognized_file_path)
+        print(f"\nNew Intent:\n", new_intent)
+
+        try:
+            with open(unrecognized_file_path, 'r+') as file:
+                data = json.load(file)
+                data["intents"].append(new_intent)
+                file.seek(0)
+                json.dump(data, file, indent=4)
+                print('New intent written to chatbot_unrecognized_message_intents.json')
+        except FileNotFoundError:
+            try:
+                with open(unrecognized_file_path, 'w') as file:
+                    json.dump({"intents": [new_intent]}, file, indent=4)
+                    print('New file created and intent written to chatbot_unrecognized_message_intents.json')
+            except Exception as e:
+                print(f"Error creating new file: {e}")
+        except Exception as e:
+            print(f"Error updating existing file: {e}")
+
+        print('Intent update attempted. Check the file for changes.')
+
+    @staticmethod
+    def describe_capabilities():
+        SpeechToTextTextToSpeechIO.speak_mainframe('Reading the code... One sec...')
+        chat = gemini_model.start_chat(history=[])
+        diagnostic_summary = ChatBotTools.summarize_module(sys.modules[__name__])
+        print(f'DIAGNOSTIC SUMMARY: \n\n{diagnostic_summary}\n\n')
+        prompt = f'''### SYSTEM MESSAGE ### Gemini, the user is currently speaking to you from within their TTS / STT app. 
+        Here is a summary of their Python codebase. The user is going to ask you to describe the capabilities of their codebase.: 
+        \n {diagnostic_summary}\n
+        ### SYSTEM MESSAGE ### Gemini, please read and deeply unterstand all the methods, static methods, and class methods in 
+        this codebase - examine and think about the functionalities, strengths, opportunities for improvement, 
+        design principles that have been applied, etc. Also assess the skill level of the developer, and 
+        think of helpful advice for them and how they can improve their app and the overall cohesiveness and optimization of their code. 
+        Be like a coach for the developer. You are a senior architect doing a code review and helping them improve their code and their overall skills. 
+        Refer to the user directly in the second person tense. You are interacting with the developer directly. 
+        Read the code, and then say "I've read the code. What do you want to discuss first?", and then await further instructions. 
+        ## wait for user input after you acknowledge this message ##'''
+        diagnostic_response = chat.send_message(f'{prompt}', stream=True)
+        if diagnostic_response:
+            for chunk in diagnostic_response:
+                SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                time.sleep(0.1)
+                print(chunk.text)
+                print('\n')
+            time.sleep(1)     
+        
+        while True:
+            user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+            if not user_input:
+                continue
+
+            query = user_input.lower().split()
+            if not query:
+                continue
+
+            if query[0] in exit_words:
+                SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
+                break
+                                             
+            else:
+                response = chat.send_message(f'{user_input}', stream=True)
+                if response:
+                    for chunk in response:
+                        SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                        time.sleep(0.1)
+        
     @staticmethod
     def gemini_chat():
         SpeechToTextTextToSpeechIO.speak_mainframe('Initializing...')
@@ -342,8 +399,10 @@ class ChatBotTools:
         prompt_template = '''Gemini, you are in a verbal chat with the user via a 
         STT / TTS application. Please generate text that sounds like natural speech 
         rather than written text. Please avoid monologuing or including anything in the output that will 
-        not sound like natural spoken language. After confirming you understand this message, the chat will proceed. Please 
-        confirm your understanding of these instructions by simply saying "Chat loop is open" and then await another prompt from the user. ## wait for user input after you acknowledge this message ##'''
+        not sound like natural spoken language. After confirming you understand this message, the chat will proceed. 
+        Refer to the user directly in the second person tense. You are talking to them directly. 
+        Please confirm your understanding of these instructions by simply saying "Chat loop is open" 
+        and then await another prompt from the user. ## wait for user input after you acknowledge this message ##'''
 
         intro_response = chat.send_message(f'{prompt_template}', stream=True)
         
@@ -374,7 +433,8 @@ class ChatBotTools:
                 \n {diagnostic_summary}\n
                 ### SYSTEM MESSAGE ### Gemini, please provide your interpretation of this codebase - strengths, opportunities for improvement, 
                 design principles that have been applied, etc. Also try to interpret the skill level of this codebase's developer, and 
-                provide helpful advice for them and how they can improve. Provide your quick summary and then await further instructions. 
+                provide helpful advice for them and how they can improve. Refer to the user directly in the second person tense. You are talking to them directly. 
+                Provide your quick summary and then await further instructions. 
                 ## wait for user input after you acknowledge this message ##'''
                 diagnostic_response = chat.send_message(f'{prompt}', stream=True)
                 if diagnostic_response:
@@ -476,46 +536,62 @@ class ChatBotTools:
 
         return summary
 
+# Translate a spoken phrase from English to another language by saying "robot, translate to {language}"
+def translate(phrase_to_translate, target_language_name):
+    
+    while True:
+        user_input = parse_user_speech()
+        if not user_input:
+            continue
 
+        query = user_input.lower().split()
+        if not query:
+            continue
+    
+        if query[0] in exit_words:
+            SpeechToTextTextToSpeechIO.speak_mainframe('Canceling translation.')
+            break
+    
+        # translate
+        if len(query) > 1 and query[0] == activation_word and query[1] == 'translate' and query[2] == 'to':
+            target_language_name = query[3]
+            SpeechToTextTextToSpeechIO.speak_mainframe(f'Speak the phrase you want to translate.')
+            time.sleep(1)
+            phrase_to_translate = SpeechToTextTextToSpeechIO.parse_user_speech().lower()
+            
+        language_code_mapping = {
+            "en": ["english", "Daniel"],
+            "es": ["spanish", "Paulina"],
+            "fr": ["french", "Amélie"],
+            "de": ["german", "Anna"],
+            "it": ["italian", "Alice"],
+            "ru": ["russian", "Milena"],
+            "ja": ["japanese", "Kyoko"],
+        }
 
+        source_language = USER_PREFERRED_LANGUAGE  # From .env file
+        target_voice = None
 
+        # Find the language code and voice that matches the target language name
+        target_language_code = None
+        for code, info in language_code_mapping.items():
+            if target_language_name.lower() == info[0].lower():
+                target_language_code = code
+                target_voice = info[1]
+                break
 
+        if not target_language_code:
+            return f"Unsupported language: {target_language_name}", USER_PREFERRED_VOICE
 
+        model_name = f'Helsinki-NLP/opus-mt-{source_language}-{target_language_code}'
+        tokenizer = MarianTokenizer.from_pretrained(model_name)
+        model = MarianMTModel.from_pretrained(model_name)
 
-# # Translate a spoken phrase from English to another language by saying "robot, translate to {language}"
-# def translate(phrase_to_translate, target_language_name):
-#     language_code_mapping = {
-#         "en": ["english", "Daniel"],
-#         "es": ["spanish", "Paulina"],
-#         "fr": ["french", "Amélie"],
-#         "de": ["german", "Anna"],
-#         "it": ["italian", "Alice"],
-#         "ru": ["russian", "Milena"],
-#         "ja": ["japanese", "Kyoko"],
-#     }
-
-#     source_language = USER_PREFERRED_LANGUAGE  # From .env file
-#     target_voice = None
-
-#     # Find the language code and voice that matches the target language name
-#     target_language_code = None
-#     for code, info in language_code_mapping.items():
-#         if target_language_name.lower() == info[0].lower():
-#             target_language_code = code
-#             target_voice = info[1]
-#             break
-
-#     if not target_language_code:
-#         return f"Unsupported language: {target_language_name}", USER_PREFERRED_VOICE
-
-#     model_name = f'Helsinki-NLP/opus-mt-{source_language}-{target_language_code}'
-#     tokenizer = MarianTokenizer.from_pretrained(model_name)
-#     model = MarianMTModel.from_pretrained(model_name)
-
-#     batch = tokenizer([phrase_to_translate], return_tensors="pt", padding=True)
-#     translated = model.generate(**batch)
-#     translation = tokenizer.batch_decode(translated, skip_special_tokens=True)
-#     return translation[0], target_voice
+        batch = tokenizer([phrase_to_translate], return_tensors="pt", padding=True)
+        translated = model.generate(**batch)
+        translation = tokenizer.batch_decode(translated, skip_special_tokens=True)
+        print(f'In {target_language_name}, it\'s: {translation}')    
+        SpeechToTextTextToSpeechIO.speak_mainframe(f'In {target_language_name}, it\'s: {translation}', voice=target_voice)
 
 # # Gathering a summary of a wikipedia page based on user input
 # def wiki_summary(query = ''):

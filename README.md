@@ -186,6 +186,8 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.1 - 2024-01-04 imported and called the chatbot_training module at the top of the chatbot_app module.
     0.2.1 - 2024-01-05 improved mouse control function (responds to up down left right + north south east west) after migrating to v 0.2.1.
     0.2.1 - 2024-01-05 added a function to run diagnostics on the codebase with inspect and then call in the llm as a pair programmer copilot.
+    0.2.2 - 2024-01-05 trimmed out commented old functions and migrated more tool methods from 0.1.2 to 0.2.2.
+    0.2.2 - 2024-01-05 added a function for the llm to simply read in the codebase and stand by as a pair programmer.
     
     
 

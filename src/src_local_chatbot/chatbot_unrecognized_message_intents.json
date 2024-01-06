@@ -147,6 +147,30 @@
             ],
             "responses": "",
             "action": ""
+        },
+        {
+            "tag": "unrecognized_20240105161519",
+            "patterns": [
+                "robot tambourine",
+                "robot tambourine is a robot robot that can be used to make robots . robots can be accessed from the robot ."
+            ],
+            "responses": [
+                "Mechanical merriment.",
+                "mechanical merriment . mr. sneel ."
+            ],
+            "action": "robottambourine_function"
+        },
+        {
+            "tag": "unrecognized_20240105162552",
+            "patterns": [
+                "robot tambourine",
+                "robot tambourine is a robot robot that can be used to make robots . robots can be accessed from the robot ."
+            ],
+            "responses": [
+                "Dancing robot rocks rhythm.",
+                "Dancing robot rocks rhythm . dancing robot is a robot that rocks rhythm."
+            ],
+            "action": "robottambourine_function"
         }
     ]
 }

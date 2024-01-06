@@ -3,8 +3,10 @@
 {
   "tag": "conversation_unrecognized",
   "patterns": [""],
-  "responses": ["I don't understand that. Can you re-phrase? Otherwise ask 'what can you do?'", 
-    "I don't understand that. Say it differently or say 'tell me what you can do'."],
+  "responses": ["Can you re-phrase that?", 
+    "What was that?",
+    "I didn't understand that.",
+    "I don't understand that."],
   "action": "generate_json_intent"
 },
 {
@@ -13,30 +15,44 @@
     "hey how is it going",
     "hi my name is",
     "hello", "hi",
+    "whats up",
+    "aloha",
+    "howdy",
+    "yo",
+    "hey",
+    "hi there",
+    "hey there",
+    "sup",
+    "wassup",
     "hey nice to meet you"],
-  "responses": ["Hi there.",
-    "Hello.",
+  "responses": ["Hi. How can I help you?",
+    "Hello. How can I help you?",
     "Hi. How's it going?",
-    "Hello there.", 
+    "Hello there. How can I help?", 
     "Hey. Whats up?", 
-    "Hey."],
+    "Hey. Can I help with something?"],
   "action": "run_greeting_code"
 },
 {
   "tag": "conversation_capabilities",
-  "patterns": ["tell me what do you know", 
-    "tell me which questions do you understand", 
+  "patterns": ["tell me what you know", 
+    "tell me which questions you understand", 
     "tell me what you can do", 
-    "what do you know how to do", 
-    "what kind of things do you know", 
-    "what questions do you understand"],
-  "responses": ["These are the questions, answers, and functions I have available:", 
-    "These are the prompts, replies, and code I have available:", 
-    "These are the semantics and code I have available:", 
-    "These are the phrases, responses, and code functions I have available:", 
-    "This is the foundation of my reasoning abilities:", 
-    "This is the logic I use:"],
-  "action": "# print a list of functions that the chatbot can execute"
+    "what can you do?",
+    "I need help programming",
+    "Can you assist me with coding",
+    "I'm not sure what to do with this python program",
+    "Help me out with my python code in this program",
+    "what functions do you have",
+    "what can this code do",
+    "what does this code know how to do",
+    "what does this code understand",
+    "tell me how to use this app program",
+    "what does this app know how to do", 
+    "what kind of things does this code do", 
+    "what questions does the app in this code understand"],
+  "responses": ["Scanning the codebase..."],
+  "action": "describe_capabilities"
 },
 {
   "tag": "conversation_quotes",
@@ -71,23 +87,6 @@
       "Parallel lines have so much in common. It’s a shame they’ll never meet."
   ],
   "action": ""
-},
-{
-  "tag": "conversation_help",
-  "patterns": [
-      "I need help",
-      "Can you assist me?",
-      "I'm not sure what to do",
-      "Help me out",
-      "I require some assistance"
-  ],
-  "responses": [
-      "Of course, I'm here to help. What do you need?",
-      "Sure, I can assist. What seems to be the problem?",
-      "I'm here to help. Just let me know what you need.",
-      "Tell me what you need, and I'll do my best to assist."
-  ],
-  "action": "# engage an llm with a help or advice prompt template for how to use this app or fix the current problem"
 },
 {
   "tag": "conversation_fun_facts",
@@ -179,31 +178,14 @@
   "action": ""
 },
 {
-  "tag": "conversation_curiosity",
-  "patterns": [
-    "How do you work?",
-    "What can you do?",
-    "Tell me more about AI",
-    "How were you made?",
-    "Explain your capabilities"
-  ],
-  "responses": [
-    "I'm an AI programmed to assist with various tasks.",
-    "My capabilities include answering questions, providing information, and more.",
-    "I was created by a team of developers using advanced AI algorithms.",
-    "I'm constantly learning and evolving to assist you better."
-  ],
-  "action": ""
-},
-{
   "tag": "conversation_swearing",
   "patterns": [
-    "what the fuck",
-    "this is fucking bullshit",
-    "what the fuck is this shit",
-    "god fucking damn it",
-    "motherfucking son of a bitch",
-    "stupid piece of shit",
+    "fuck",
+    "fucking bullshit",
+    "fuck shit",
+    "fucking damn",
+    "motherfucking bitch",
+    "stupid shit",
     "cunt dick bitch jackass dickhead asshole retard fuckhead cocksucker shitbag bitchass fucker"
   ],
   "responses": [
@@ -212,9 +194,10 @@
     "You mad bro?",
     "Take a deep breath.",
     "Quit being a wet blanket",
+    "That's bumming me out",
     "Nobody wants to hear that shit",
     "Hey, tell it to your therapist",
-    "lol"
+    "lol chill"
   ],
   "action": "# recommend a guided meditation or breathing exercise"
 },
@@ -676,19 +659,27 @@
 {
   "tag": "tools_language_translation",
   "patterns": [
-      "Can you translate this for me?",
-      "I need a translation",
+      "translate this",
+      "speech translation",
       "Translate this sentence",
-      "How do you say this in another language?",
-      "Help me with this translation"
-  ],
+      "How do you say in language?",
+      "verbal translation",
+      "spanish translation",
+      "french translation",
+      "german translation",
+      "italian translation",
+      "chinese translation",
+      "japanese translation",
+      "korean translation",
+      "russian translation",
+      "arabic translation",
+      "hindi translation",
+      "portuguese translation",
+      "dutch translation"],
   "responses": [
-      "Sure, what do you need translated?",
-      "I can help with that. What's the sentence?",
-      "Okay, which language should I translate it to?",
-      "Translation coming right up."
+      "Heard."
   ],
-  "action": "# perform language translation function"
+  "action": "translate_speech"
 },
 {
   "tag": "tools_file_management",
