@@ -17,6 +17,7 @@ import sys
 import subprocess
 import threading
 import time
+import traceback
 # third party imports
 from nltk.stem import WordNetLemmatizer
 from transformers import MarianMTModel, MarianTokenizer, pipeline, T5ForConditionalGeneration, T5Tokenizer
@@ -28,6 +29,8 @@ import pyautogui
 import requests
 import speech_recognition as sr
 import tensorflow as tf
+import wikipedia
+import wolframalpha
 # local imports
 # from chatbot_training import train_chatbot_model
 # train_chatbot_model()
@@ -66,8 +69,20 @@ for folder in folders_to_create:
         os.makedirs(folder)
 
 # Set the default SSL context for the entire script
-ssl._create_default_https_context = ssl.create_default_context(cafile=certifi.where())
-print(f'Using SSL certificate at {certifi.where()}\n\n')
+def create_ssl_context():
+    return ssl.create_default_context(cafile=certifi.where())
+
+ssl._create_default_https_context = create_ssl_context
+context = create_ssl_context()
+print("SSL Context Details:")
+print(f"CA Certs File: {context.cert_store_stats()}")
+print(f"Protocol: {context.protocol}")
+print(f"Options: {context.options}")
+print(f"Verify Mode: {context.verify_mode}")
+print(f"Verify Flags: {context.verify_flags}")
+print(f"Check Hostname: {context.check_hostname}")
+print(f"CA Certs Path: {certifi.where()}")
+print("\n\n")
 
 # Set API keys and other sensitive information from environment variables
 open_weather_api_key = os.getenv('OPEN_WEATHER_API_KEY')
@@ -167,9 +182,10 @@ class SpeechToTextTextToSpeechIO:
     @classmethod
     def calculate_speech_duration(cls, text, rate):
         '''calculate_speech_duration calculates the duration of the speech based on text length and speech rate. 
-        the intent for this is to create a variable that "knows how long each piece of speech output will take to say" for various 
-        reasons, including a time.sleep() for bot listening in the speehc manager. that said, this is a workaround that will eventually 
-        conflict with our desired funcitonality of the bot being able to listen while it is speaking.'''
+        the intent for calculate_speech_duration is to calculate how long each piece of speech output will "take to say". 
+        it will be used for various reasons, primarily a time.sleep() for bot listening in the speech manager. 
+        that said, this is a workaround that will eventually conflict with our desired funcitonality of the bot being able to 
+        listen while it is speaking. also, the timing is sometimes inaccurate.'''
         words = text.split()
         number_of_words = len(words)
         minutes = number_of_words / rate
@@ -178,8 +194,9 @@ class SpeechToTextTextToSpeechIO:
     
     @classmethod
     def speak_mainframe(cls, text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
-        '''speak_mainframe contains the bot's speech output voice settings, and it puts each chunk of output 
-        into the speech output queue. it also returns the duration of the speech output in seconds, using thecalculate_speech_duration function.'''
+        '''speak_mainframe contains the bot's speech output voice settings, and it puts each chunk of text output from the bot or the LLM 
+        into the speech output queue to be processed in sequential order. it also separately returns the estimated duration of the speech 
+        output (in seconds), using thecalculate_speech_duration function.'''
         cls.queue_lock.acquire()
         try:
             cls.speech_queue.put((text, rate, chunk_size, voice))
@@ -366,6 +383,7 @@ class ChatBotApp:
 class ChatBotTools:
     '''ChatBotTools contains all of the functions that are called by the chatbot_model, including larger llms, system commands, utilities, and api connections 
     to various services. it contains all of the methods that are called by the JSON intents in the chatbot_intents.json file in response to user input. '''
+    data_store = {}
     def __init__(self):
         self.tokenizer = T5Tokenizer.from_pretrained('t5-small')
         self.model = T5ForConditionalGeneration.from_pretrained('t5-small')
@@ -445,10 +463,11 @@ class ChatBotTools:
         Here is a summary of their Python codebase. The user is going to ask you to describe the capabilities of their codebase.: 
         \n {diagnostic_summary}\n
         ### SYSTEM MESSAGE ### Gemini, please read and deeply unterstand all the methods, static methods, and class methods in 
-        this codebase - examine and think about the functionalities, strengths, opportunities for improvement, 
+        this codebase - examine this code and think about the functionalities, strengths, opportunities for improvement, 
         design principles that have been applied, etc. Also assess the skill level of the developer, and 
         think of helpful advice for them and how they can improve their app and the overall cohesiveness and optimization of their code. 
-        Be like a coach for the developer. You are a senior architect doing a code review and helping them improve their code and their overall skills. 
+        Be like a coach for the developer. You are a senior architect who is mentoring them by reviewing 
+        their code and helping them improve their app and their overall software development skills. 
         Refer to the user directly in the second person tense. You are interacting with the developer directly. 
         Read the code, and then say "I've read the code. What do you want to discuss first?", and then await further instructions. 
         ## wait for user input after you acknowledge this message ##'''
@@ -516,17 +535,50 @@ class ChatBotTools:
                 SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
                 break
             
+            if query[0] == 'access' and query [1] == 'global' and query[2] == 'memory':
+                SpeechToTextTextToSpeechIO.speak_mainframe('Accessing global memory.')
+                data_store = ChatBotTools.data_store
+                print(ChatBotTools.data_store)
+                data_prompt = f'''### SYSTEM MESSAGE ### Gemini, the user is currently speaking to you from within their TTS / STT app. 
+                Here is the data they've pulled into the conversation so far. The user is going to ask you to discuss this data: 
+                \n {data_store}\n
+                ### SYSTEM MESSAGE ### Gemini, please read and deeply unterstand all the data and metadata in 
+                this dictionary - examine this data and plase it all into context together. 
+                Refer to the user directly in the second person tense. You are conversing with the user directly. 
+                Read the data, and then say "I've read the data. What do you want to discuss first?", and then await further instructions. 
+                ## wait for user input after you acknowledge this message ##'''
+                data_response = chat.send_message(f'{data_prompt}', stream=True)
+                if data_response:
+                    for chunk in data_response:
+                        SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                        time.sleep(0.1)
+                        print(chunk.text)
+                        print('\n')
+                    time.sleep(1)
+                continue
+                                             
+            else:
+                response = chat.send_message(f'{user_input}', stream=True)
+                if response:
+                    for chunk in response:
+                        SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                        time.sleep(0.1)
+            
             if query[0] == 'diagnostics':
                 SpeechToTextTextToSpeechIO.speak_mainframe('Running diagnostics.')
                 diagnostic_summary = ChatBotTools.summarize_module(sys.modules[__name__])
                 print(f'DIAGNOSTIC SUMMARY: \n\n{diagnostic_summary}\n\n')
                 prompt = f'''### SYSTEM MESSAGE ### Gemini, the user is currently speaking to you from within their TTS / STT app. 
-                Here is a summary of the classes and functions in their Python codebase: 
+                Here is a summary of their Python code. The user is going to ask you to describe the capabilities of their codebase.: 
                 \n {diagnostic_summary}\n
-                ### SYSTEM MESSAGE ### Gemini, please provide your interpretation of this codebase - strengths, opportunities for improvement, 
-                design principles that have been applied, etc. Also try to interpret the skill level of this codebase's developer, and 
-                provide helpful advice for them and how they can improve. Refer to the user directly in the second person tense. You are talking to them directly. 
-                Provide your quick summary and then await further instructions. 
+                ### SYSTEM MESSAGE ### Gemini, please read and deeply unterstand all the methods, static methods, and class methods in 
+                this codebase - examine this code and think about the functionalities, strengths, opportunities for improvement, 
+                design principles that have been applied, etc. Also assess the skill level of the developer, and 
+                think of helpful advice for them and how they can improve their app and the overall cohesiveness and optimization of their code. 
+                Be like a coach for the developer. You are a senior architect who is mentoring them by reviewing 
+                their code and helping them improve their app and their overall software development skills. 
+                Refer to the user directly in the second person tense. You are interacting with the developer directly. 
+                Read the code, and then say "I've read the code. What do you want to discuss first?", and then await further instructions. 
                 ## wait for user input after you acknowledge this message ##'''
                 diagnostic_response = chat.send_message(f'{prompt}', stream=True)
                 if diagnostic_response:
@@ -694,84 +746,160 @@ class ChatBotTools:
                 SpeechToTextTextToSpeechIO.speak_mainframe(f'In {target_language_name}, it\'s: {translation}', voice=target_voice)
                 continue
 
-# # Gathering a summary of a wikipedia page based on user input
-# def wiki_summary(query = ''):
-#     search_results = wikipedia.search(query)
-#     if not search_results:
-#         print('No results found.')
-#     try:
-#         wiki_page = wikipedia.page(search_results[0])
-#     except wikipedia.DisambiguationError as e:
-#         wiki_page = wikipedia.page(e.options[0])
-#     print(wiki_page.title)
-#     wiki_summary = str(wiki_page.summary)
-#     speak_mainframe(wiki_summary)
+    @staticmethod
+    def wiki_summary():
+        '''wiki_summary returns a summary of a wikipedia page based on user input by saying 
+        "{activation_word}, wiki summary" or "{activation_word}, wikipedia summary".'''
+        SpeechToTextTextToSpeechIO.speak_mainframe(f'What should we summarize from Wikipedia?')
+        time.sleep(1)
+        wikipedia_summary_query = SpeechToTextTextToSpeechIO.parse_user_speech().lower()
+        print("Wikipedia Query:", wikipedia_summary_query)  
+        SpeechToTextTextToSpeechIO.speak_mainframe(f'Searching {wikipedia_summary_query}')
+        search_results = wikipedia.search(wikipedia_summary_query)
+        if not search_results:
+            print('No results found.')
+        try:
+            wiki_page = wikipedia.page(search_results[0])
+        except wikipedia.DisambiguationError as e:
+            wiki_page = wikipedia.page(e.options[0])
+        wiki_title = str(wiki_page.title)
+        wiki_summary = str(wiki_page.summary)
+        response = f'Page title: \n{wiki_title}\n, ... Page Summary: \n{wiki_summary}\n'
+        # Storing Wikipedia summary in the data store
+        ChatBotTools.data_store['wikipedia_summary'] = {
+            'query': wikipedia_summary_query,
+            'title': wiki_title,
+            'summary': wiki_summary,
+            'full_page': str(wiki_page)
+        }
+        print(response)
+        SpeechToTextTextToSpeechIO.speak_mainframe("Wikipedia summary added to global memory store.")
+        # SpeechToTextTextToSpeechIO.speak_mainframe(response)
+        # context_prompt = f'''User query: \n {wikipedia_summary_query}\n, .. Page title: \n{wiki_title}\n, ... 
+        # Page Summary: \n{wiki_summary}\n, ... Full Wikipedia Page: \n{wiki_page}\n. 
+        # \n\n ### SYSTEM MESSAGE ### Gemini, please read the Wikipedia page and then summarize it in your own words. 
+        # \n\n ## wait for user input after your short summary ##'''
+        # chat = gemini_model.start_chat(history=[])
+        
+        # intro_response = chat.send_message(f'{context_prompt}', stream=True)
+                
+        # if intro_response:
+        #     for chunk in intro_response:
+        #         SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+        #         time.sleep(0.1)
+        
+        # while True:
+        #     user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+        #     if not user_input:
+        #         continue
 
-# # Querying Wolfram|Alpha based on user input
-# def wolfram_alpha(query):
-#     wolfram_client = wolframalpha.Client(wolfram_app_id)
-#     try:
-#         response = wolfram_client.query(query)
-#         print(f"Response from Wolfram Alpha: {response}")
+        #     query = user_input.lower().split()
+        #     if not query:
+        #         continue
 
-#         # Check if the query was successfully interpreted
-#         if not response['@success']:
-#             suggestions = response.get('didyoumeans', {}).get('didyoumean', [])
-#             if suggestions:
-#                 # Handle multiple suggestions
-#                 if isinstance(suggestions, list):
-#                     suggestion_texts = [suggestion['#text'] for suggestion in suggestions]
-#                 else:
-#                     suggestion_texts = [suggestions['#text']]
+        #     if query[0] in exit_words:
+        #         SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
+        #         break
+                                            
+        #     else:
+        #         response = chat.send_message(f'{user_input}', stream=True)
+        #         if response:
+        #             for chunk in response:
+        #                 SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+        #                 time.sleep(0.1)        
+        
+    @staticmethod
+    def wolfram_alpha():
+        '''wolfram_alpha returns a summary of a wolfram alpha query based on user input'''
+        wolfram_client = wolframalpha.Client(wolfram_app_id)
+        SpeechToTextTextToSpeechIO.speak_mainframe(f'Initializing wolfram alpha. State your query.')
+        wolfram_alpha_query = SpeechToTextTextToSpeechIO.parse_user_speech().lower()
+        SpeechToTextTextToSpeechIO.speak_mainframe(f'Heard. Calculating.')
+        try:
+            response = wolfram_client.query(wolfram_alpha_query)
+            print(f"Response from Wolfram Alpha: {response}")
 
-#                 suggestion_message = " or ".join(suggestion_texts)
-#                 speak_mainframe(f"Sorry, I couldn't interpret that query. These are the alternate suggestions: {suggestion_message}.")
-#             else:
-#                 speak_mainframe('Sorry, I couldn\'t interpret that query. Please try rephrasing it.')
+            # Check if the query was successfully interpreted
+            if not response['@success']:
+                suggestions = response.get('didyoumeans', {}).get('didyoumean', [])
+                if suggestions:
+                    # Handle multiple suggestions
+                    if isinstance(suggestions, list):
+                        suggestion_texts = [suggestion['#text'] for suggestion in suggestions]
+                    else:
+                        suggestion_texts = [suggestions['#text']]
 
-#             return 'Query failed.'
+                    suggestion_message = " or ".join(suggestion_texts)
+                    SpeechToTextTextToSpeechIO.speak_mainframe(f"Sorry, I couldn't interpret that query. These are the alternate suggestions: {suggestion_message}.")
+                else:
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Sorry, I couldn\'t interpret that query. Please try rephrasing it.')
 
-#         relevant_pods_titles = [
-#             "Result", "Definition", "Overview", "Summary", "Basic information",
-#             "Notable facts", "Basic properties", "Notable properties",
-#             "Basic definitions", "Notable definitions", "Basic examples",
-#             "Notable examples", "Basic forms", "Notable forms",
-#             "Detailed Information", "Graphical Representations", "Historical Data",
-#             "Statistical Information", "Comparative Data", "Scientific Data",
-#             "Geographical Information", "Cultural Information", "Economic Data",
-#             "Mathematical Proofs and Derivations", "Physical Constants",
-#             "Measurement Conversions", "Prediction and Forecasting", "Interactive Pods"]
+                return 'Query failed.'
 
-#         # Filtering and summarizing relevant pods
-#         answer = []
-#         for pod in response.pods:
-#             if pod.title in relevant_pods_titles and hasattr(pod, 'text') and pod.text:
-#                 answer.append(f"{pod.title}: {pod.text}")
+            relevant_pods_titles = [
+                "Result", "Definition", "Overview", "Summary", "Basic information",
+                "Notable facts", "Basic properties", "Notable properties",
+                "Basic definitions", "Notable definitions", "Basic examples",
+                "Notable examples", "Basic forms", "Notable forms",
+                "Detailed Information", "Graphical Representations", "Historical Data",
+                "Statistical Information", "Comparative Data", "Scientific Data",
+                "Geographical Information", "Cultural Information", "Economic Data",
+                "Mathematical Proofs and Derivations", "Physical Constants",
+                "Measurement Conversions", "Prediction and Forecasting", "Interactive Pods"]
 
-#         # Create a summarized response
-#         response_text = ' '.join(answer)
-#         if response_text:
-#             speak_mainframe(response_text)
-#         else:
-#             speak_mainframe("I found no information in the specified categories.")
+            # Filtering and summarizing relevant pods
+            answer = []
+            for pod in response.pods:
+                if pod.title in relevant_pods_titles and hasattr(pod, 'text') and pod.text:
+                    answer.append(f"{pod.title}: {pod.text}")
 
-#         # Asking user for interest in other pods
-#         for pod in response.pods:
-#             if pod.title not in relevant_pods_titles:
-#                 speak_mainframe(f"Do you want to hear more about {pod.title}? Say 'yes' or 'no'.")
-#                 user_input = parse_user_speech().lower()
-#                 if user_input == 'yes' and hasattr(pod, 'text') and pod.text:
-#                     speak_mainframe(pod.text)
-#                     continue
-#                 elif user_input == 'no':
-#                     break
+            # Create a summarized response
+            response_text = ' '.join(answer)
+            if response_text:
+                SpeechToTextTextToSpeechIO.speak_mainframe(response_text)
+                print(f'User: {wolfram_alpha_query} \nWolfram|Alpha: {response_text}')
 
-#         return response_text
+            else:
+                SpeechToTextTextToSpeechIO.speak_mainframe("I found no information in the specified categories.")
 
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
-#         speak_mainframe('An error occurred while processing the query.')
-#         return f"An error occurred: {e}"
+            # Asking user for interest in other pods
+            for pod in response.pods:
+                if pod.title not in relevant_pods_titles:
+                    SpeechToTextTextToSpeechIO.speak_mainframe(f"Do you want to hear more about {pod.title}? Say 'yes' or 'no'.")
+                    user_input = SpeechToTextTextToSpeechIO.parse_user_speech().lower()
+                    if user_input == 'yes' and hasattr(pod, 'text') and pod.text:
+                        SpeechToTextTextToSpeechIO.speak_mainframe(pod.text)
+                        continue
+                    elif user_input == 'no':
+                        break
+
+            return response_text        
+
+        except Exception as e:
+            error_traceback = traceback.format_exc()
+            print(f"An error occurred: {e}\nDetails: {error_traceback}")
+            SpeechToTextTextToSpeechIO.speak_mainframe('An error occurred while processing the query. Please check the logs for more details.')
+            return f"An error occurred: {e}\nDetails: {error_traceback}"
+        
+        
+        
+        
+
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
 
 # # Get a spoken weather forecast from openweathermap for the next 4 days by day part based on user defined home location
 # def get_weather_forecast():

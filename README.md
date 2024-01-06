@@ -40,10 +40,9 @@ For commercial use of this project, a separate commercial license is required. T
     within the .env file, optionally declare any of these variables (or others of your own) to extend tool functionality to the assistant:
     PROJECT_VENV_DIRECTORY=/Users/USERNAME/REPOSITORIES_FILDER/REPOSITORY/VENV
     USER_DOWNLOADS_FOLDER=/Users/USERNAME/Downloads
-    WOLFRAM_APP_ID - Required to use the "robot, computation engine" function
-    OPENAI_API_KEY - Required to use the "robot, call chatgpt" function
-    GOOGLE_CLOUD_API_KEY
-    GOOGLE_MAPS_API_KEY
+    WOLFRAM_APP_ID - Required to use the wolfram alpha function
+    OPENAI_API_KEY - Required to use the chatgpt function
+    GOOGLE_CLOUD_API_KEY - Required to use the google maps, places, and gustom search engine apis
     GOOGLE_GEMINI_API_KEY - Required to use the "robot, call gemini" function
     OPEN_WEATHER_API_KEY - Required to use the "robot, weather forecast" function
     USER_PREFERRED_LANGUAGE - 2 letter lowercase language code: USER_PREFERRED_LANGUAGE=en
@@ -79,7 +78,7 @@ For commercial use of this project, a separate commercial license is required. T
     - "robot, translate to {language}" to translate to a language
     - "robot, wiki research" to search wikipedia
                 WIKI NOTES:
-                the app crashes when wikipedia doesn't return a valid result. 
+                the app crashes when wikipedia doesn't return a valid result and needs error handling. 
                 the bot should list the next 3 closest results and ask the user if one of the 'next closest search results' is acceptable and if so, read it, and if not, then the bot should ask the user to rephrase the query.
                 the bot recites the full wikipedia summary which can tend to be long. the user wants a way to interrupt the bot if necessary by saying "robot reset robot".
     - "robot, youtube video" to search youtube
@@ -132,6 +131,11 @@ For commercial use of this project, a separate commercial license is required. T
     integrate it with the phomemo printer to print notes.
     add the ability to conduct legal research with websites like casetext, lexisnexis, westlaw, docketbird, pacer, bloomberg law, bna, fastcase, bestlaw, case text, casecheck, case notebook.
     add oauth2 for authentication to google cloud API services with pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib.
+    unit tests.
+    input validations for each function.
+    performance optimization.
+    code profiling to identify bottlenecks.
+    additional secutiry measures - encryption, access control, input sanitation, etc.
 
 
 
@@ -139,7 +143,7 @@ For commercial use of this project, a separate commercial license is required. T
 
     the speech timeout settings are still a bit clunky with room for improvement.
     currently, the bot is hearing its own output which is muddying the user input when the bot prompts the user for input.
-    this is interfering with the ability to create a stateful chat loop with good conversational flow.
+    this is interfering with the ability to create a lifelike stateful chat loop with good conversational flow.
     the speech recognizer is combining the bot's speech and the user's speech into one message which is not correct.
     The i/o is currently working like this and needs to be fixed: 
         the user says "robot, translate to spanish", the bot says "Speak the phrase you want to translate.", the user says "this is the phrase." then the bot interprets and translates "Speak the phrase you want to translate. this is the phrase." into Spanish.
@@ -188,6 +192,8 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.1 - 2024-01-05 added a function to run diagnostics on the codebase with inspect and then call in the llm as a pair programmer copilot.
     0.2.2 - 2024-01-05 trimmed out commented old functions and migrated more tool methods from 0.1.2 to 0.2.2.
     0.2.2 - 2024-01-05 added a function for the llm to simply read in the codebase and stand by as a pair programmer.
+    0.2.2 - 2024-01-05 added more thorough docstrings to all classes and methods.
+    0.2.2 - 2024-01-06 added a shared class dictionary called data_store to the ChatBotTools class which stores the data rendered by certain chatbot tools like wikipedia for later access by the LLM agent.
     
     
 

@@ -525,14 +525,21 @@
     "gemini a i",
     "gemini ai",
     "speak with a i"],
-  "responses": ["Ok."],
+  "responses": ["Heard."],
   "action": "gemini_chat"
+},
+{
+  "tag": "tools_wiki_summary",
+  "patterns": ["wiki", 
+    "wikipedia"],
+  "responses": ["Done."],
+  "action": "wiki_summary"
 },
 {
   "tag": "tools_control_mouse",
   "patterns": ["move the mouse", 
     "control the mouse"],
-  "responses": ["Ok."],
+  "responses": ["Heard."],
   "action": "control_mouse"
 },
 {
@@ -565,12 +572,7 @@
     "record this message", 
     "record this note", 
     "take down some notes for me please"],
-  "responses": ["ok, ready", 
-    "sure, go ahead", 
-    "ok, go ahead", 
-    "sure, what's the note?", 
-    "ok go", 
-    "ready"],
+  "responses": ["Heard"],
   "action": "take_notes"
 },
 {
@@ -581,27 +583,19 @@
     "what are the notes for", 
     "what notes do we have", 
     "what does the note for say"],
-  "responses": ["ok", 
-    "ok, here it is", 
-    "sure", 
-    "heard", 
-    "k", 
-    "got it"],
+  "responses": ["Heard"],
   "action": "recall_notes"
 },
 {
   "tag": "tools_computation_engine",
-  "patterns": ["hi, please search wolfram alpha for", 
-    "query wolfram alpha for", 
-    "look up on wolfram alpha", 
+  "patterns": ["search wolfram alpha", 
+    "wolfram alpha", 
+    "look up on wolfram alpha query", 
     "search wolfram alpha", 
-    "computatoin engine", 
+    "computation engine", 
     "compute calculations"],
-  "responses": ["ok, what should we search", 
-    "ok what's the query", 
-    "ok state your search phrase", 
-    "sure - what do you need to know"],
-  "action": "wolfram_alpha_search"
+  "responses": ["Heard"],
+  "action": "wolfram_alpha"
 },
 {
   "tag": "tools_basic_google_search",
@@ -638,23 +632,6 @@
       "I can find that information for you."
   ],
   "action": "custom_search_engine_assistant"
-},
-{
-  "tag": "tools_tech_support",
-  "patterns": [
-      "I'm having a problem with my computer",
-      "Can you help me with a tech issue?",
-      "My phone isn't working",
-      "I need help with a device",
-      "There's a problem with my laptop"
-  ],
-  "responses": [
-      "I can try to help. What seems to be the problem?",
-      "Sure, tell me more about your tech issue.",
-      "What device are you having trouble with?",
-      "Let's see if we can sort this out."
-  ],
-  "action": "# engage the custom search engine based on user query keyword extraction and provide basic llm tech support or guide to relevant resources"
 },
 {
   "tag": "tools_language_translation",
@@ -700,64 +677,6 @@
       "OK."
   ],
   "action": "# assist with file management tasks"
-},
-{
-  "tag": "tools_search_social_media",
-  "patterns": [
-      "Can you search this on social media?",
-      "Review social media for this topic",
-      "What is happening with on social media",
-      "Whats going on in social media for",
-      "How is trending on social media"
-  ],
-  "responses": [
-      "Searching.",
-      "Looking into it.",
-      "Checking.",
-      "Researching."
-  ],
-  "action": "# crawl social media or pull from apis for social media data and public sentiment analysis on a topic"
-},
-{
-  "tag": "tools_shopping_assistance",
-  "patterns": [
-      "Can you order groceries for me?",
-      "I need to buy a gift online",
-      "Find me the best deals on laptops",
-      "Help me with online shopping",
-      "Add items to my shopping cart"
-  ],
-  "responses": [
-      "I can order groceries for you. What do you need?",
-      "Looking for gift ideas. Any preferences?",
-      "Finding the best deals on laptops for you.",
-      "Let's start with your online shopping. What are you looking for?",
-      "Items added to your shopping cart."
-  ],
-  "action": "# assist with online shopping tasks"
-},
-{
-  "tag": "tools_educational_assistance",
-  "patterns": [
-      "Can you help me with my homework?",
-      "I need assistance with a school project",
-      "Explain this topic to me",
-      "I'm struggling with a subject",
-      "Teach me something new",
-      "Can you tutor me on",
-      "can you help me study for",
-      "can you help me with my homework for",
-      "can you help me learn about",
-      "can you help me with my project for"
-  ],
-  "responses": [
-      "Sure, what subject do you need help with?",
-      "I'd be happy to assist with your project. What's the topic?",
-      "Let me explain that topic to you.",
-      "What specific part are you struggling with?",
-      "Let's learn something new together. What are you interested in?"
-  ],
-  "action": "# engage tutor agent to assist with educational tasks"
 }
     ]
 }
