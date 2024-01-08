@@ -15,7 +15,7 @@ genai.configure(api_key=google_gemini_api_key)
 model = genai.GenerativeModel('gemini-pro')
 chat = model.start_chat(history=[])
 
-response = chat.send_message("Please give me instructions for how to pass a downloaded image to gemini provision in a generate content message. write your output in python code please.", stream=True)
+response = chat.send_message("what data does google store from users or developers when using the speech recognition (aka speech_recognition) python package? are there any comparable open source alternatives? are there any libraries that do this and don't store users' data? can google users or devs opt out of data storage with the speech recognition api?", stream=True)
 
 for chunk in response:
     print(chunk.text)

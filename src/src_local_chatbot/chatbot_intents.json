@@ -34,27 +34,6 @@
   "action": "run_greeting_code"
 },
 {
-  "tag": "conversation_capabilities",
-  "patterns": ["tell me what you know", 
-    "tell me which questions you understand", 
-    "tell me what you can do", 
-    "what can you do?",
-    "I need help programming",
-    "Can you assist me with coding",
-    "I'm not sure what to do with this python program",
-    "Help me out with my python code in this program",
-    "what functions do you have",
-    "what can this code do",
-    "what does this code know how to do",
-    "what does this code understand",
-    "tell me how to use this app program",
-    "what does this app know how to do", 
-    "what kind of things does this code do", 
-    "what questions does the app in this code understand"],
-  "responses": ["Scanning the codebase..."],
-  "action": "describe_capabilities"
-},
-{
   "tag": "conversation_quotes",
   "patterns": ["tell me a quote", 
     "do you know any good quotes", 
@@ -352,39 +331,6 @@
   "action": "# play music through music API or engage spotify with a search based on user input"
 },
 {
-  "tag": "report_stock_market",
-  "patterns": ["load stock data", 
-    "upload the stock data", 
-    "download my stock information", 
-    "get the stock data info", 
-    "get our stock market change information", 
-    "please get the stock market reports"],
-  "responses": ["Ok, good to go.", 
-    "Got it, all set.", 
-    "Heard. Now what?.", 
-    "All done.", 
-    "Good to go.", 
-    "Done."],
-  "action": "# trigger the stocks class to load data then pass it to a global variable so we can include it in llm prompts and/or give the llm search access"
-},
-{
-  "tag": "report_weather",
-  "patterns": [
-      "What's the weather like today?",
-      "Is it going to rain tomorrow?",
-      "Tell me the weather forecast",
-      "Weather update please",
-      "I need to know the weather for my trip"
-  ],
-  "responses": [
-      "Let me check the weather for you.",
-      "I'll look up today's weather forecast.",
-      "Sure, getting the weather details right away.",
-      "I can help with that. Where are you located?"
-  ],
-  "action": "# call weather API"
-},
-{
   "tag": "report_news",
   "patterns": [
       "What's the latest news?",
@@ -529,6 +475,59 @@
   "action": "gemini_chat"
 },
 {
+  "tag": "tools_pair_programmer",
+  "patterns": ["app",
+    "program",
+    "code",
+    "script",
+    "coding",
+    "programming",
+    "coder",
+    "programmer",
+    "developer",
+    "copilot",
+    "co pilot",
+    "pair programmer",
+    "pair coder",
+    "pair programming",
+    "code assistance",
+    "coding assistance",
+    "programming assistance",
+    "code help",
+    "coding help",
+    "programming help",
+    "coding",
+    "help programming",
+    "assist coding",
+    "python program",
+    "python code this program",
+    "functions classes methods",
+    "this code",
+    "app program",
+    "application", 
+    "help me code", 
+    "this code"],
+  "responses": ["Loading..."],
+  "action": "pair_programmer"
+},
+{
+  "tag": "tools_custom_search_engine",
+  "patterns": [
+      "custom  search engine",
+      "custom search engine",
+      "custom engine",
+      "custom",
+      "custom engine",
+      "search engine",
+      "custom search",
+      "custom search engine"
+  ],
+  "responses": [
+      "Heard."
+  ],
+  "action": "custom_search_engine"
+},
+{
   "tag": "tools_wiki_summary",
   "patterns": ["wiki", 
     "wikipedia"],
@@ -536,11 +535,47 @@
   "action": "wiki_summary"
 },
 {
+  "tag": "tools_stock_report",
+  "patterns": ["stock report", 
+    "stock data", 
+    "stock markt", 
+    "stock portfolio", 
+    "stock performance", 
+    "stock watch list"],
+  "responses": ["Ok.", 
+    "Got it.", 
+    "Heard."],
+  "action": "get_stock_report"
+},
+{
   "tag": "tools_control_mouse",
   "patterns": ["move the mouse", 
     "control the mouse"],
   "responses": ["Heard."],
   "action": "control_mouse"
+},
+{
+  "tag": "tools_play_youtube_video",
+  "patterns": ["youtube video", 
+    "youtube",
+    "you tube",
+    "u tube",
+    "you tube video"],
+  "responses": ["Heard."],
+  "action": "play_youtube_video"
+},
+{
+  "tag": "tools_weather_forecast",
+  "patterns": [
+      "forecast weather",
+      "weather forecast",
+      "weather for cast",
+      "Weather"
+  ],
+  "responses": [
+      "On it."
+  ],
+  "action": "get_weather_forecast"
 },
 {
   "tag": "tools_fact_checking",
@@ -596,42 +631,6 @@
     "compute calculations"],
   "responses": ["Heard"],
   "action": "wolfram_alpha"
-},
-{
-  "tag": "tools_basic_google_search",
-  "patterns": [
-      "Can you google this for me?",
-      "I need information on",
-      "Google search",
-      "Find this on the internet",
-      "web search",
-      "internet search",
-      "Look this up please"
-  ],
-  "responses": [
-      "Sure, I'll search that for you.",
-      "Let me look that up quickly.",
-      "Okay, googling it now.",
-      "I can find that information for you."
-  ],
-  "action": "basic_google_search"
-},
-{
-  "tag": "tools_google_custom_search_engine",
-  "patterns": [
-      "Can you use our custom google search engine?",
-      "Custom google search engine",
-      "custom Google search engine",
-      "custom search engine",
-      "google search engine"
-  ],
-  "responses": [
-      "Sure, I'll search that for you.",
-      "Let me look that up quickly.",
-      "Okay, googling it now.",
-      "I can find that information for you."
-  ],
-  "action": "custom_search_engine_assistant"
 },
 {
   "tag": "tools_language_translation",

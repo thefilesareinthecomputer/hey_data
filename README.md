@@ -150,6 +150,8 @@ For commercial use of this project, a separate commercial license is required. T
         this is also affecting other functions like the wikipedia summary function. 
         the bot also hears its own announcement when it sais "robot online", etc.
         we need the simplest solution possible to fix this problem.
+    planning to build the ui in flet 
+    implement cachching for speed increase
 
 
 ## COMPLETION LOG / COMMIT MESSAGES:
