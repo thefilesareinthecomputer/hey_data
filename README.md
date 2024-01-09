@@ -23,6 +23,9 @@ For commercial use of this project, a separate commercial license is required. T
     brew install portaudio
     brew install flac
 
+    download the pocketsphinx model, unzip it, and store it in 'app_local_models' in the project root directory
+    https://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/US%20English/
+
     pip install --upgrade pip
     pip install --upgrade virtualenv
     pip install --upgrade pytest
@@ -196,6 +199,7 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.2 - 2024-01-05 added a function for the llm to simply read in the codebase and stand by as a pair programmer.
     0.2.2 - 2024-01-05 added more thorough docstrings to all classes and methods.
     0.2.2 - 2024-01-06 added a shared class dictionary called data_store to the ChatBotTools class which stores the data rendered by certain chatbot tools like wikipedia for later access by the LLM agent.
+    0.2.2 - 2024-01-07 migrated the remaining functions from 0.1.2 to 0.2.2.
     
     
 

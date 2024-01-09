@@ -578,6 +578,52 @@
   "action": "get_weather_forecast"
 },
 {
+  "tag": "tools_computation_engine",
+  "patterns": ["search wolfram alpha", 
+    "wolfram alpha", 
+    "look up on wolfram alpha query", 
+    "search wolfram alpha", 
+    "computation engine", 
+    "compute calculations"],
+  "responses": ["Heard"],
+  "action": "wolfram_alpha"
+},
+{
+  "tag": "tools_language_translation",
+  "patterns": [
+      "translate this",
+      "speech translation",
+      "Translate this sentence",
+      "How do you say in language?",
+      "verbal translation",
+      "spanish translation",
+      "french translation",
+      "german translation",
+      "italian translation",
+      "chinese translation",
+      "japanese translation",
+      "korean translation",
+      "russian translation",
+      "arabic translation",
+      "hindi translation",
+      "portuguese translation",
+      "dutch translation"],
+  "responses": [
+      "Heard."
+  ],
+  "action": "translate_speech"
+},
+{
+  "tag": "tools_take_screenshot",
+  "patterns": ["screenshot", 
+    "screen shot", 
+    "screen capture", 
+    "snapshot", 
+    "screen"],
+  "responses": ["Heard"],
+  "action": "take_screenshot"
+},
+{
   "tag": "tools_fact_checking",
   "patterns": ["are you sure about that", 
     "that doesnt sound right", 
@@ -620,42 +666,6 @@
     "what does the note for say"],
   "responses": ["Heard"],
   "action": "recall_notes"
-},
-{
-  "tag": "tools_computation_engine",
-  "patterns": ["search wolfram alpha", 
-    "wolfram alpha", 
-    "look up on wolfram alpha query", 
-    "search wolfram alpha", 
-    "computation engine", 
-    "compute calculations"],
-  "responses": ["Heard"],
-  "action": "wolfram_alpha"
-},
-{
-  "tag": "tools_language_translation",
-  "patterns": [
-      "translate this",
-      "speech translation",
-      "Translate this sentence",
-      "How do you say in language?",
-      "verbal translation",
-      "spanish translation",
-      "french translation",
-      "german translation",
-      "italian translation",
-      "chinese translation",
-      "japanese translation",
-      "korean translation",
-      "russian translation",
-      "arabic translation",
-      "hindi translation",
-      "portuguese translation",
-      "dutch translation"],
-  "responses": [
-      "Heard."
-  ],
-  "action": "translate_speech"
 },
 {
   "tag": "tools_file_management",

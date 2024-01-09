@@ -151,8 +151,8 @@ class SpeechToTextTextToSpeechIO:
                         listener.pause_threshold = 1.5
                         input_speech = listener.listen(source, timeout=20, phrase_time_limit=8)
                     print('Processing...')
-                    query = listener.recognize_google(input_speech, language='en_US')
-                    # query = listener.recognize_sphinx(input_speech, language='en_US')
+                    # query = listener.recognize_google(input_speech, language='en_US')
+                    query = listener.recognize_sphinx(input_speech, language='en_US')
                     print(f'You said: {query}\n')
                     return query
 

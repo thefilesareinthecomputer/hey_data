@@ -77,7 +77,7 @@ LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_local_models')
 NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_base_knowledge')
 SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_source_data')
 TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_tests')
-UTILITIES_DIR_PATH = os.path.join(SCRIPT_DIR_PATH, 'utilities')
+UTILITIES_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'utilities')
 
 folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, NOTES_DROP_DIR_PATH, SOURCE_DATA_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
 for folder in folders_to_create:
@@ -123,34 +123,61 @@ pd.set_option('display.precision', 1)
 
 # STABLE VERSION 
 
-# img = PIL.Image.open(f'{SOURCE_DATA_DIR_PATH}/menu.png')
+img = PIL.Image.open(f'{SOURCE_DATA_DIR_PATH}/menu.png')
+response_first_pass = model.generate_content(["### SYSTEM MESSAGE ### Gemini - you are a restaurant food menu text sorter and parser. you are being asked to convert an unstructured restaurant menu pdf into a structured data table. Please list all menu items on this menu, by category, as a data table. Do not hallucinate any false words. You will be rewarded for high accuracy. Do not make up any fake items. Do not make any mistakes such as categorizing a steak as a sandwich or merging 2 distinct menu items into 1 row by mistake. You are converting a pdf of a restaurant menu into a structured data table that can be queried. Ensure the data table is clear and accurate. Keep in mind that menu categories are often the menu headers, and the common categories for menu items include: Salads, Appetizers, Entrees, Desserts, Mains, Sides, Sushi, Soups, Seafood, Sandwiches, Plant-Based, Vegetarian, etc. Keep in mind that menus differ in format. Some sections may have all items listed vertically, whereas some sections may contain multiple columns of menu items. Some menu items may include a description or listed ingredients, and some amy not. Please be discerning and ensure you are recognizing the appropriate entities on the menu as what they really are. Please make sure to gather all of the items on the menu and group them all into the correct categories. Thanks in advance for your hard work. Make sure your output is a data table. Only reply with the data table. Here is an example of a 'correct row' for a menu item in the data table: ' | index | menu item | category | price | ingredients | | 11 | CHILLED JUMBO SHRIMP | Starters | 26 | with cocktail and remoulade sauces |'. Use your common sense and understanding of food and restaurant menu items - for example, you know that a caesar salad belongs in the salads category and you know that a side of fries will probably be listed in the sides section, even if it's not totally clear on the menu. Include these columns in the data table: index, menu item, category, price, ingredients.", img])
+time.sleep(1)
+response_first_pass.resolve()
+time.sleep(1)
+response_1 = response_first_pass.text
+print(f'RESPONSE 1 \n\n{response_1}\n\n')
+time.sleep(1)
+response_second_pass = model.generate_content([f"### SYSTEM MESSAGE ### Gemini - you are a restaurant food menu text sorter and parser. you are being asked to convert an unstructured restaurant menu pdf into a structured data table. Please look at the data table you generated and also look at this image of a restaurant food menu. You will be rewarded for high accuracy. Do not make up any fake items. Please list all menu items on this menu, by category, as a data table. Do not hallucinate any false words. Do not make any mistakes such as categorizing a steak as a sandwich or merging 2 distinct menu items into 1 row by mistake. You are converting a pdf of a restaurant menu into a structured data table that can be queried. Ensure the data table is clear and accurate. Keep in mind that menu categories are often the menu headers, and the common categories for menu items include: Salads, Appetizers, Entrees, Desserts, Mains, Sides, Sushi, Soups, Seafood, Sandwiches, Plant-Based, Vegetarian, etc. Keep in mind that menus differ in format. Some sections may have all items listed vertically, whereas some sections may contain multiple columns of menu items. Some menu items may include a description or listed ingredients, and some amy not. Please be discerning and ensure you are recognizing the appropriate entities on the menu as what they really are. Please make sure to gather all of the items on the menu and group them all into the correct categories. A moment ago, you used computer vision to read this food menu into this structured data table, and now you must verify that it is 100% accurate. This is the second pass, and we still have some inaccuracies to correct. Please examine this data table against this food menu and validate the accuracy in the data table. If you discover any incorrect or missing items, please correct them or add them. The image is the source of truth. Ensure the data table accurately reflects the data in the image (in a correctly structured way). Please provide your output as a data table with the same column structure as the current one. Please make sure to gather all of the items on the menu and group them all into the correct categories. Thanks in advance for your hard work. Make sure your output is a data table. Only reply with the data table. Include these columns in the data table: index, menu item, category, price, ingredients. Here is an example of a 'correct row' for a menu item in the data table: ' | index | menu item | category | price | ingredients || 11 | CHILLED JUMBO SHRIMP | Starters | 26 | with cocktail and remoulade sauces |'. Use your common sense and understanding of food and restaurant menu items - for example, you know that a caesar salad belongs in the salads category and you know that a side of fries will probably be listed in the sides section, even if it's not totally clear on the menu. Here is the data table for you to correct. Please scrutinize and correct all the errors: RESPONSE 1: \n{response_1}\n RESPONSE 2: (your updated table here)", img])
+time.sleep(1)
+response_second_pass.resolve()
+time.sleep(1)
+response_2 = response_second_pass.text
+print(f'RESPONSE 2 \n\n{response_2}\n\n')
+time.sleep(1)
+response_third_pass = model.generate_content([f"### SYSTEM MESSAGE ### Gemini - you are a restaurant food menu text sorter and parser. you are being asked to convert an unstructured restaurant menu pdf into a structured data table. Please look at the data tables you generated and also look at this image of a restaurant food menu. You will be rewarded for high accuracy. Do not make up any fake items. Please list all menu items on this menu, by category, as a data table. Do not hallucinate any false words. Do not make any mistakes such as categorizing a steak as a sandwich or merging 2 distinct menu items into 1 row by mistake. You are converting a pdf of a restaurant menu into a structured data table that can be queried. Ensure the data table is clear and accurate. Keep in mind that menu categories are often the menu headers, and the common categories for menu items include: Salads, Appetizers, Entrees, Desserts, Mains, Sides, Sushi, Soups, Seafood, Sandwiches, Plant-Based, Vegetarian, etc. Keep in mind that menus differ in format. Some sections may have all items listed vertically, whereas some sections may contain multiple columns of menu items. Some menu items may include a description or listed ingredients, and some amy not. Please be discerning and ensure you are recognizing the appropriate entities on the menu as what they really are. Please make sure to gather all of the items on the menu and group them all into the correct categories. You just made 2 attempts to use computer vision to read this food menu into this structured data table, and now you must verify that it is 100% accurate. This is the third pass, and we still have some inaccuracies to correct. Please examine this data table against this food menu and validate the accuracy in the data table. If you discover any incorrect or missing items, please correct them or add them. The image is the source of truth. Ensure the data table accurately reflects the data in the image (in a correctly structured way). Please provide your output as a data table with the same column structure as the current one. Please make sure to gather all of the items on the menu and group them all into the correct categories. Thanks in advance for your hard work. Make sure your output is a data table. Only reply with the data table. Include these columns in the data table: index, menu item, category, price, ingredients. Here is an example of a 'correct row' for a menu item in the data table: ' | index | menu item | category | price | ingredients || 11 | CHILLED JUMBO SHRIMP | Starters | 26 | with cocktail and remoulade sauces |'. Use your common sense and understanding of food and restaurant menu items - for example, you know that a caesar salad belongs in the salads category and you know that a side of fries will probably be listed in the sides section, even if it's not totally clear on the menu. Here are the tables you've generated so far - please perfect the table. Please scrutinize and correct all the errors: RESPONSE 1: \n{response_1}\n RESPONSE 2: \n{response_2}\n RESPONSE 3: (your updated table here)", img])
+time.sleep(1)
+response_third_pass.resolve()
+time.sleep(1)
+response_3 = response_third_pass.text
+print(f'RESPONSE 3 \n\n{response_3}\n\n')
+time.sleep(1)
+response_fourth_pass = model.generate_content([f"### SYSTEM MESSAGE ### Gemini - you are a restaurant food menu text sorter and parser. you are being asked to convert an unstructured restaurant menu pdf into a structured data table. Please look at the data tables you generated and also look at this image of a restaurant food menu. You will be rewarded for high accuracy. Do not make up any fake items. Please list all menu items on this menu, by category, as a data table. Do not hallucinate any false words. Do not make any mistakes such as categorizing a steak as a sandwich or merging 2 distinct menu items into 1 row by mistake. You are converting a pdf of a restaurant menu into a structured data table that can be queried. Ensure the data table is clear and accurate. Keep in mind that menu categories are often the menu headers, and the common categories for menu items include: Salads, Appetizers, Entrees, Desserts, Mains, Sides, Sushi, Soups, Seafood, Sandwiches, Plant-Based, Vegetarian, etc. Keep in mind that menus differ in format. Some sections may have all items listed vertically, whereas some sections may contain multiple columns of menu items. Some menu items may include a description or listed ingredients, and some amy not. Please be discerning and ensure you are recognizing the appropriate entities on the menu as what they really are. Please make sure to gather all of the items on the menu and group them all into the correct categories. You just made 3 attempts to use computer vision to read this food menu into this structured data table, and now you must verify that it is 100% accurate. This is the fourth pass, and we still have some inaccuracies to correct. Please examine this data table against this food menu and validate the accuracy in the data table. If you discover any incorrect or missing items, please correct them or add them. The image is the source of truth. Ensure the data table accurately reflects the data in the image (in a correctly structured way). Please provide your output as a data table with the same column structure as the current one. Please make sure to gather all of the items on the menu and group them all into the correct categories. Thanks in advance for your hard work. Make sure your output is a data table. Only reply with the data table. Include these columns in the data table: index, menu item, category, price, ingredients. Here is an example of a 'correct row' for a menu item in the data table: ' | index | menu item | category | price | ingredients || 11 | CHILLED JUMBO SHRIMP | Starters | 26 | with cocktail and remoulade sauces |'. Use your common sense and understanding of food and restaurant menu items - for example, you know that a caesar salad belongs in the salads category and you know that a side of fries will probably be listed in the sides section, even if it's not totally clear on the menu. Here are the tables you've generated so far - please perfect the table. Please scrutinize and correct all the errors: RESPONSE 1: \n{response_1}\n RESPONSE 2: \n{response_2}\n RESPONSE 3: \n{response_3}\n RESPONSE 4: (your updated table here)", img])
+time.sleep(1)
+response_fourth_pass.resolve()
+time.sleep(1)
+response_4 = response_fourth_pass.text
+print(f'RESPONSE 4 \n\n{response_4}\n\n')
+time.sleep(1)
 
-# response = model.generate_content(["Please list all menu items on this menu, by category, as a data table. Do not hallucinate any false words. You are converting a pdf of a restaurant menu into a data table that can be queried. Ensure the data table is clear and accurate. Keep in mind that menu categories are often the menu headers, and the common categories for menu items include: Salads, Appetizers, Entrees, Desserts, Mains, Sides, Sushi, Soups, Seafood, Sandwiches, Plant-Based, Vegetarian, etc. Keep in mind that menus differ in format. Some sections may have all items listed vertically, whereas some sections may contain multiple columns of menu items. Some menu items may include a description or listed ingredients, and some amy not. Please be discerning and ensure you are recognizing the appropriate entities on the menu as what they really are. Please make sure to gather all of the items on the menu and group them all into the correct categories. Thanks in advance for your hard work. Make sure your output is a data table. Only reply with the data table. Include these columns in the data table: index, menu item, category, price, ingredients.", img])
+# Combined content with headers
+combined_content = f"RESPONSE 1: \n\n{response_1}\n\n RESPONSE 2: \n\n{response_2}\n\n RESPONSE 3: \n\n{response_3}\n\n RESPONSE 4: \n\n{response_4}\n\n"
+# Write the combined content to a single file
+with open(f'{FILE_DROP_DIR_PATH}/menu_description.txt', 'w') as f:
+    f.write(combined_content)
 
-# time.sleep(1)
 
-# response.resolve()
 
-# time.sleep(1)
 
-# response_1 = response.text
 
-# time.sleep(1)
 
-# response_second_pass = model.generate_content([f"Please look at this data table and this image of a restaurant food menu. A moment ago, an AI model used computer vision to read this food menu into this structured data table, but it was not 100% accurate. Please examine this data table against this food menu and validate the accuracy in the data table. If you discover any incorrect or missing items, please correct them or add them. This was the first pass of the data table, followed by the image. The image is the source of truth. Please ensure the data table reflects the daa in the image in a structured way. Please provide your output as a data table with the same column structure as in the current one. Please make sure to gather all of the items on the menu and group them all into the correct categories. Thanks in advance for your hard work. Make sure your output is a data table. Only reply with the data table. Include these columns in the data table: index, menu item, category, price, ingredients. Here is the data table for you to correct: {response_1}", img])
 
-# time.sleep(1)
 
-# response_second_pass.resolve()
 
-# time.sleep(1)
 
-# response_2 = response_second_pass.text
 
-# time.sleep(1)
 
-# print(f'RESPONSE 1 \n\n {response_1}\n')
-# print(f'RESPONSE 2 \n\n {response_2}\n')
+
+
+
+
+
+
+
+
 
 # # Convert the content of the response to a .txt file and save it
 # with open(f'{FILE_DROP_DIR_PATH}/menu_response_1.txt', 'w') as f:
@@ -162,53 +189,53 @@ pd.set_option('display.precision', 1)
     
 # MENU PARSING AGENT THAT USES A URL PHOTO ###################################################################################################################################
 
-# URL of the image
-image_url = 'https://hillstone.com/menus/hillstone/Hillstone%20Park%20Avenue%20South%20Dinner.pdf?version=v-1703997983'  # Replace with your image URL
+# # URL of the image
+# image_url = 'https://hillstone.com/menus/hillstone/Hillstone%20Park%20Avenue%20South%20Dinner.pdf?version=v-1703997983'  # Replace with your image URL
 
-# Fetch the image from the URL
-response = requests.get(image_url, verify=False)
-if response.status_code == 200:  # Check if the request was successful
-    img = Image.open(BytesIO(response.content))
-else:
-    print(f"Failed to retrieve image. Status code: {response.status_code}")
-    img = None  # Or handle the error as needed
+# # Fetch the image from the URL
+# response = requests.get(image_url, verify=False)
+# if response.status_code == 200:  # Check if the request was successful
+#     img = Image.open(BytesIO(response.content))
+# else:
+#     print(f"Failed to retrieve image. Status code: {response.status_code}")
+#     img = None  # Or handle the error as needed
 
-# Use `img` in model.generate_content() call
-if img:
-    response = model.generate_content(["Please list all menu items on this menu, by category, as a data table. Do not hallucinate any false words. You are converting a pdf of a restaurant menu into a data table that can be queried. Ensure the data table is clear and accurate. Keep in mind that menu categories are often the menu headers, and the common categories for menu items include: Salads, Appetizers, Entrees, Desserts, Mains, Sides, Sushi, Soups, Seafood, Sandwiches, Plant-Based, Vegetarian, etc. Keep in mind that menus differ in format. Some sections may have all items listed vertically, whereas some sections may contain multiple columns of menu items. Some menu items may include a description or listed ingredients, and some amy not. Please be discerning and ensure you are recognizing the appropriate entities on the menu as what they really are. Please make sure to gather all of the items on the menu and group them all into the correct categories. Thanks in advance for your hard work. Make sure your output is a data table. Only reply with the data table. Include these columns in the data table: index, menu item, category, price, ingredients.", img])
+# # Use `img` in model.generate_content() call
+# if img:
+#     response = model.generate_content(["Please list all menu items on this menu, by category, as a data table. Do not hallucinate any false words. You are converting a pdf of a restaurant menu into a data table that can be queried. Ensure the data table is clear and accurate. Keep in mind that menu categories are often the menu headers, and the common categories for menu items include: Salads, Appetizers, Entrees, Desserts, Mains, Sides, Sushi, Soups, Seafood, Sandwiches, Plant-Based, Vegetarian, etc. Keep in mind that menus differ in format. Some sections may have all items listed vertically, whereas some sections may contain multiple columns of menu items. Some menu items may include a description or listed ingredients, and some amy not. Please be discerning and ensure you are recognizing the appropriate entities on the menu as what they really are. Please make sure to gather all of the items on the menu and group them all into the correct categories. Thanks in advance for your hard work. Make sure your output is a data table. Only reply with the data table. Include these columns in the data table: index, menu item, category, price, ingredients.", img])
 
-    time.sleep(1)
+#     time.sleep(1)
 
-    response.resolve()
+#     response.resolve()
 
-    time.sleep(1)
+#     time.sleep(1)
 
-    response_1 = response.text
+#     response_1 = response.text
 
-    time.sleep(1)
+#     time.sleep(1)
 
-    response_second_pass = model.generate_content([f"Please look at this data table and this image of a restaurant food menu. A moment ago, an AI model used computer vision to read this food menu into this structured data table, but it was not 100% accurate. Please examine this data table against this food menu and validate the accuracy in the data table. If you discover any incorrect or missing items, please correct them or add them. This was the first pass of the data table, followed by the image. The image is the source of truth. Please ensure the data table reflects the daa in the image in a structured way. Please provide your output as a data table with the same column structure as in the current one. Please make sure to gather all of the items on the menu and group them all into the correct categories. Thanks in advance for your hard work. Make sure your output is a data table. Only reply with the data table. Include these columns in the data table: index, menu item, category, price, ingredients. Here is the data table for you to correct: {response_1}", img])
+#     response_second_pass = model.generate_content([f"Please look at this data table and this image of a restaurant food menu. A moment ago, an AI model used computer vision to read this food menu into this structured data table, but it was not 100% accurate. Please examine this data table against this food menu and validate the accuracy in the data table. If you discover any incorrect or missing items, please correct them or add them. This was the first pass of the data table, followed by the image. The image is the source of truth. Please ensure the data table reflects the daa in the image in a structured way. Please provide your output as a data table with the same column structure as in the current one. Please make sure to gather all of the items on the menu and group them all into the correct categories. Thanks in advance for your hard work. Make sure your output is a data table. Only reply with the data table. Include these columns in the data table: index, menu item, category, price, ingredients. Here is the data table for you to correct: {response_1}", img])
 
-    time.sleep(1)
+#     time.sleep(1)
 
-    response_second_pass.resolve()
+#     response_second_pass.resolve()
 
-    time.sleep(1)
+#     time.sleep(1)
 
-    response_2 = response_second_pass.text
+#     response_2 = response_second_pass.text
 
-    time.sleep(1)
+#     time.sleep(1)
 
-    print(f'RESPONSE 1 \n\n {response_1}\n')
-    print(f'RESPONSE 2 \n\n {response_2}\n')
+#     print(f'RESPONSE 1 \n\n {response_1}\n')
+#     print(f'RESPONSE 2 \n\n {response_2}\n')
 
-    # Convert the content of the response to a .txt file and save it
-    with open(f'{FILE_DROP_DIR_PATH}/menu_response_url_1.txt', 'w') as f:
-        f.write(response_1)
+#     # Convert the content of the response to a .txt file and save it
+#     with open(f'{FILE_DROP_DIR_PATH}/menu_response_url_1.txt', 'w') as f:
+#         f.write(response_1)
 
-    # Convert the content of the response to a .txt file and save it
-    with open(f'{FILE_DROP_DIR_PATH}/menu_response_url_2.txt', 'w') as f:
-        f.write(response_2)
+#     # Convert the content of the response to a .txt file and save it
+#     with open(f'{FILE_DROP_DIR_PATH}/menu_response_url_2.txt', 'w') as f:
+#         f.write(response_2)
 
 
 
