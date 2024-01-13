@@ -220,10 +220,11 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.2 - 2024-01-05 trimmed out commented old functions and migrated more tool methods from 0.1.2 to 0.2.2.
     0.2.2 - 2024-01-05 added a function for the llm to simply read in the codebase and stand by as a pair programmer.
     0.2.2 - 2024-01-05 added more thorough docstrings to all classes and methods.
-    0.2.2 - 2024-01-06 added a shared class dictionary called data_store to the ChatBotTools class which stores the data rendered by certain chatbot tools like wikipedia for later access by the LLM agent.
+    0.2.2 - 2024-01-06 added class level data_store to ChatBotTools to store data rendered by tools for access by the llm agent.
     0.2.2 - 2024-01-07 migrated the remaining functions from 0.1.2 to 0.2.2.
-    0.2.2 - implemented a neo4j graph database with the intention of turning this into the bot's full knowledge base.
-    
+    0.2.2 - 2024-01-12 implemented a neo4j graph database with the intention of turning this into the bot's full knowledge base.
+    0.2.3 - 2024-01-13 removed t5 from the generate_json_intent function along with the generate_variations helper function.
+
     
     
 

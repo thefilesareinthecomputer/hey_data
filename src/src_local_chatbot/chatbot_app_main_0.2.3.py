@@ -24,7 +24,7 @@ import webbrowser
 from neo4j import GraphDatabase
 from nltk.stem import WordNetLemmatizer
 from PIL import Image
-from transformers import MarianMTModel, MarianTokenizer, pipeline, T5ForConditionalGeneration, T5Tokenizer
+from transformers import MarianMTModel, MarianTokenizer
 import certifi
 import google.generativeai as genai
 import numpy as np
@@ -87,18 +87,23 @@ def create_ssl_context():
 
 ssl._create_default_https_context = create_ssl_context
 context = create_ssl_context()
-print(f"SSL Context Details: \nCA Certs File: {context.cert_store_stats()} \nProtocol: {context.protocol} \nOptions: {context.options} \n")
-print(f"Verify Mode: {context.verify_mode} \nVerify Flags: {context.verify_flags} \n")
-print(f"Check Hostname: {context.check_hostname} \nCA Certs Path: {certifi.where()} \n")
+print(f"""SSL Context Details: 
+    CA Certs File: {context.cert_store_stats()} 
+    Protocol: {context.protocol} 
+    Options: {context.options} 
+    Verify Mode: {context.verify_mode}
+    Verify Flags: {context.verify_flags}
+    Check Hostname: {context.check_hostname}
+    CA Certs Path: {certifi.where()}
+    """)
 
 # Set API keys and other sensitive information from environment variables
 open_weather_api_key = os.getenv('OPEN_WEATHER_API_KEY')
 wolfram_app_id = os.getenv('WOLFRAM_APP_ID')
-openai_api_key=os.getenv('OPENAI_API_KEY')
+# openai_api_key=os.getenv('OPENAI_API_KEY')
 google_cloud_api_key = os.getenv('GOOGLE_CLOUD_API_KEY')
 google_maps_api_key = os.getenv('GOOGLE_MAPS_API_KEY')
 google_gemini_api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
-google_api_key = os.getenv('GOOGLE_API_KEY')
 google_documentation_search_engine_id = os.getenv('GOOGLE_DOCUMENTATION_SEARCH_ENGINE_ID')
 print('API keys and other sensitive information loaded from environment variables.\n\n')
 
@@ -325,72 +330,13 @@ class ChatBotTools:
     '''ChatBotTools contains all of the functions that are called by the chatbot_model, including larger llms, system commands, utilities, and api connections 
     to various services. it contains all of the methods that are called by the JSON intents in the chatbot_intents.json file in response to user input. '''
     data_store = {}
+    
     def __init__(self):
-        self.tokenizer = T5Tokenizer.from_pretrained('t5-small')
-        self.model = T5ForConditionalGeneration.from_pretrained('t5-small')
-        self.summarizer = pipeline("summarization", model=self.model, tokenizer=self.tokenizer)
         self.user_input = None  
-        
+
     def set_user_input(self, input_text):
         '''Sets the user input for use in other methods.'''
         self.user_input = input_text
-
-    def run_greeting_code(self):
-        '''This is a placeholder test function that will be called by the chatbot when the user says hello'''
-        print('### TEST ### You said:', self.user_input)
-               
-    def generate_variations(self, text):
-        '''generate_variations generates variations of the user input and bot reply using the T5 summarization model. 
-        this is very rudimentary and needs to be improved. the goal is to generate variations of the user input and bot reply for fabricating 
-        new intents for unrecognized bot interactions to add to the chatbot_intents.json training data file. this is a work in progress.'''
-        summaries = self.summarizer(text, max_length=45, min_length=15, do_sample=False)
-        return [summary['summary_text'] for summary in summaries]
-     
-    def generate_json_intent(self):
-        '''generate_json_intent is called by the chatbot when the user input is not recognized. it "works" but the content is not very intelligent yet.'''
-        print("UNRECOGNIZED INPUT: writing new intent to chatbot_unrecognized_message_intents.json")
-
-        json_gen_prompt = '''# System Message Start # - Gemini, ONLY GENERATE ONE SHORT SENTENCE FOR EACH PROMPT ACCORDING TO THE USER INSTRUCTIONS. KEEP EACH SENTENCE TO UNDER 10 WORDS, IDEALLY CLOSER TO 5. - # System Message End #'''
-        # Generate an initial response using Gemini
-        initial_reply = gemini_model.generate_content(f"{json_gen_prompt}. // Please provide a response to: {self.user_input}")
-        initial_reply.resolve()
-        bot_reply = initial_reply.text
-
-        # Generate variations of user input and bot reply
-        user_input_variations = self.generate_variations(self.user_input)
-        bot_reply_variations = self.generate_variations(bot_reply)
-
-        # Simple function name generation
-        json_function_name = re.sub(r'\W+', '', self.user_input).lower() + '_function'
-
-        new_intent = {
-            "tag": f"unrecognized_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-            "patterns": [self.user_input] + user_input_variations,
-            "responses": [bot_reply] + bot_reply_variations,
-            "action": json_function_name
-        }
-
-        print(f"\nAttempting to write to:\n", unrecognized_file_path)
-        print(f"\nNew Intent:\n", new_intent)
-
-        try:
-            with open(unrecognized_file_path, 'r+') as file:
-                data = json.load(file)
-                data["intents"].append(new_intent)
-                file.seek(0)
-                json.dump(data, file, indent=4)
-                print('New intent written to chatbot_unrecognized_message_intents.json')
-        except FileNotFoundError:
-            try:
-                with open(unrecognized_file_path, 'w') as file:
-                    json.dump({"intents": [new_intent]}, file, indent=4)
-                    print('New file created and intent written to chatbot_unrecognized_message_intents.json')
-            except Exception as e:
-                print(f"Error creating new file: {e}")
-        except Exception as e:
-            print(f"Error updating existing file: {e}")
-
-        print('Intent update attempted. Check the file for changes.')
         
     @staticmethod
     def gemini_chat():
@@ -546,6 +492,48 @@ class ChatBotTools:
                         else:
                             SpeechToTextTextToSpeechIO.speak_mainframe('Chat failed.')
 
+    def run_greeting_code(self):
+        '''This is a placeholder test function that will be called by the chatbot when the user says hello'''
+        print('### TEST ### You said:', self.user_input)
+     
+    def generate_json_intent(self):
+        '''generate_json_intent is called by the chatbot when the user input is not recognized. it "works" but the content is not very intelligent yet.'''
+        print("UNRECOGNIZED INPUT: writing new intent to chatbot_unrecognized_message_intents.json")
+        json_gen_prompt = '''# System Message Start # - Gemini, ONLY GENERATE ONE SHORT SENTENCE FOR EACH PROMPT ACCORDING TO THE USER INSTRUCTIONS. KEEP EACH SENTENCE TO UNDER 10 WORDS, IDEALLY CLOSER TO 5. - # System Message End #'''
+        # Generate an initial response using Gemini
+        initial_reply = gemini_model.generate_content(f"{json_gen_prompt}. // Please provide a response to: {self.user_input}")
+        initial_reply.resolve()
+        bot_reply = initial_reply.text
+        json_function_name = re.sub(r'\W+', '', self.user_input).lower() + '_function'
+        new_intent = {
+            "tag": f"unrecognized_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "patterns": [self.user_input],
+            "responses": [bot_reply],
+            "action": json_function_name
+        }
+
+        print(f"\nAttempting to write to:\n", unrecognized_file_path)
+        print(f"\nNew Intent:\n", new_intent)
+
+        try:
+            with open(unrecognized_file_path, 'r+') as file:
+                data = json.load(file)
+                data["intents"].append(new_intent)
+                file.seek(0)
+                json.dump(data, file, indent=4)
+                print('New intent written to chatbot_unrecognized_message_intents.json')
+        except FileNotFoundError:
+            try:
+                with open(unrecognized_file_path, 'w') as file:
+                    json.dump({"intents": [new_intent]}, file, indent=4)
+                    print('New file created and intent written to chatbot_unrecognized_message_intents.json')
+            except Exception as e:
+                print(f"Error creating new file: {e}")
+        except Exception as e:
+            print(f"Error updating existing file: {e}")
+
+        print('Intent update attempted. Check the file for changes.')
+
     @classmethod
     def control_mouse(cls):
         '''control_mouse is a simple mouse control function that allows the user to control the mouse with their voice by 
@@ -635,95 +623,95 @@ class ChatBotTools:
                 webbrowser.open(url, new=1)
                 break
         
-###################################################################################################################
+# ###################################################################################################################
         
-    @staticmethod
-    def save_note():
-        today = datetime.today().strftime('%Y%m%d %H%M%S')         
-        SpeechToTextTextToSpeechIO.speak_mainframe('OK... What is the subject of the note?')
-        time.sleep(.5)
-        subject = None
-        while True:
-            user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
-            if not user_input:
-                continue
-            query = user_input.lower().split()
-            if not query:
-                continue
-            if len(query) > 0 and query[0] in exit_words:
-                SpeechToTextTextToSpeechIO.speak_mainframe('Exiting note.')
-                break
-            else:
-                subject = user_input.lower()
-                break
-        SpeechToTextTextToSpeechIO.speak_mainframe('OK, ready for note.')
-        text = None
-        while True:
-            user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
-            if not user_input:
-                continue
-            query = user_input.lower().split()
-            if not query:
-                continue
-            if len(query) > 0 and query[0] in exit_words:
-                SpeechToTextTextToSpeechIO.speak_mainframe('Exiting mouse control.')
-                break
-            else:
-                text = f"Date: {today} \n Note: {user_input.lower()}"
-                break
-        try:
-            driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            with driver.session() as session:
-                session.run("""
-                    CREATE (n:Note {subject: $subject, text: $text, timestamp: $timestamp})
-                """, subject=subject, text=text, timestamp=timestamp)
-            SpeechToTextTextToSpeechIO.speak_mainframe('Saved.')
-        except Exception as e:
-            SpeechToTextTextToSpeechIO.speak_mainframe("Error occurred. Please try again.")
-            print(e)
-        finally:
-            driver.close()
+#     @staticmethod
+#     def save_note():
+#         today = datetime.today().strftime('%Y%m%d %H%M%S')         
+#         SpeechToTextTextToSpeechIO.speak_mainframe('OK... What is the subject of the note?')
+#         time.sleep(.5)
+#         subject = None
+#         while True:
+#             user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+#             if not user_input:
+#                 continue
+#             query = user_input.lower().split()
+#             if not query:
+#                 continue
+#             if len(query) > 0 and query[0] in exit_words:
+#                 SpeechToTextTextToSpeechIO.speak_mainframe('Exiting note.')
+#                 break
+#             else:
+#                 subject = user_input.lower()
+#                 break
+#         SpeechToTextTextToSpeechIO.speak_mainframe('OK, ready for note.')
+#         text = None
+#         while True:
+#             user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+#             if not user_input:
+#                 continue
+#             query = user_input.lower().split()
+#             if not query:
+#                 continue
+#             if len(query) > 0 and query[0] in exit_words:
+#                 SpeechToTextTextToSpeechIO.speak_mainframe('Exiting mouse control.')
+#                 break
+#             else:
+#                 text = f"Date: {today} \n Note: {user_input.lower()}"
+#                 break
+#         try:
+#             driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+#             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+#             with driver.session() as session:
+#                 session.run("""
+#                     CREATE (n:Note {subject: $subject, text: $text, timestamp: $timestamp})
+#                 """, subject=subject, text=text, timestamp=timestamp)
+#             SpeechToTextTextToSpeechIO.speak_mainframe('Saved.')
+#         except Exception as e:
+#             SpeechToTextTextToSpeechIO.speak_mainframe("Error occurred. Please try again.")
+#             print(e)
+#         finally:
+#             driver.close()
 
-###################################################################################################################
+# ###################################################################################################################
 
-    @staticmethod
-    def recall_notes(subject):
-        SpeechToTextTextToSpeechIO.speak_mainframe('OK... What subject would you like to discuss?')
-        time.sleep(.5)
-        while True:
-            user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
-            if not user_input:
-                continue
-            query = user_input.lower().split()
-            if not query:
-                continue
-            if len(query) > 0 and query[0] in exit_words:
-                SpeechToTextTextToSpeechIO.speak_mainframe('Exiting mouse control.')
-                break
-            else:
-                subject = user_input.lower()
-                break
-        try:
-            driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-            with driver.session() as session:
-                result = session.run("""
-                    MATCH (n:Note {subject: $subject})
-                    RETURN n.text, n.timestamp
-                    ORDER BY n.timestamp DESC
-                """, subject=subject)
-                notes = [record['n.text'] for record in result]
-            if notes:
-                SpeechToTextTextToSpeechIO.speak_mainframe(" ".join(notes))
-            else:
-                SpeechToTextTextToSpeechIO.speak_mainframe("No notes found for this subject.")
-        except Exception as e:      
-            SpeechToTextTextToSpeechIO.speak_mainframe("Error occurred. Please try again.")
-            print(e)
-        finally:
-            driver.close()                        
+#     @staticmethod
+#     def recall_notes(subject):
+#         SpeechToTextTextToSpeechIO.speak_mainframe('OK... What subject would you like to discuss?')
+#         time.sleep(.5)
+#         while True:
+#             user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+#             if not user_input:
+#                 continue
+#             query = user_input.lower().split()
+#             if not query:
+#                 continue
+#             if len(query) > 0 and query[0] in exit_words:
+#                 SpeechToTextTextToSpeechIO.speak_mainframe('Exiting mouse control.')
+#                 break
+#             else:
+#                 subject = user_input.lower()
+#                 break
+#         try:
+#             driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+#             with driver.session() as session:
+#                 result = session.run("""
+#                     MATCH (n:Note {subject: $subject})
+#                     RETURN n.text, n.timestamp
+#                     ORDER BY n.timestamp DESC
+#                 """, subject=subject)
+#                 notes = [record['n.text'] for record in result]
+#             if notes:
+#                 SpeechToTextTextToSpeechIO.speak_mainframe(" ".join(notes))
+#             else:
+#                 SpeechToTextTextToSpeechIO.speak_mainframe("No notes found for this subject.")
+#         except Exception as e:      
+#             SpeechToTextTextToSpeechIO.speak_mainframe("Error occurred. Please try again.")
+#             print(e)
+#         finally:
+#             driver.close()                        
                         
-###################################################################################################################      
+# ###################################################################################################################      
                         
     @staticmethod
     def summarize_module(module, detail_level='high'):
@@ -1016,7 +1004,7 @@ class ChatBotTools:
                 SpeechToTextTextToSpeechIO.speak_mainframe('Ending session.')
                 break
             
-            SpeechToTextTextToSpeechIO.speak_mainframe(f'Heard. Calculating.')
+            SpeechToTextTextToSpeechIO.speak_mainframe(f'Heard.')
             try:
                 response = wolfram_client.query(user_input)
                 print(f"Response from Wolfram Alpha: {response}")
@@ -1038,53 +1026,50 @@ class ChatBotTools:
 
                     return 'Query failed.'
 
-                relevant_pods_titles = [
-                    "Result", "Definition", "Overview", "Summary", "Basic information",
-                    "Notable facts", "Basic properties", "Notable properties",
-                    "Basic definitions", "Notable definitions", "Basic examples",
-                    "Notable examples", "Basic forms", "Notable forms",
-                    "Detailed Information", "Graphical Representations", "Historical Data",
-                    "Statistical Information", "Comparative Data", "Scientific Data",
-                    "Geographical Information", "Cultural Information", "Economic Data",
-                    "Mathematical Proofs and Derivations", "Physical Constants",
-                    "Measurement Conversions", "Prediction and Forecasting", "Interactive Pods"]
-
-                # Filtering and summarizing relevant pods
-                answer = []
+                # Filtering and storing all available pods
+                wolfram_data = []
                 for pod in response.pods:
-                    if pod.title in relevant_pods_titles and hasattr(pod, 'text') and pod.text:
-                        answer.append(f"{pod.title}: {pod.text}")
+                    pod_data = {'title': pod.title}
+                    if hasattr(pod, 'text') and pod.text:
+                        pod_data['text'] = pod.text
+                    wolfram_data.append(pod_data)
 
-                # Create a summarized response
-                response_text = ' '.join(answer)
-                if response_text:
-                    SpeechToTextTextToSpeechIO.speak_mainframe(response_text)
-                    print(f'User: {user_input} \nWolfram|Alpha: {response_text}')
+                # # Adding to data store
+                # ChatBotTools.data_store['wolfram_alpha_response'] = {
+                #     'query': user_input,
+                #     'pods': wolfram_data
+                # }  
+                # SpeechToTextTextToSpeechIO.speak_mainframe('Search complete. Data saved to memory.') 
 
-                else:
-                    SpeechToTextTextToSpeechIO.speak_mainframe("I found no information in the specified categories.")
+                # Initialize the data store dictionary if it doesn't exist
+                if 'wolfram_alpha_responses' not in ChatBotTools.data_store:
+                    ChatBotTools.data_store['wolfram_alpha_responses'] = {}
 
-                # Asking user for interest in other pods
-                for pod in response.pods:
-                    if pod.title not in relevant_pods_titles:
-                        SpeechToTextTextToSpeechIO.speak_mainframe(f"Do you want to hear more about {pod.title}? Say 'yes' or 'no'.")
-                        user_input = SpeechToTextTextToSpeechIO.parse_user_speech().lower()
-                        if not user_input:
-                            continue
-                        if user_input == 'yes' and hasattr(pod, 'text') and pod.text:
-                            SpeechToTextTextToSpeechIO.speak_mainframe(pod.text)
-                            continue
-                        elif user_input == 'no':
-                            break
+                # Generate a unique key for the current query
+                # For example, using a timestamp or an incrementing index
+                unique_key = f"query_{len(ChatBotTools.data_store['wolfram_alpha_responses']) + 1}"
 
-                return response_text        
+                # Store the response using the unique key
+                ChatBotTools.data_store['wolfram_alpha_responses'][unique_key] = {
+                    'query': user_input,
+                    'pods': wolfram_data
+                }
 
             except Exception as e:
                 error_traceback = traceback.format_exc()
                 print(f"An error occurred: {e}\nDetails: {error_traceback}")
                 SpeechToTextTextToSpeechIO.speak_mainframe('An error occurred while processing the query. Please check the logs for more details.')
                 return f"An error occurred: {e}\nDetails: {error_traceback}"
-        
+            
+            SpeechToTextTextToSpeechIO.speak_mainframe('Would you like to run another query?') 
+            user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+            if not user_input:
+                continue
+            query = user_input.lower().split()
+            if not query or query[0] in exit_words or query[0] in ['no', 'nope', 'nah', 'not', 'not yet', 'cancel', 'exit', 'quit']:
+                SpeechToTextTextToSpeechIO.speak_mainframe('Ending session.')
+                break
+            
     @staticmethod
     def get_weather_forecast():
         '''get_weather_forecast gets a spoken weather forecast from openweathermap for the next 4 days by day part based on user defined home location'''
@@ -1130,8 +1115,9 @@ class ChatBotTools:
                 forecast_date = datetime.strptime(forecast_date, '%Y-%m-%d').strftime('%A')
                 forecast += f"\n{forecast_date}: {'; '.join(day_forecasts)}."
 
-                print("Weather forecast:", forecast)
-                SpeechToTextTextToSpeechIO.speak_mainframe(f'Weather forecast for {USER_SELECTED_HOME_CITY}, {USER_SELECTED_HOME_STATE}: {forecast}')
+                # print("Weather forecast:", forecast)
+                # SpeechToTextTextToSpeechIO.speak_mainframe(f'Weather forecast for {USER_SELECTED_HOME_CITY}, {USER_SELECTED_HOME_STATE}: {forecast}')
+                weather_forecast = f'Weather forecast for next 4 days, broken out by 6 hour day part: {forecast}'
                 
             else:
                 print("No weather forecast data available.")

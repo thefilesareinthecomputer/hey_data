@@ -656,24 +656,24 @@
   "action": "# trigger an agent containing a classification model with fact checker tools to review the last 5 exchanges between the user and chatbot and verify if they are accurate"
 },
 {
-  "tag": "tools_note_taking",
+  "tag": "tools_save_note",
   "patterns": ["take a note", 
-    "take down a note", 
-    "take down this message", 
+    "take a note", 
+    "take this message", 
     "record this message", 
     "record this note", 
-    "take down some notes for me please"],
+    "take notes",
+    "take note",
+    "some notes"],
   "responses": ["Heard"],
-  "action": "take_notes"
+  "action": "save_note"
 },
 {
-  "tag": "tools_note_recall",
-  "patterns": ["read me the note for", 
-    "tell me what's in the note about", 
-    "what nores do we have for", 
-    "what are the notes for", 
-    "what notes do we have", 
-    "what does the note for say"],
+  "tag": "tools_recall_notes",
+  "patterns": ["recall notes", 
+    "note recall", 
+    "recall", 
+    "re call"],
   "responses": ["Heard"],
   "action": "recall_notes"
 },
