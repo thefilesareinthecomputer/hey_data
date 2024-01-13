@@ -578,6 +578,16 @@
   "action": "get_weather_forecast"
 },
 {
+  "tag": "tools_google_search",
+  "patterns": [
+      "google"
+  ],
+  "responses": [
+      ""
+  ],
+  "action": "google_search"
+},
+{
   "tag": "tools_computation_engine",
   "patterns": ["search wolfram alpha", 
     "wolfram alpha", 
@@ -585,7 +595,7 @@
     "search wolfram alpha", 
     "computation engine", 
     "compute calculations"],
-  "responses": ["Heard"],
+  "responses": [""],
   "action": "wolfram_alpha"
 },
 {

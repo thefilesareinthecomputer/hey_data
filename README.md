@@ -1,6 +1,6 @@
 ## VERSION
 
-    hey_data 0.1.2
+    hey_data 0.2.3
     
 
 ## LICENSE
@@ -23,7 +23,13 @@ For commercial use of this project, a separate commercial license is required. T
     brew install portaudio
     brew install flac
 
-    download the pocketsphinx model, unzip it, and store it in 'app_local_models' in the project root directory
+    Java 17 for the neo4j graph database
+    https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
+
+    neo4j community edition, locally hosted self managed graph database (place in the project root directory after unzipping)
+    https://neo4j.com/deployment-center/?ref=subscription#community
+
+    if you prefer to run the bot fully offline you'll need a speech to text model instead of the google api which is the SpeechRecognition package's default. you can also pass your own Google Cloud API key to the speech_recognition Recognizer if you want further control over your parsed data. if you opt to run it offline, ensure the pocketsphinx model is present in the speech_recognition directory once installed. if not, download and unzip it, then store it in the speech_recognition package directory.
     https://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/US%20English/
 
     pip install --upgrade pip
@@ -35,32 +41,49 @@ For commercial use of this project, a separate commercial license is required. T
 
     requirements.txt
 
-    This version utilizes the built-in macOS text to speech (TTS) engine, and will need slight modification on windows and linux with pyttsx3 or other TTS libraries.
+    This version utilizes the built-in macOS text to speech (TTS) engine for the bot's voice, and will need slight modification on windows and linux with pyttsx3 or other TTS libraries.
 
 
 ## USER DEFINED VARIABLES:
 
     within the .env file, optionally declare any of these variables (or others of your own) to extend tool functionality to the assistant:
-    PROJECT_VENV_DIRECTORY=/Users/USERNAME/REPOSITORIES_FILDER/REPOSITORY/VENV
-    USER_DOWNLOADS_FOLDER=/Users/USERNAME/Downloads
-    WOLFRAM_APP_ID - Required to use the wolfram alpha function
-    OPENAI_API_KEY - Required to use the chatgpt function
-    GOOGLE_CLOUD_API_KEY - Required to use the google maps, places, and gustom search engine apis
-    GOOGLE_GEMINI_API_KEY - Required to use the "robot, call gemini" function
-    OPEN_WEATHER_API_KEY - Required to use the "robot, weather forecast" function
-    USER_PREFERRED_LANGUAGE - 2 letter lowercase language code: USER_PREFERRED_LANGUAGE=en
-    USER_PREFERRED_VOICE - Preferred voice name from built-in iOS TTS: USER_PREFERRED_VOICE=Daniel
-    USER_PREFERRED_NAME - First name or nickname (conversational): USER_PREFERRED_NAME=Name
-    USER_SELECTED_HOME_CITY - Full spelling of city: USER_SELECTED_HOME_CITY=City
-    USER_SELECTED_HOME_COUNTY - Full spelling of county: USER_SELECTED_HOME_COUNTY=County
-    USER_SELECTED_HOME_STATE - Full spelling of state / province: USER_SELECTED_HOME_STATE=State
-    USER_SELECTED_HOME_COUNTRY - Country code in this format: USER_SELECTED_HOME_COUNTRY=ZZ
-    USER_SELECTED_HOME_LAT - Floating point number in this format: USER_SELECTED_HOME_LAT=50.000000
-    USER_SELECTED_HOME_LON - Floating point number in this format: USER_SELECTED_HOME_LON=-10.000000
-    USER_SELECTED_PASSWORD - Add an optional passkey like this: USER_SELECTED_PASSWORD=password
-    USER_SELECTED_TIMEZONE - User's local timezone in this format: USER_SELECTED_TIMEZONE=Country/City
-    USER_CRYPTO - List of coins the user wants to track in this format: BTC,ETH,ADA,LTC
-    USER_STOCK_WATCH_LIST - List of stocks the user wants to track in this format: USER_STOCK_WATCH_LIST=AAPL,GOOG,MSFT,VOO
+    PROJECT_VENV_DIRECTORY=
+    PROJECT_ROOT_DIRECTORY=
+    USER_DOWNLOADS_FOLDER=
+
+    GOOGLE_CLOUD_API_KEY=
+    GOOGLE_CLOUD_PROJECT_NUMBER=
+    GOOGLE_CLOUD_PROJECT_ID=
+    GOOGLE_MAPS_API_KEY=
+    GOOGLE_GEMINI_API_KEY=
+    GOOGLE_API_KEY=
+    GOOGLE_DOCUMENTATION_SEARCH_ENGINE_ID=
+    OPEN_WEATHER_API_KEY=
+    WOLFRAM_APP_ID=
+    OPENAI_API_KEY=
+    ACTIVATION_WORD=
+    PASSWORD=
+    EXIT_WORDS=exit,quit,cancel,stop,break,terminate,end
+    USER_PREFERRED_LANGUAGE=en
+    USER_PREFERRED_VOICE=Oliver
+    USER_PREFERRED_NAME=
+    USER_SELECTED_HOME_CITY=
+    USER_SELECTED_HOME_COUNTY=
+    USER_SELECTED_HOME_STATE=
+    USER_SELECTED_HOME_COUNTRY=
+    USER_SELECTED_HOME_LAT=
+    USER_SELECTED_HOME_LON=
+    USER_SELECTED_TIMEZONE=
+
+    JAVA_HOME=
+    NEO4J_URI=
+    NEO4J_USER=
+    NEO4J_PASSWORD=
+    NEO4J_DATABASE=
+    NEO4J_PATH=
+
+    USER_CRYPTO=
+    USER_STOCK_WATCH_LIST=
 
 
 ## APP OVERVIEW & NOTES:
@@ -95,10 +118,7 @@ For commercial use of this project, a separate commercial license is required. T
     - "robot, call gemini" to interact with the Gemini chatbot (then say "robot, terminate chat" to exit back to the main chat loop)    
     - "robot, call chatgpt" to interact with chatgpt.
                 currently not returning a successful response from the openai api due to quota limits but the account is fully paid and should be working. we need to debug this.
-    - "robot, scientific research"
-                not complete. we need to add the ability to search for health information from a list of trusted sources and summarize the results.
-    - "robot, legal research"
-                not complete. we need to add the ability to search for legal information from a list of trusted sources and summarize the results.
+    - "robot, custom search engine" to interact with the custom search engine.
 
 
 ## BACKLOG (planned additions, improvements, and bug fixes):
@@ -139,6 +159,7 @@ For commercial use of this project, a separate commercial license is required. T
     performance optimization.
     code profiling to identify bottlenecks.
     additional secutiry measures - encryption, access control, input sanitation, etc.
+    to modularize the "chatbot tools initial conversation" we can implement args into the tools and then have the "inquiry" function get user input for each arg in a loop - for arg in args: arg = input("what is your value for " + arg + "?") - then we can pass the args into the tool function.
 
 
 
@@ -153,8 +174,9 @@ For commercial use of this project, a separate commercial license is required. T
         this is also affecting other functions like the wikipedia summary function. 
         the bot also hears its own announcement when it sais "robot online", etc.
         we need the simplest solution possible to fix this problem.
-    planning to build the ui in flet 
-    implement cachching for speed increase
+    planning to build the ui in flet .
+    implement cachching for speed increase.
+    add functionality to work with the ne04j graph database.
 
 
 ## COMPLETION LOG / COMMIT MESSAGES:
@@ -164,7 +186,7 @@ For commercial use of this project, a separate commercial license is required. T
     0.1.1 - 2023-12-01 moved speech output to a separate thread so that in the future the bot can listen while speaking.
     0.1.1 - 2023-12-02 added more user details in the .env file to personalize the output in various functions.
     0.1.1 - 2023-12-03 speech queue and speech manager have been implemented to prevent the bot from trying to say multiple things at once.
-    0.1.1 - 2023-12-03 wolfram alpha finction improved to consolidate specified pods from the api call rather than just the first pod.
+    0.1.1 - 2023-12-03 wolfram alpha function improved to consolidate specified pods from the api call rather than just the first pod.
     0.1.1 - 2023-12-03 screenshot function added.
     0.1.1 - 2023-12-03 verbal translation function added.
     0.1.1 - 2023-12-03 verbal translation function improved with native accents for translated speech.
@@ -200,6 +222,8 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.2 - 2024-01-05 added more thorough docstrings to all classes and methods.
     0.2.2 - 2024-01-06 added a shared class dictionary called data_store to the ChatBotTools class which stores the data rendered by certain chatbot tools like wikipedia for later access by the LLM agent.
     0.2.2 - 2024-01-07 migrated the remaining functions from 0.1.2 to 0.2.2.
+    0.2.2 - implemented a neo4j graph database with the intention of turning this into the bot's full knowledge base.
+    
     
     
 

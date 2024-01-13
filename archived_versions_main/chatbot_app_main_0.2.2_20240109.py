@@ -136,10 +136,12 @@ class SpeechToTextTextToSpeechIO:
     queue_lock = threading.Lock()
     is_speaking = False
 
+    # this version of the function is currently not being used because we are testing a diplicate version with different pause threshold settings.
+    
     @classmethod
     def parse_user_speech(cls):
         '''parse_user_speech is the main speech recognition function. 
-        it uses the google speech recognition API to parse user speech from the microphone into text'''
+        it uses the google speech recognition API to parse user speech from the microphone into text.'''
         listener = sr.Recognizer()
         while True:
             if cls.is_speaking == True:
@@ -163,7 +165,7 @@ class SpeechToTextTextToSpeechIO:
                 except sr.UnknownValueError:
                     print('Speech not recognized. Please try again.')
                     return None
-
+                
     @classmethod
     def speech_manager(cls):
         '''speech_manager handles the flow of the speech output queue in a first in first out order, 
@@ -177,8 +179,6 @@ class SpeechToTextTextToSpeechIO:
                         cls.is_speaking = True
                         text, rate, chunk_size, voice = item
                         if text:
-                            # words = text.split()
-                            # chunks = [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
                             chunks = [' '.join(text.split()[i:i + chunk_size]) for i in range(0, len(text.split()), chunk_size)]
                             for chunk in chunks:
                                 subprocess.call(['say', '-v', voice, '-r', str(rate), chunk])

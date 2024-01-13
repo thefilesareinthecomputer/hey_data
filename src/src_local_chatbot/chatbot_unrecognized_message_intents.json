@@ -171,6 +171,18 @@
                 "Dancing robot rocks rhythm . dancing robot is a robot that rocks rhythm."
             ],
             "action": "robottambourine_function"
+        },
+        {
+            "tag": "unrecognized_20240112184429",
+            "patterns": [
+                "robot Cornelius",
+                "robot cornelius is a robot robot . the robot was able to use the robot to create a prototype . a robotic robot could be used to test the robots ."
+            ],
+            "responses": [
+                "Metal friend Cornelius.",
+                "metal friend cornelius . he was a friend of the metal friend ."
+            ],
+            "action": "robotcornelius_function"
         }
     ]
 }
