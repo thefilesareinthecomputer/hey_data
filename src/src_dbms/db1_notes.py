@@ -276,54 +276,6 @@ class ChatBotTools:
         self.user_input = input_text
     
 # ###################################################################################################################
-        
-#     @staticmethod
-#     def save_note():
-#         today = datetime.today().strftime('%Y%m%d %H%M%S')         
-#         SpeechToTextTextToSpeechIO.speak_mainframe('OK... What is the subject of the note?')
-#         time.sleep(.5)
-#         subject = None
-#         while True:
-#             user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
-#             if not user_input:
-#                 continue
-#             query = user_input.lower().split()
-#             if not query:
-#                 continue
-#             if len(query) > 0 and query[0] in exit_words:
-#                 SpeechToTextTextToSpeechIO.speak_mainframe('Exiting note.')
-#                 break
-#             else:
-#                 subject = user_input.lower()
-#                 break
-#         SpeechToTextTextToSpeechIO.speak_mainframe('OK, ready for note.')
-#         text = None
-#         while True:
-#             user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
-#             if not user_input:
-#                 continue
-#             query = user_input.lower().split()
-#             if not query:
-#                 continue
-#             if len(query) > 0 and query[0] in exit_words:
-#                 SpeechToTextTextToSpeechIO.speak_mainframe('Exiting mouse control.')
-#                 break
-#             else:
-#                 text = f"Date: {today} \n Note: {user_input.lower()}"
-#                 break
-#         try:
-#             driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-#             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-#             with driver.session() as session:
-#                 session.run("""
-#                     CREATE (n:Note {subject: $subject, text: $text, timestamp: $timestamp})
-#                 """, subject=subject, text=text, timestamp=timestamp)
-#             SpeechToTextTextToSpeechIO.speak_mainframe('Saved.')
-#         except Exception as e:
-#             SpeechToTextTextToSpeechIO.speak_mainframe("Error occurred. Please try again.")
-#             print(e)
-#         finally:
-#             driver.close()
 
     @staticmethod
     def save_note():
@@ -371,43 +323,7 @@ class ChatBotTools:
             SpeechToTextTextToSpeechIO.speak_mainframe('An error occurred while saving the note.')
             print(e)
         
-# ###################################################################################################################
-
-#     @staticmethod
-#     def recall_notes(subject):
-#         SpeechToTextTextToSpeechIO.speak_mainframe('OK... What subject would you like to discuss?')
-#         time.sleep(.5)
-#         while True:
-#             user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
-#             if not user_input:
-#                 continue
-#             query = user_input.lower().split()
-#             if not query:
-#                 continue
-#             if len(query) > 0 and query[0] in exit_words:
-#                 SpeechToTextTextToSpeechIO.speak_mainframe('Exiting mouse control.')
-#                 break
-#             else:
-#                 subject = user_input.lower()
-#                 break
-#         try:
-#             driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-#             with driver.session() as session:
-#                 result = session.run("""
-#                     MATCH (n:Note {subject: $subject})
-#                     RETURN n.text, n.timestamp
-#                     ORDER BY n.timestamp DESC
-#                 """, subject=subject)
-#                 notes = [record['n.text'] for record in result]
-#             if notes:
-#                 SpeechToTextTextToSpeechIO.speak_mainframe(" ".join(notes))
-#             else:
-#                 SpeechToTextTextToSpeechIO.speak_mainframe("No notes found for this subject.")
-#         except Exception as e:      
-#             SpeechToTextTextToSpeechIO.speak_mainframe("Error occurred. Please try again.")
-#             print(e)
-#         finally:
-#             driver.close()                        
+# ###################################################################################################################                     
 
     @staticmethod
     def recall_notes():

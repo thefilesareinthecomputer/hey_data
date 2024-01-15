@@ -1,6 +1,6 @@
 ## VERSION
 
-    hey_data 0.2.3
+    hey_data 0.2.4
     
 
 ## LICENSE
@@ -160,6 +160,8 @@ For commercial use of this project, a separate commercial license is required. T
     code profiling to identify bottlenecks.
     additional secutiry measures - encryption, access control, input sanitation, etc.
     to modularize the "chatbot tools initial conversation" we can implement args into the tools and then have the "inquiry" function get user input for each arg in a loop - for arg in args: arg = input("what is your value for " + arg + "?") - then we can pass the args into the tool function.
+    give the bot the ability to do DRUD operations on the tools class data store.
+    use asyncio to run the speech recognition and speech output in separate threads so that the bot can listen while it speaks.
 
 
 
@@ -224,6 +226,7 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.2 - 2024-01-07 migrated the remaining functions from 0.1.2 to 0.2.2.
     0.2.2 - 2024-01-12 implemented a neo4j graph database with the intention of turning this into the bot's full knowledge base.
     0.2.3 - 2024-01-13 removed t5 from the generate_json_intent function along with the generate_variations helper function.
+    0.2.4 - 2024-01-13 added a rudimentary ui with a mic on/off button using flet.
 
     
     
