@@ -373,135 +373,172 @@ class ChatBotTools:
                 time.sleep(0.1)
         
         while True:
-            user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
-            if not user_input:
-                continue
+            global mic_on
+            if not SpeechToTextTextToSpeechIO.is_speaking and mic_on:
+                user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+                if not user_input:
+                    continue
 
-            query = user_input.lower().split()
-            if not query:
-                continue
+                query = user_input.lower().split()
+                if not query:
+                    continue
 
-            if query[0] in exit_words:
-                SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
-                break
-            
-            if query[0] == 'access' and query [1] == 'data':
-                SpeechToTextTextToSpeechIO.speak_mainframe('Accessing global memory.')
-                data_store = ChatBotTools.data_store
-                print(ChatBotTools.data_store)
-                data_prompt = f'''### "*SYSTEM MESSAGE*" ### Gemini, the user is currently speaking to you from within their TTS / STT app. 
-                Here is the data they've pulled into the conversation so far. The user is going to ask you to discuss this data: 
-                \n {data_store}\n
-                ### "*SYSTEM MESSAGE*" ### Gemini, please read and deeply understand all the nuances of the data and metadata in 
-                this dictionary - examine this data and place it all together in context. 
-                Read the data, and then say "I've read the data. What do you want to discuss first?", and then await further instructions. 
-                ### "*wait for user input after you acknowledge this message*" ###'''
-                data_response = chat.send_message(f'{data_prompt}', stream=True)
-                if data_response:
-                    for chunk in data_response:
-                        SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
-                        print(chunk.text)
-                        time.sleep(0.1)
-                    time.sleep(1)
-                continue
-
-            if query[0] in ['sous', 'sue', 'soo', 'su', 'tsu', 'sew', 'shoe', 'shoo'] and query [1] in ['chef', 'shef', 'chefs', 'shefs']:
-                SpeechToTextTextToSpeechIO.speak_mainframe('Yes chef.')
-                egg_mix_recipe = {
-                    "recipe": "Egg Mix",
-                    "ingredients": [
-                        {"quantity": "6000", "unit": "g", "ingredient": "Egg"},
-                        {"quantity": "240", "unit": "g", "ingredient": "Creme Fraiche"},
-                        {"quantity": "30", "unit": "g", "ingredient": "Kosher Salt"}
-                    ],
-                    "yield": {"quantity": "6", "unit_of_measure": "liter"},
-                    "source_document": "recipes_brunch.docx",
-                    "instructions": {"step_1": "Crack eggs into a large plastic Cambro.",
-                                     "step_2": "Add creme fraiche and salt.",
-                                     "step_3": "Mix with an immersion blender until smooth",
-                                     "step_4": "Pass through a mesh sieve, then label and store in the walk-in until needed.",},
-                    "shelf_life": "2 days",
-                    "tools": ["Immersion Blender", "Mesh Sieve", "Scale", "Cambro", "Label Maker"],
-                }
-                print(egg_mix_recipe)
-                chef_prompt = f'''### "*SYSTEM MESSAGE*" ### Gemini, the user is currently speaking to you from within their TTS / STT app. 
-                The user's role is Executive Chef at a restaurant. Your role is Sous Chef.
-                Here is the recipe data they've pulled into the conversation so far. The user is going to ask you to discuss this data: 
-                \n {egg_mix_recipe}\n
-                ### "*SYSTEM MESSAGE*" ### Gemini, read and understand all the nuances of the recipe data and metadata in 
-                this dictionary - examine this data and place it all together in context. 
-                Read the data, and then say "Yes Chef. What do you want to discuss first?", and then await further instructions. 
-                ### "*wait for user input after you acknowledge this message*" ###'''
-                print(chef_prompt)
-                chef_response = chat.send_message(f'{chef_prompt}', stream=True)
-                if chef_response:
-                    for chunk in chef_response:
-                        SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
-                        print(chunk.text)
-                        time.sleep(0.1)
-                    time.sleep(1)
-                continue
-            
-            if query[0] == 'pair' and query [1] == 'programmer':
-                diagnostic_summary = ""
-                SpeechToTextTextToSpeechIO.speak_mainframe('What level of detail?')
-                while True:
-                    user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
-                    if not user_input:
-                        continue
-
-                    query = user_input.lower().split()
-                    if not query:
-                        continue
-
-                    if query[0] in exit_words:
-                        SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
-                        break
-                    
-                    if query[0] in ['high', 'hi', 'full']:
-                        diagnostic_summary = ChatBotTools.summarize_module(sys.modules[__name__], detail_level='high')
-                    if query[0] in ['medium', 'mid', 'middle']:
-                        diagnostic_summary = ChatBotTools.summarize_module(sys.modules[__name__], detail_level='medium')
-                    if query[0] in ['low', 'lo', 'little', 'small']:
-                        diagnostic_summary = ChatBotTools.summarize_module(sys.modules[__name__], detail_level='low')
-                        
-                    SpeechToTextTextToSpeechIO.speak_mainframe('Examining the code...')
-                    print(f'DIAGNOSTIC SUMMARY: \n\n{diagnostic_summary}\n\n')
-                    prompt = f'''### SYSTEM MESSAGE ### Gemini, I'm speaking to you in my TTS / STT chatbot coding assistant app. 
-                    Here is a summary of the current Python codebase for the app. Once you've read the code we're going to discuss the capabilities of the codebase.: 
-                    \n {diagnostic_summary}\n
-                    ### SYSTEM MESSAGE ### Gemini, please read and deeply understand all the nuances of 
-                    this codebase. Read the code, and then say "I've read the code. What do you want to discuss first?", and then await further instructions. 
-                    ## wait for user input after you acknowledge this message ##'''
-                    diagnostic_response = chat.send_message(f'{prompt}', stream=True)
-                    if diagnostic_response:
-                        for chunk in diagnostic_response:
-                            SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
-                            print(chunk.text)
-                            time.sleep(0.1)
-                        time.sleep(1)
+                if query[0] in exit_words:
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
                     break
-                continue
-                                             
-            else:
-                response = chat.send_message(f'{user_input}', stream=True)
-                if response:
-                    for chunk in response:
-                        SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
-                        print(chunk.text)
-                        time.sleep(0.1)
-                if not response:
-                    attempt_count = 1  # Initialize re-try attempt count
-                    while attempt_count < 5:
-                        response = chat.send_message(f'{user_input}', stream=True)
-                        attempt_count += 1  # Increment attempt count
-                        if response:
-                            for chunk in response:
+                
+                if query[0] == 'access' and query [1] == 'data':
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Accessing global memory.')
+                    data_store = ChatBotTools.data_store
+                    print(ChatBotTools.data_store)
+                    data_prompt = f'''### "*SYSTEM MESSAGE*" ### Gemini, the user is currently speaking to you from within their TTS / STT app. 
+                    Here is the data they've pulled into the conversation so far. The user is going to ask you to discuss this data: 
+                    \n {data_store}\n
+                    ### "*SYSTEM MESSAGE*" ### Gemini, please read and deeply understand all the nuances of the data and metadata in 
+                    this dictionary - examine this data and place it all together in context. 
+                    Read the data, and then say "I've read the data. What do you want to discuss first?", and then await further instructions. 
+                    ### "*wait for user input after you acknowledge this message*" ###'''
+                    data_response = chat.send_message(f'{data_prompt}', stream=True)
+                    if data_response:
+                        for chunk in data_response:
+                            if hasattr(chunk, 'parts'):
+                                # Concatenate the text from each part
+                                full_text = ''.join(part.text for part in chunk.parts)
+                                SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                print(full_text)
+                            else:
+                                # If it's a simple response, just speak and print the text
                                 SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
                                 print(chunk.text)
+                            time.sleep(0.1)
+                        time.sleep(1)
+                    continue
+
+                if query[0] in ['sous', 'sue', 'soo', 'su', 'tsu', 'sew', 'shoe', 'shoo'] and query [1] in ['chef', 'shef', 'chefs', 'shefs']:
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Yes chef.')
+                    egg_mix_recipe = {
+                        "recipe": "Egg Mix",
+                        "ingredients": [
+                            {"quantity": "6000", "unit": "g", "ingredient": "Egg"},
+                            {"quantity": "240", "unit": "g", "ingredient": "Creme Fraiche"},
+                            {"quantity": "30", "unit": "g", "ingredient": "Kosher Salt"}
+                        ],
+                        "yield": {"quantity": "6", "unit_of_measure": "liter"},
+                        "source_document": "recipes_brunch.docx",
+                        "instructions": {"step_1": "Crack eggs into a large plastic Cambro.",
+                                        "step_2": "Add creme fraiche and salt.",
+                                        "step_3": "Mix with an immersion blender until smooth",
+                                        "step_4": "Pass through a mesh sieve, then label and store in the walk-in until needed.",},
+                        "shelf_life": "2 days",
+                        "tools": ["Immersion Blender", "Mesh Sieve", "Scale", "Cambro", "Label Maker"],
+                    }
+                    print(egg_mix_recipe)
+                    chef_prompt = f'''### "*SYSTEM MESSAGE*" ### Gemini, the user is currently speaking to you from within their TTS / STT app. 
+                    The user's role is Executive Chef at a restaurant. Your role is Sous Chef.
+                    Here is the recipe data they've pulled into the conversation so far. The user is going to ask you to discuss this data: 
+                    \n {egg_mix_recipe}\n
+                    ### "*SYSTEM MESSAGE*" ### Gemini, read and understand all the nuances of the recipe data and metadata in 
+                    this dictionary - examine this data and place it all together in context. 
+                    Read the data, and then say "Yes Chef. What do you want to discuss first?", and then await further instructions. 
+                    ### "*wait for user input after you acknowledge this message*" ###'''
+                    print(chef_prompt)
+                    chef_response = chat.send_message(f'{chef_prompt}', stream=True)
+                    if chef_response:
+                        for chunk in chef_response:
+                            if hasattr(chunk, 'parts'):
+                                # Concatenate the text from each part
+                                full_text = ''.join(part.text for part in chunk.parts)
+                                SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                print(full_text)
+                            else:
+                                # If it's a simple response, just speak and print the text
+                                SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                                print(chunk.text)
+                            time.sleep(0.1)
+                        time.sleep(1)
+                    continue
+                
+                if query[0] == 'pair' and query [1] == 'programmer':
+                    diagnostic_summary = ""
+                    SpeechToTextTextToSpeechIO.speak_mainframe('What level of detail?')
+                    while True:
+                        user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+                        if not user_input:
+                            continue
+
+                        query = user_input.lower().split()
+                        if not query:
+                            continue
+
+                        if query[0] in exit_words:
+                            SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
+                            break
+                        
+                        if query[0] in ['high', 'hi', 'full']:
+                            diagnostic_summary = ChatBotTools.summarize_module(sys.modules[__name__], detail_level='high')
+                        if query[0] in ['medium', 'mid', 'middle']:
+                            diagnostic_summary = ChatBotTools.summarize_module(sys.modules[__name__], detail_level='medium')
+                        if query[0] in ['low', 'lo', 'little', 'small']:
+                            diagnostic_summary = ChatBotTools.summarize_module(sys.modules[__name__], detail_level='low')
+                            
+                        SpeechToTextTextToSpeechIO.speak_mainframe('Examining the code...')
+                        print(f'DIAGNOSTIC SUMMARY: \n\n{diagnostic_summary}\n\n')
+                        prompt = f'''### SYSTEM MESSAGE ### Gemini, I'm speaking to you in my TTS / STT chatbot coding assistant app. 
+                        Here is a summary of the current Python codebase for the app. Once you've read the code we're going to discuss the capabilities of the codebase.: 
+                        \n {diagnostic_summary}\n
+                        ### SYSTEM MESSAGE ### Gemini, please read and deeply understand all the nuances of 
+                        this codebase. Read the code, and then say "I've read the code. What do you want to discuss first?", and then await further instructions. 
+                        ## wait for user input after you acknowledge this message ##'''
+                        diagnostic_response = chat.send_message(f'{prompt}', stream=True)
+                        if diagnostic_response:
+                            for chunk in diagnostic_response:
+                                if hasattr(chunk, 'parts'):
+                                    # Concatenate the text from each part
+                                    full_text = ''.join(part.text for part in chunk.parts)
+                                    SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                    print(full_text)
+                                else:
+                                    # If it's a simple response, just speak and print the text
+                                    SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                                    print(chunk.text)
                                 time.sleep(0.1)
-                        else:
-                            SpeechToTextTextToSpeechIO.speak_mainframe('Chat failed.')
+                            time.sleep(1)
+                        break
+                    continue
+                                                
+                else:
+                    response = chat.send_message(f'{user_input}', stream=True)
+                    if response:
+                        for chunk in response:
+                            if hasattr(chunk, 'parts'):
+                                # Concatenate the text from each part
+                                full_text = ''.join(part.text for part in chunk.parts)
+                                SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                print(full_text)
+                            else:
+                                # If it's a simple response, just speak and print the text
+                                SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                                print(chunk.text)
+                            time.sleep(0.1)
+                    if not response:
+                        attempt_count = 1  # Initialize re-try attempt count
+                        while attempt_count < 5:
+                            response = chat.send_message(f'{user_input}', stream=True)
+                            attempt_count += 1  # Increment attempt count
+                            if response:
+                                for chunk in response:
+                                    if hasattr(chunk, 'parts'):
+                                        # Concatenate the text from each part
+                                        full_text = ''.join(part.text for part in chunk.parts)
+                                        SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                        print(full_text)
+                                    else:
+                                        # If it's a simple response, just speak and print the text
+                                        SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                                        print(chunk.text)
+                                    time.sleep(0.1)
+                            else:
+                                SpeechToTextTextToSpeechIO.speak_mainframe('Chat failed.')
 
     def run_greeting_code(self):
         '''This is a placeholder test function that will be called by the chatbot when the user says hello'''
@@ -634,8 +671,6 @@ class ChatBotTools:
                 webbrowser.open(url, new=1)
                 break
         
-# ###################################################################################################################
-
     @staticmethod
     def save_note():
         SpeechToTextTextToSpeechIO.speak_mainframe('What is the subject of the note?')
@@ -681,8 +716,6 @@ class ChatBotTools:
         except Exception as e:
             SpeechToTextTextToSpeechIO.speak_mainframe('An error occurred while saving the note.')
             print(e)
-
-# ###################################################################################################################
 
     @staticmethod
     def recall_notes():
@@ -765,9 +798,7 @@ class ChatBotTools:
 
             else:
                 SpeechToTextTextToSpeechIO.speak_mainframe('Please specify "list", "statistics", or "recall".')                      
-                        
-# ###################################################################################################################      
-                        
+                                                
     @staticmethod
     def summarize_module(module, detail_level='high'):
         summary = {'classes': {}, 'functions': {}}
@@ -1195,6 +1226,8 @@ class ChatBotTools:
         else:
             SpeechToTextTextToSpeechIO.speak_mainframe(f'No recommended stocks found.')
 
+# TOOLS SUPPORT CLASSES ###################################################################################################################################
+
 # Conducts various targeted stock market reports such as discounts, recommendations, etc. based on user defined watch list
 class StockReports:
     def __init__(self, user_watch_list):
@@ -1395,32 +1428,65 @@ class StockReports:
                     discounted_stocks_report.append(report_line)
         return '\n'.join(discounted_stocks_report) if discounted_stocks_report else "No discounted stocks found meeting the criteria."
 
+# FRONT END ###################################################################################################################################
+
+# class ChatBotUI(ft.UserControl):
+#     def build(self):
+#         # Define your controls
+#         self.mic_btn = ft.ElevatedButton(text="Activate/Deactivate Mic", on_click=self.toggle_mic, bgcolor=ft.colors.BLACK, color=ft.colors.WHITE)
+#         self.response_text = ft.Text(value="Mic is off")
+#         self.conversation_list = ft.ListView(auto_scroll=True, expand=True)
+
+#         # Create a column for the button and response text
+#         controls_column = ft.Column(
+#             controls=[self.mic_btn, self.response_text],
+#             spacing=25,
+#             alignment="start"
+#         )
+
+#         # Create a row that includes your controls column and the conversation list
+#         main_row = ft.Row(
+#             controls=[
+#                 controls_column,
+#                 self.conversation_list
+#             ],
+#             spacing=25,  # Adjust spacing to your preference
+#             alignment="start"  # Align items to the start of the row
+#         )
+
+#         # Return the main container
+#         return ft.Container(
+#             content=main_row,
+#             padding=10,
+#             expand=True
+#         )
+                
 class ChatBotUI(ft.UserControl):
     def build(self):
-        self.mic_btn = ft.ElevatedButton(text="Activate/Deactivate Mic", on_click=self.toggle_mic, bgcolor=ft.colors.BLUE, color=ft.colors.WHITE)
+        self.mic_btn = ft.ElevatedButton(text="Activate/Deactivate Mic", on_click=self.toggle_mic, bgcolor=ft.colors.BLACK, color=ft.colors.WHITE)
         self.response_text = ft.Text(value="Mic is off")
         # self.conversation_text = ft.Text(value="")  
-        self.conversation_list = ft.ListView(auto_scroll=True)
-
-        return ft.Container(
-            content=ft.Column(
-                controls=[
-                    self.mic_btn,
-                    self.response_text,
-                    # self.conversation_text
-                    self.conversation_list
-                ],
-                spacing=15
-            ),
-            padding=10
-        )
+        self.conversation_list = ft.ListView(auto_scroll=True,)
+        controls_column = ft.Column(controls=[self.mic_btn, self.response_text], spacing=15,)
+        convo_column = ft.Column(controls=[self.conversation_list], spacing=15, scroll=ft.ScrollMode.ALWAYS, height=1000, width=600, wrap=True)
+        
+        return ft.Container(content=ft.Row(controls=[controls_column, convo_column], spacing=15), padding=10)
         
     def toggle_mic(self, e):
         global mic_on
         mic_on = not mic_on
         self.response_text.value = "Mic is on" if mic_on else "Mic is off"
         self.update()
+        
+def ui_main(page: ft.Page):
+    page.title = "ROBOT"
+    page.scroll = "adaptive"
+    chatbot_ui = ChatBotUI()
+    page.add(chatbot_ui)
 
+    # Start the thread and pass chatbot_ui to it
+    threading.Thread(target=update_conversation, args=(chatbot_ui,), daemon=True).start()  
+    
 def update_conversation(chatbot_ui):
     global conversation_history
     last_index = 0  # Keep track of the last message index added
@@ -1432,17 +1498,10 @@ def update_conversation(chatbot_ui):
             chatbot_ui.conversation_list.controls.append(ft.Text(value=conversation_history[i]))
             last_index += 1
         chatbot_ui.update()
-        time.sleep(1)  # Update interval
-        
-def ui_main(page: ft.Page):
-    page.title = "ROBOT"
-    page.scroll = "adaptive"
-    chatbot_ui = ChatBotUI()
-    page.add(chatbot_ui)
+        time.sleep(1)  # Update interval   
 
-    # Start the thread and pass chatbot_ui to it
-    threading.Thread(target=update_conversation, args=(chatbot_ui,), daemon=True).start()     
-        
+# MAIN EXECUTION ###################################################################################################################################
+
 def run_chatbot():
     chatbot_app = ChatBotApp()
     chatbot_tools = ChatBotTools()

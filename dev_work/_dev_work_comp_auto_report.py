@@ -23,7 +23,6 @@ from transformers import MarianMTModel, MarianTokenizer
 from urllib.parse import urlparse, urljoin
 import asyncio # new
 import certifi
-import datetime
 import difflib
 import google.generativeai as genai
 import json
@@ -53,40 +52,6 @@ import yfinance as yf
 
 
 # CONSTANTS ###################################################################################################################################
-
-# bring in the environment variables from the .env file
-# load_dotenv()
-# ACTIVATION_WORD = os.getenv('ACTIVATION_WORD', 'robot')
-# USER_DOWNLOADS_FOLDER = os.getenv('USER_DOWNLOADS_FOLDER')
-# USER_PREFERRED_LANGUAGE = os.getenv('USER_PREFERRED_LANGUAGE', 'en')  # 2-letter lowercase
-# USER_PREFERRED_VOICE = os.getenv('USER_PREFERRED_VOICE', 'Daniel')  # Daniel
-# USER_PREFERRED_NAME = os.getenv('USER_PREFERRED_NAME', 'User')  # Title case
-# USER_SELECTED_PASSWORD = os.getenv('USER_SELECTED_PASSWORD', 'None')  
-# USER_SELECTED_HOME_CITY = os.getenv('USER_SELECTED_HOME_CITY', 'None')  # Title case
-# USER_SELECTED_HOME_COUNTY = os.getenv('USER_SELECTED_HOME_COUNTY', 'None')  # Title case
-# USER_SELECTED_HOME_STATE = os.getenv('USER_SELECTED_HOME_STATE', 'None')  # Title case
-# USER_SELECTED_HOME_COUNTRY = os.getenv('USER_SELECTED_HOME_COUNTRY', 'None')  # 2-letter country code
-# USER_SELECTED_HOME_LAT = os.getenv('USER_SELECTED_HOME_LAT', 'None')  # Float with 6 decimal places
-# USER_SELECTED_HOME_LON = os.getenv('USER_SELECTED_HOME_LON', 'None')  # Float with 6 decimal places 
-# USER_SELECTED_TIMEZONE = os.getenv('USER_SELECTED_TIMEZONE', 'America/Chicago')  # Country/State format
-# USER_STOCK_WATCH_LIST = os.getenv('USER_STOCK_WATCH_LIST', 'None').split(',')  # Comma separated list of stock symbols
-# PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
-
-# # establish relative file paths for the current script
-# SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-# PROJECT_ROOT_DIR_PATH = os.path.dirname(SCRIPT_DIR_PATH)
-# ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_archive')
-# FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_generated_files')
-# LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_local_models')
-# NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_base_knowledge')
-# SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_source_data')
-# TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_tests')
-# UTILITIES_DIR_PATH = os.path.join(SCRIPT_DIR_PATH, 'utilities')
-
-# folders_to_create = [ARCHIVED_DEV_VERSIONS_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, NOTES_DROP_DIR_PATH, SOURCE_DATA_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
-# for folder in folders_to_create:
-#     if not os.path.exists(folder):
-#         os.makedirs(folder)
 
 load_dotenv()
 ACTIVATION_WORD = os.getenv('ACTIVATION_WORD', 'robot')
@@ -121,12 +86,23 @@ for folder in folders_to_create:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-# # Set the default SSL context for the entire script
-# ssl._create_default_https_context = ssl.create_default_context(cafile=certifi.where())
+# def create_ssl_context():
+#     return ssl.create_default_context(cafile=certifi.where())
+
+# ssl._create_default_https_context = create_ssl_context
+# context = create_ssl_context()
+# print(f"""SSL Context Details: 
+#     CA Certs File: {context.cert_store_stats()} 
+#     Protocol: {context.protocol} 
+#     Options: {context.options} 
+#     Verify Mode: {context.verify_mode}
+#     Verify Flags: {context.verify_flags}
+#     Check Hostname: {context.check_hostname}
+#     CA Certs Path: {certifi.where()}
+#     """)
 
 # Set API keys and other information from environment variables
 open_weather_api_key = os.getenv('OPEN_WEATHER_API_KEY')
-wolfram_app_id = os.getenv('WOLFRAM_APP_ID')
 openai_api_key=os.getenv('OPENAI_API_KEY')
 google_cloud_api_key = os.getenv('GOOGLE_CLOUD_API_KEY')
 google_maps_api_key = os.getenv('GOOGLE_MAPS_API_KEY')
@@ -135,6 +111,7 @@ google_gemini_api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
 # Initialize LLM
 genai.configure(api_key=google_gemini_api_key)
 model = genai.GenerativeModel('gemini-pro')
+vision_model = genai.GenerativeModel('gemini-pro-vision')
 
 # Set the terminal output display options
 pd.set_option('display.max_columns', 10)
@@ -146,7 +123,7 @@ pd.set_option('display.precision', 1)
 
 # FUNCTION DEFINITIONS ###################################################################################################################################
 
-address = "590 20th St, San Francisco, CA 94107"
+address = """1486 East Valley Road Montecito, CA 93108"""
 search_distance = 10000
     
 class AddressResearcher:
@@ -388,28 +365,39 @@ class AddressResearcher:
                 try:
                     place_data_str = json.dumps(place, ensure_ascii=False)
                     prompt = (
-                        "Hi Gemini, please look at this data and write a *CONCISE AND SHORT* summary. This data contains information about a business. "
-                        "The business in this dataset is located near an American fine dining restaurant. Please offer your *market business insights* about the business. "
-                        "The nearby comparison restaurant for this exercise is a luxury American fine dining establishment with a robust wine list and elevated style of service. "
-                        "Your goal is to *explain the nuances* of the relationship between these two entities. The audience is a research analyst who is researching the affect of various businesses located near a luxury American fine dining restaurant. "
-                        "Please write a short and concise summary of the business in this data, and how this business will affect the American fine dining restaurant - either positively, negatively, or neither. "
-                        "You are being asked to assess the competitive business-related relevance between the business in this data and the American fine dining restaurant. We want to learn if it will help or hinder the nearby restaurant. "
-                        "The comparison restaurant is an American fine dining restaurant, located near the business in the json data. "
-                        "The distance between the business in the json object and the comparison restaurant is listed in the json data. "
-                        "The goal is to understand the relationships and potential competition evel and/or partnership opportunities in the area of the American fine dining restaurant and draw business hypotheses about the potential relationships between the restaurant and the other entities in the area, such as the one in this data. "
-                        "Please write a summary of how this business could affect a nearby American fine dining restaurant. "
-                        "Explain everything about this business as a potential competitor or partner within the American restaurant's local market. "
-                        "If the business is a restaurant, describe their menu offerings in detail and how they would or would not compete with an American fine dining restaurant. "
-                        "Include a S.W.O.T. analysis of the business in this json data, as it relates to the relationship with an American fine dining restaurant located nearby. "
-                        "Only analyze how the business in this data may passivle influence a nearby American fine dining restaurant. Do not make any recommendations about the two entities partnering directly. "
-                        "Also include any of your own knowledge about the listed business and its relevance to a restaurant located nearby within the same market. "
-                        "Your output should be a short and concise summary of the business in this json data along with the details outlined in this message. "
-                        "Please keep it simple and concise. Statements like 'this business is not relevant because the style of food and price tier are much different' or 'this business is relevant because they have wine, they accept reservations, they are fine dining, and they have luxury American food' are acceptable levels of detail. "
-                        "Please limit your responses to a few sentences, no more than a paragraph. "
-                        "Do not include any markdown or special characters in your final output. "
-                        "Please limit your responses to no more than 1 paragraph of direct and concise text. "
-                        "Be consice and direct. "
-                        f"Here is the object to analyze: {place_data_str}"
+                        f"""### SYSTEM MESSAGE ### Gemini, you are a hospitality and restaurant and F&B business market comparison analyst. 
+                        The audience for your reply is is a research analyst who is researching the affect of various businesses located near a luxury American fine dining restaurant. 
+                        You will write a *CONCISE AND SHORT* summary, following the instructions below. 
+                        The data following the prompt contains data about a business. 
+                        Write a short summary of all *BUSINESS CRITICAL* information that you can think of about this business. 
+                        List all details about this business that would be relevant to a hospitality and restaurant and F&B market analyst. 
+                        The goal is to examine this business and its role within the context of its local market (geographic and economic). 
+                        Explain everything you know from your training data about this business at this specific location. 
+                        List all important headlines and info about this location (if any). 
+                        This business is most likely a restaurant. 
+                        List any headlines, awards or accolades this business has recieved such as Michelin stars, James Beard awards, etc. 
+                        Provide any known information about the business such as whether they have any Michelin stars, have been in the news, if they have a famous chef, etc. 
+                        The business in this dataset provided is located near an American fine dining restaurant. 
+                        You will offer your *market business insights* about the business listed below as it would relate to a nearby American fine dining restaurant. 
+                        The nearby comparison restaurant is a luxury American fine dining establishment with a robust wine list and elevated style of service. 
+                        Your goal is to explain the potential interplay and nuances of the relationship between these two entities. 
+                        Write a short and concise summary of the business in the provided data, and how this business will affect the American fine dining restaurant - either positively, negatively, or neither. 
+                        We want to learn if the restaurant shown in this data will help or hinder the nearby American fine dining restaurant's business. 
+                        The comparison restaurant is an American fine dining restaurant, located near the business in the provided data. 
+                        The distance between the businesses is listed in the data. 
+                        The goal is to understand the relationships and potential competition level in the area of the American fine dining restaurant and draw business hypotheses about the potential relationships between the restaurant and the other entities in the area, such as the one shown in this data. 
+                        Write a summary of how this business could affect the nearby American fine dining restaurant. 
+                        Explain everything about this business as a potential competitor or significant entity within the American restaurant's local market. 
+                        If the business is a restaurant, describe their menu offerings in detail and whether or not they would directly compete with a nearby American fine dining restaurant. 
+                        Only analyze how the business in this data may passively influence a nearby American fine dining restaurant. Do not give any recommendations or advice about the two entities partnering directly. 
+                        Also include any of your own knowledge about the listed business and its relevance to a restaurant located nearby within the same market. 
+                        Your output must be a short and concise summary of the business in the context of its local market, with your own thoughtful insights included in the summary. 
+                        Keep it simple and concise and only include factual data. 
+                        Please limit your responses to a few sentences, but include substantial information. 
+                        Make sure your response is simple and easy to read quickly. 
+                        Limit your response to no more than 1 paragraph of direct and concise text. 
+                        Be consice and direct. 
+                        Here is the object to analyze: {place_data_str}"""
                     )
                     response = model.generate_content(prompt)
                     summary = response.text
@@ -418,41 +406,6 @@ class AddressResearcher:
                 except Exception as e:
                     print(f"Error generating summary for {place.get('name', 'N/A')}: {e}")
                     place['gemini_summary'] = 'N/A'
-                    time.sleep(2)
-
-        # Optionally return the whole data if needed
-        return self.data
-
-    def business_summary(self):
-        for group, places in self.data['grouped_places'].items():
-            for place in tqdm(places, desc=f"Generating general business summaries for {group}"):
-                try:
-                    place_data_str = json.dumps(place, ensure_ascii=False)
-                    prompt = (
-                        "Hi Gemini, write a *CONCISE AND SHORT* summary. Please begin by examining the following json object. This json contains data about a business. "
-                        "Interpret info (like name and location) from the JSON. "
-                        "Write a short summary of all *BUSINESS CRITICAL* information that you can think of about this place. "
-                        "The goal is to *understand the nuances* of the business and write your observations. The audience is a research analyst who is researching the business and its market presence and overall company info. "
-                        "The goal is to examine this business and its role within the context of its local market (geographic and economic). "
-                        "Explain everything you know from your training data about this business at this specific location. "
-                        "List all important headlines and info about this location (if any). "
-                        "List any awards or accolades this business has recieved such as Michelin stars, James Beard awards, etc. "
-                        "Provide any known information about the business such as whether they have any Michelin stars, have been in the news, if they have a famous chef, etc. "
-                        "Also include any of your own knowledge about the business. "
-                        "Your output should be a short and concise summary of the business, with your own thoughtful insights included in the summary. "
-                        "Please keep it simple and concise and add value to the knowledge with factual data. "
-                        "Please limit your responses to a few sentences, but include substantial information. "
-                        "Do not include any markdown or special characters in your final output. "
-                        "Please limit your responses to no more than 1 paragraph of direct and concise text. "
-                        f"Here is the object to analyze: {place_data_str}"
-                    )
-                    response = model.generate_content(prompt)
-                    summary = response.text
-                    place['business_summary'] = summary
-                    time.sleep(2) 
-                except Exception as e:
-                    print(f"Error generating summary for {place.get('name', 'N/A')}: {e}")
-                    place['business_summary'] = 'N/A'
                     time.sleep(2)
 
         # Optionally return the whole data if needed
@@ -544,9 +497,7 @@ class AddressResearcher:
         self.add_list_to_doc(doc, 'PDF Links', place.get('pdf_links', []))
         
         doc.add_paragraph(f"AI Summary: {place.get('gemini_summary', 'N/A')}", style='List Bullet')
-        
-        doc.add_paragraph(f"Business Summary: {place.get('business_summary', 'N/A')}", style='List Bullet')
-    
+            
     def add_list_to_doc(self, doc, title, items):
         if items:
             doc.add_paragraph(f'{title}:', style='List Bullet')
@@ -605,18 +556,18 @@ class AddressResearcher:
         for group, places in data['grouped_places'].items():
             for place in places:
                 place_data = {
-                    'Business Type': group.capitalize(),
                     'Name': place.get('name', 'N/A'),
+                    'Business Type': group.capitalize(),
                     'Distance (km)': round(place.get('distance_from_target_address', 0), 1),
                     'Weighted Relevance Score': round(place.get('weighted_score', 0), 2),
+                    'Price Level': place.get('price_level', 'N/A'),
+                    'Average Rating': place.get('rating', 'N/A'),
+                    'Operating Hours': AddressResearcher.format_weekday_text(place.get('opening_hours', {})),
                     'Tags': ', '.join(place.get('types', ['N/A'])),
                     'Google Summary': place.get('editorial_summary', {}).get('overview', 'N/A'),
                     'AI Summary 1': place.get('gemini_summary', 'N/A'),
-                    'AI Summary 2': place.get('business_summary', 'N/A'),
-                    'Operating Hours': AddressResearcher.format_weekday_text(place.get('opening_hours', {})),
-                    'Price Level': place.get('price_level', 'N/A'),
-                    'Average Rating': place.get('rating', 'N/A'),
                     'Total Reviews': place.get('user_ratings_total', 'N/A'),
+                    '5 Most Relevant Reviews': AddressResearcher.format_reviews(place.get('reviews', [])),
                     'Business Status': place.get('business_status', 'N/A'),
                     'Website': place.get('website', 'N/A'),
                     'Google Maps URL': place.get('url', 'N/A'),
@@ -634,7 +585,6 @@ class AddressResearcher:
                     'Serves Dinner': 'Yes' if place.get('serves_dinner') else 'No',
                     'Serves Wine': 'Yes' if place.get('serves_wine') else 'No',
                     'Service Vegetarian Food': 'Yes' if place.get('serves_vegetarian_food') else 'No',
-                    '5 Most Relevant Reviews': AddressResearcher.format_reviews(place.get('reviews', [])),
                     'Menu Content': place.get('menu_content', 'N/A')
                 }
                 data_for_df.append(place_data)
@@ -667,25 +617,29 @@ class AddressResearcher:
         print_dict(data['grouped_places'])
         
 if __name__ == '__main__':
+    now = datetime.now()
     address_researcher = AddressResearcher(google_maps_api_key)
     address_researcher.perform_research(address)
     address_researcher.augment_place_details_with_web_data()
     address_researcher.generate_summary()
-    address_researcher.business_summary()
-    address_researcher.save_research_report(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented.json")
-    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented.json"):
+    
+    address_researcher.save_research_report(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented_{address}_{now}.json")
+    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented_{address}_{now}.json"):
         print("Research json saved successfully.")
     else:
         print("Research json save failed.")
-    address_researcher.save_report_as_word(f"{FILE_DROP_DIR_PATH}/research_report_doc_formatted.docx")
-    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_doc_formatted.docx"):
+        
+    address_researcher.save_report_as_word(f"{FILE_DROP_DIR_PATH}/research_report_doc_formatted_{address}_{now}.docx")
+    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_doc_formatted_{address}_{now}.docx"):
         print("Research doc saved successfully.")
     else:
         print("Research doc save failed.")
-    AddressResearcher.save_report_as_csv(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented.json", f"{FILE_DROP_DIR_PATH}/research_report_spreadsheet.csv")
-    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_spreadsheet.csv"):
+        
+    AddressResearcher.save_report_as_csv(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented.json", f"{FILE_DROP_DIR_PATH}/research_report_spreadsheet_{address}_{now}.csv")
+    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_spreadsheet_{address}_{now}.csv"):
         print("Research csv saved successfully.")
     else:    
         print("Research csv save failed.")
+        
     AddressResearcher.print_human_readable(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented.json")
 
