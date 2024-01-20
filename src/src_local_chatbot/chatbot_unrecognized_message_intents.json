@@ -183,6 +183,16 @@
                 "metal friend cornelius . he was a friend of the metal friend ."
             ],
             "action": "robotcornelius_function"
+        },
+        {
+            "tag": "unrecognized_20240120131401",
+            "patterns": [
+                "robot guy"
+            ],
+            "responses": [
+                "Beep boop! I am a robot."
+            ],
+            "action": "robotguy_function"
         }
     ]
 }

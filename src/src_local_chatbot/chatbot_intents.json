@@ -366,24 +366,6 @@
   "action": "# provide updates on entertainment and celebrity news"
 },
 {
-  "tag": "report_event_information",
-  "patterns": [
-      "Tell me about upcoming local events",
-      "What are some interesting events happening soon?",
-      "Find events near me this weekend",
-      "Are there any conferences related to my field?",
-      "List some cultural events happening around"
-  ],
-  "responses": [
-      "There are several local events coming up. Here's a list.",
-      "I found some interesting events happening soon.",
-      "Here are the events near you this weekend.",
-      "There are a few conferences related to your field. Check these out.",
-      "Several cultural events are happening. Here's what I found."
-  ],
-  "action": "# provide information on upcoming events"
-},
-{
   "tag": "report_travel_guidance",
   "patterns": [
       "What are the travel restrictions in place?",
@@ -466,6 +448,11 @@
     "robot ai",
     "robot call ai",
     "a i",
+    "ai",
+    "a.i.",
+    "AI",
+    "A I",
+    "A.I.",
     "speak to a i",
     "gemini",
     "gemini a i",
@@ -473,6 +460,33 @@
     "speak with a i"],
   "responses": ["Heard."],
   "action": "gemini_chat"
+},
+{
+  "tag": "tools_alfred_chat",
+  "patterns": ["alfred", 
+    "Alfred", 
+    "al fred", 
+    "Al Fred", 
+    "allfred", 
+    "all fred",
+    "owl fred",
+    "al friend"],
+  "responses": [""],
+  "action": "alfred_chat"
+},
+{
+  "tag": "tools_agent_one",
+  "patterns": ["agent 1",
+    "agent one"],
+  "responses": [""],
+  "action": "agent_one"
+},
+{
+  "tag": "tools_agent_two",
+  "patterns": ["agent 2",
+    "agent two"],
+  "responses": [""],
+  "action": "agent_two"
 },
 {
   "tag": "tools_pair_programmer",

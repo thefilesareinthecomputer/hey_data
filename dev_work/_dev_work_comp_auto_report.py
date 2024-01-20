@@ -123,7 +123,7 @@ pd.set_option('display.precision', 1)
 
 # FUNCTION DEFINITIONS ###################################################################################################################################
 
-address = """1486 East Valley Road Montecito, CA 93108"""
+address = "1486 East Valley Road Montecito, CA 93108"
 search_distance = 10000
     
 class AddressResearcher:
@@ -359,21 +359,35 @@ class AddressResearcher:
         # Add logic to filter out invalid or duplicate links
         return link.startswith("http") or (link.startswith("/") and not link.startswith("//"))
         
+    def augment_place_details_with_web_data(self):
+        print("Augmenting place details with web data")
+        for group, places in self.data['grouped_places'].items():
+            for place in tqdm(places, desc=f"Processing {group}"):
+                if 'website' in place:
+                    web_data = self.scrape_website_data(place['website'])
+                    place.update(web_data)
+                    time.sleep(2)  
+                    
+        time.sleep(2) 
+        
     def generate_summary(self):
         for group, places in self.data['grouped_places'].items():
             for place in tqdm(places, desc=f"Generating in-market comp summaries for {group}"):
                 try:
                     place_data_str = json.dumps(place, ensure_ascii=False)
                     prompt = (
-                        f"""### SYSTEM MESSAGE ### Gemini, you are a hospitality and restaurant and F&B business market comparison analyst. 
-                        The audience for your reply is is a research analyst who is researching the affect of various businesses located near a luxury American fine dining restaurant. 
+                        f"""### <SYSTEM MESSAGE> <START> ### 
+                        Gemini, you are a hospitality, restaurant, and F&B market comparison business analyst. 
+                        The audience for your output is is an operations research analyst who is attempting to draw conclusions 
+                        about the affect that various businesses may have on their potential future business in the same market. 
+                        The new business will be an American fine dining restaurant. 
+                        The data shown below is for a business that is located near the aformentioned luxury American fine dining restaurant. 
                         You will write a *CONCISE AND SHORT* summary, following the instructions below. 
-                        The data following the prompt contains data about a business. 
-                        Write a short summary of all *BUSINESS CRITICAL* information that you can think of about this business. 
-                        List all details about this business that would be relevant to a hospitality and restaurant and F&B market analyst. 
-                        The goal is to examine this business and its role within the context of its local market (geographic and economic). 
+                        Your summary must be only a few simple sentences. 
+                        List the details about this business that would be relevant to a hospitality and restaurant and F&B market analyst. 
+                        The goal is to examine this business within the context of its local market (geographic and economic). 
                         Explain everything you know from your training data about this business at this specific location. 
-                        List all important headlines and info about this location (if any). 
+                        List important headlines and info about this location (if any). 
                         This business is most likely a restaurant. 
                         List any headlines, awards or accolades this business has recieved such as Michelin stars, James Beard awards, etc. 
                         Provide any known information about the business such as whether they have any Michelin stars, have been in the news, if they have a famous chef, etc. 
@@ -397,7 +411,8 @@ class AddressResearcher:
                         Make sure your response is simple and easy to read quickly. 
                         Limit your response to no more than 1 paragraph of direct and concise text. 
                         Be consice and direct. 
-                        Here is the object to analyze: {place_data_str}"""
+                        Here is the object to analyze: {place_data_str}
+                        ### <SYSTEM MESSAGE> <END> ###"""
                     )
                     response = model.generate_content(prompt)
                     summary = response.text
@@ -411,122 +426,111 @@ class AddressResearcher:
         # Optionally return the whole data if needed
         return self.data
     
-    def augment_place_details_with_web_data(self):
-        print("Augmenting place details with web data")
-        for group, places in self.data['grouped_places'].items():
-            for place in tqdm(places, desc=f"Processing {group}"):
-                if 'website' in place:
-                    web_data = self.scrape_website_data(place['website'])
-                    place.update(web_data)
-                    time.sleep(2)  
-                    
-        time.sleep(2) 
-    
-    ### FILE SAVING METHODS FOR DOCX AND CSV ###
+    ### FILE SAVING ###
 
-    def save_report_as_word(self, filename):
-        doc = Document()
-        style = doc.styles['Normal']
-        font = style.font
-        font.name = 'Open Sans'
-        font.size = Pt(12)
+    # def save_report_as_word(self, filename):
+    #     doc = Document()
+    #     style = doc.styles['Normal']
+    #     font = style.font
+    #     font.name = 'Open Sans'
+    #     font.size = Pt(12)
 
-        doc.add_heading('Research Report', level=1)
-        doc.add_paragraph(f'Address: {self.data["address"]}\n')
+    #     doc.add_heading('Research Report', level=1)
+    #     doc.add_paragraph(f'Address: {self.data["address"]}\n')
         
-        self.add_summary_to_doc(doc)
+    #     self.add_summary_to_doc(doc)
 
-        for group, places in self.data['grouped_places'].items():
-            doc.add_heading(f'{group.capitalize()}:', level=2)
-            for place in places:
-                if isinstance(place, dict):
-                    self.add_place_details_to_doc(doc, place)
-                else:
-                    print(f"Warning: Expected a dictionary for 'place', got {type(place)}")
+    #     for group, places in self.data['grouped_places'].items():
+    #         doc.add_heading(f'{group.capitalize()}:', level=2)
+    #         for place in places:
+    #             if isinstance(place, dict):
+    #                 self.add_place_details_to_doc(doc, place)
+    #             else:
+    #                 print(f"Warning: Expected a dictionary for 'place', got {type(place)}")
 
-        doc.save(filename)
+    #     doc.save(filename)
 
-    def add_place_details_to_doc(self, doc, place):
-        # Ensure 'place' is a dictionary
-        if not isinstance(place, dict):
-            print(f"Warning: Expected a dictionary for 'place', got {type(place)}")
-            return
+    # def add_place_details_to_doc(self, doc, place):
+    #     # Ensure 'place' is a dictionary
+    #     if not isinstance(place, dict):
+    #         print(f"Warning: Expected a dictionary for 'place', got {type(place)}")
+    #         return
 
-        doc.add_heading(place.get('name', 'N/A'), level=3)
+    #     doc.add_heading(place.get('name', 'N/A'), level=3)
                 
-        doc.add_paragraph(f"Distance from Address: {place.get('distance_from_target_address', 'N/A')} km", style='List Bullet')
+    #     doc.add_paragraph(f"Distance from Address: {place.get('distance_from_target_address', 'N/A')} km", style='List Bullet')
         
-        editorial_summary = place.get('editorial_summary', {})
-        summary_str = editorial_summary.get('overview', 'N/A')
-        doc.add_paragraph(f"Editorial summary: {summary_str}", style='List Bullet')
+    #     editorial_summary = place.get('editorial_summary', {})
+    #     summary_str = editorial_summary.get('overview', 'N/A')
+    #     doc.add_paragraph(f"Editorial summary: {summary_str}", style='List Bullet')
 
-        types = ', '.join(place.get('types', ['N/A']))
-        doc.add_paragraph(f"Types: {types}", style='List Bullet')
+    #     types = ', '.join(place.get('types', ['N/A']))
+    #     doc.add_paragraph(f"Types: {types}", style='List Bullet')
         
-        hours = place.get('opening_hours', {})
-        if 'weekday_text' in hours:
-            hours_str = '\n'.join(hours['weekday_text'])
-        else:
-            hours_str = 'N/A'
-        doc.add_paragraph(f"Hours of operation: {hours_str}", style='List Bullet')
+    #     hours = place.get('opening_hours', {})
+    #     if 'weekday_text' in hours:
+    #         hours_str = '\n'.join(hours['weekday_text'])
+    #     else:
+    #         hours_str = 'N/A'
+    #     doc.add_paragraph(f"Hours of operation: {hours_str}", style='List Bullet')
 
-        table = doc.add_table(rows=1, cols=2)
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = 'Category'
-        hdr_cells[1].text = 'Data'
+    #     table = doc.add_table(rows=1, cols=2)
+    #     hdr_cells = table.rows[0].cells
+    #     hdr_cells[0].text = 'Category'
+    #     hdr_cells[1].text = 'Data'
     
-        # Standard fields
-        standard_fields = ['price_level', 'rating', 'user_ratings_total', 'business_status', 'website', 'url', 'international_phone_number', 'formatted_address']
-        for field in standard_fields:
-            row_cells = table.add_row().cells
-            row_cells[0].text = field.replace('_', ' ').capitalize()
-            row_cells[1].text = str(place.get(field, 'N/A'))
+    #     # Standard fields
+    #     standard_fields = ['price_level', 'rating', 'user_ratings_total', 'business_status', 'website', 'url', 'international_phone_number', 'formatted_address']
+    #     for field in standard_fields:
+    #         row_cells = table.add_row().cells
+    #         row_cells[0].text = field.replace('_', ' ').capitalize()
+    #         row_cells[1].text = str(place.get(field, 'N/A'))
 
-        # Additional boolean fields to convert to Yes/No for the report
-        additional_fields = ['dine_in', 'takeout', 'reservable', 'serves_breakfast', 'serves_brunch', 'serves_lunch', 'serves_dinner', 'serves_wine', 'serves_vegetarian_food']
-        for field in additional_fields:
-            value = place.get(field, 'N/A')
-            value_text = 'Yes' if value is True else 'No' if value is False else str(value)
-            row_cells = table.add_row().cells
-            row_cells[0].text = field.replace('_', ' ').capitalize()
-            row_cells[1].text = value_text
+    #     # Additional boolean fields to convert to Yes/No for the report
+    #     additional_fields = ['dine_in', 'takeout', 'reservable', 'serves_breakfast', 'serves_brunch', 'serves_lunch', 'serves_dinner', 'serves_wine', 'serves_vegetarian_food']
+    #     for field in additional_fields:
+    #         value = place.get(field, 'N/A')
+    #         value_text = 'Yes' if value is True else 'No' if value is False else str(value)
+    #         row_cells = table.add_row().cells
+    #         row_cells[0].text = field.replace('_', ' ').capitalize()
+    #         row_cells[1].text = value_text
 
-        # List fields
-        self.add_list_to_doc(doc, 'Menu Links', place.get('menu_links', []))
-        self.add_list_to_doc(doc, 'Event Links', place.get('event_links', []))
-        self.add_list_to_doc(doc, 'PDF Links', place.get('pdf_links', []))
+    #     # List fields
+    #     self.add_list_to_doc(doc, 'Menu Links', place.get('menu_links', []))
+    #     self.add_list_to_doc(doc, 'Event Links', place.get('event_links', []))
+    #     self.add_list_to_doc(doc, 'PDF Links', place.get('pdf_links', []))
         
-        doc.add_paragraph(f"AI Summary: {place.get('gemini_summary', 'N/A')}", style='List Bullet')
+    #     doc.add_paragraph(f"AI Summary: {place.get('gemini_summary', 'N/A')}", style='List Bullet')
             
-    def add_list_to_doc(self, doc, title, items):
-        if items:
-            doc.add_paragraph(f'{title}:', style='List Bullet')
-            for item in items:
-                # Create a sub-bullet point for each item
-                p = doc.add_paragraph(style='List Bullet 2')
-                p.add_run(item)
+    # def add_list_to_doc(self, doc, title, items):
+    #     if items:
+    #         doc.add_paragraph(f'{title}:', style='List Bullet')
+    #         for item in items:
+    #             # Create a sub-bullet point for each item
+    #             p = doc.add_paragraph(style='List Bullet 2')
+    #             p.add_run(item)
 
-    def add_summary_to_doc(self, doc):
-        doc.add_heading('Summary of Findings', level=2)
-        for group, places in self.data['grouped_places'].items():
-            doc.add_heading(f'{group.capitalize()}:', level=3)
+    # def add_summary_to_doc(self, doc):
+    #     doc.add_heading('Summary of Findings', level=2)
+    #     for group, places in self.data['grouped_places'].items():
+    #         doc.add_heading(f'{group.capitalize()}:', level=3)
             
-            # Create a table for this group with an additional column for the weighted score
-            table = doc.add_table(rows=1, cols=5)
-            hdr_cells = table.rows[0].cells
-            hdr_cells[0].text = 'Weighted Match Score'
-            hdr_cells[1].text = 'Name'
-            hdr_cells[2].text = 'Rating'
-            hdr_cells[3].text = 'Price Level'
-            hdr_cells[4].text = 'Distance (km)'
+    #         # Create a table for this group with an additional column for the weighted score
+    #         table = doc.add_table(rows=1, cols=5)
+    #         hdr_cells = table.rows[0].cells
+    #         hdr_cells[0].text = 'Weighted Match Score'
+    #         hdr_cells[1].text = 'Name'
+    #         hdr_cells[2].text = 'Rating'
+    #         hdr_cells[3].text = 'Price Level'
+    #         hdr_cells[4].text = 'Distance (km)'
 
-            for place in places:
-                row_cells = table.add_row().cells
-                row_cells[0].text = str(round(place.get('weighted_score', 0), 2))  # Weighted score rounded to 2 decimal places
-                row_cells[1].text = place.get('name', 'N/A')
-                row_cells[2].text = str(place.get('rating', 'N/A'))
-                row_cells[3].text = "$" * place.get('price_level', 0)
-                row_cells[4].text = f"{round(place.get('distance_from_target_address', 0), 1)}"
+    #         for place in places:
+    #             row_cells = table.add_row().cells
+    #             row_cells[0].text = str(round(place.get('weighted_score', 0), 2))  # Weighted score rounded to 2 decimal places
+    #             row_cells[1].text = place.get('name', 'N/A')
+    #             row_cells[2].text = str(place.get('rating', 'N/A'))
+    #             row_cells[3].text = "$" * place.get('price_level', 0)
+    #             row_cells[4].text = f"{round(place.get('distance_from_target_address', 0), 1)}"
 
     @staticmethod
     def format_weekday_text(hours):
@@ -622,24 +626,24 @@ if __name__ == '__main__':
     address_researcher.perform_research(address)
     address_researcher.augment_place_details_with_web_data()
     address_researcher.generate_summary()
+    AddressResearcher.print_human_readable(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented_{address}.json")
     
-    address_researcher.save_research_report(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented_{address}_{now}.json")
-    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented_{address}_{now}.json"):
+    address_researcher.save_research_report(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented_{address}.json")
+    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented_{address}.json"):
         print("Research json saved successfully.")
     else:
         print("Research json save failed.")
         
-    address_researcher.save_report_as_word(f"{FILE_DROP_DIR_PATH}/research_report_doc_formatted_{address}_{now}.docx")
-    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_doc_formatted_{address}_{now}.docx"):
+    address_researcher.save_report_as_word(f"{FILE_DROP_DIR_PATH}/research_report_doc_formatted_{address}.docx")
+    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_doc_formatted_{address}.docx"):
         print("Research doc saved successfully.")
     else:
         print("Research doc save failed.")
         
-    AddressResearcher.save_report_as_csv(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented.json", f"{FILE_DROP_DIR_PATH}/research_report_spreadsheet_{address}_{now}.csv")
-    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_spreadsheet_{address}_{now}.csv"):
+    AddressResearcher.save_report_as_csv(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented_{address}.json", f"{FILE_DROP_DIR_PATH}/research_report_spreadsheet_{address}.csv")
+    if os.path.exists(f"{FILE_DROP_DIR_PATH}/research_report_spreadsheet_{address}.csv"):
         print("Research csv saved successfully.")
     else:    
         print("Research csv save failed.")
-        
-    AddressResearcher.print_human_readable(f"{FILE_DROP_DIR_PATH}/research_report_data_augmented.json")
+
 

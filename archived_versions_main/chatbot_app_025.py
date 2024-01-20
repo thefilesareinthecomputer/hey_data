@@ -1,11 +1,10 @@
-# chatbot_app_main_0.2.4.py
-# adding flet UI
+# chatbot_app_025.py
+# working on app architecture
 
 # IMPORTS ###################################################################################################################################
 
 # standard imports
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 import asyncio
 import inspect
 import json
@@ -29,6 +28,15 @@ from transformers import MarianMTModel, MarianTokenizer
 import certifi
 import flet as ft
 import google.generativeai as genai
+from langchain_google_genai.llms import GoogleGenerativeAI
+from langchain_openai import ChatOpenAI
+from langchain.agents import tool
+from langchain.prompts.chat import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    SystemMessagePromptTemplate,
+)
+from langchain.schema import HumanMessage, SystemMessage
 import numpy as np
 import nltk
 import pandas as pd
@@ -41,12 +49,18 @@ import tensorflow as tf
 import wikipedia
 import wolframalpha
 import yfinance as yf
-# local imports
-# from chatbot_training import train_chatbot_model
-# train_chatbot_model()
 
-# CONSTANTS ###################################################################################################################################
+from user_persona import (user_demographics, 
+                          user_skills_and_experience,
+                          user_personality, 
+                          user_interests, 
+                          user_influential_figures, 
+                          user_life_soundtrack, 
+                          user_favorite_books,
+                          user_favorite_movies,)
 
+# ENVIRONMENT VARIABLES ###################################################################################################################################
+from dotenv import load_dotenv
 load_dotenv()
 JAVA_HOME = os.getenv('JAVA_HOME')
 NEO4J_URI = os.getenv("NEO4J_URI")
@@ -55,7 +69,7 @@ NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
 NEO4J_DATABASE = os.getenv("NEO4J_DATABASE")
 NEO4J_PATH = os.getenv("NEO4J_PATH")
 USER_PREFERRED_LANGUAGE = os.getenv('USER_PREFERRED_LANGUAGE', 'en')  # 2-letter lowercase
-USER_PREFERRED_VOICE = os.getenv('USER_PREFERRED_VOICE', 'Evan')  # Daniel
+USER_PREFERRED_VOICE = os.getenv('USER_PREFERRED_VOICE', 'Evan')
 USER_PREFERRED_NAME = os.getenv('USER_PREFERRED_NAME', 'User')  # Title case
 USER_SELECTED_HOME_CITY = os.getenv('USER_SELECTED_HOME_CITY', 'None')  # Title case
 USER_SELECTED_HOME_COUNTY = os.getenv('USER_SELECTED_HOME_COUNTY', 'None')  # Title case
@@ -68,7 +82,6 @@ USER_STOCK_WATCH_LIST = os.getenv('USER_STOCK_WATCH_LIST', 'None').split(',')  #
 USER_DOWNLOADS_FOLDER = os.getenv('USER_DOWNLOADS_FOLDER')
 PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
 PROJECT_ROOT_DIRECTORY = os.getenv('PROJECT_ROOT_DIRECTORY')
-SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 DATABASES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_databases')
 FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_generated_files')
 LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_local_models')
@@ -78,10 +91,21 @@ SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_source_data')
 SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
 TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_tests')
 UTILITIES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'utilities')
-folders_to_create = [DATABASES_DIR_PATH, FILE_DROP_DIR_PATH, LOCAL_LLMS_DIR, BASE_KNOWLEDGE_DIR_PATH, SECRETS_DIR_PATH, SOURCE_DATA_DIR_PATH, SRC_DIR_PATH, TESTS_DIR_PATH, UTILITIES_DIR_PATH]
+SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+folders_to_create = [DATABASES_DIR_PATH, 
+                     FILE_DROP_DIR_PATH, 
+                     LOCAL_LLMS_DIR, 
+                     BASE_KNOWLEDGE_DIR_PATH, 
+                     SECRETS_DIR_PATH, 
+                     SOURCE_DATA_DIR_PATH, 
+                     SRC_DIR_PATH, 
+                     TESTS_DIR_PATH, 
+                     UTILITIES_DIR_PATH]
 for folder in folders_to_create:
     if not os.path.exists(folder):
         os.makedirs(folder)
+
+# CONSTANTS ###################################################################################################################################
 
 # Set the default SSL context for the entire script
 def create_ssl_context():
@@ -102,16 +126,16 @@ print(f"""SSL Context Details:
 # Set API keys and other sensitive information from environment variables
 open_weather_api_key = os.getenv('OPEN_WEATHER_API_KEY')
 wolfram_app_id = os.getenv('WOLFRAM_APP_ID')
-# openai_api_key=os.getenv('OPENAI_API_KEY')
+openai_api_key=os.getenv('OPENAI_API_KEY')
 google_cloud_api_key = os.getenv('GOOGLE_CLOUD_API_KEY')
 google_maps_api_key = os.getenv('GOOGLE_MAPS_API_KEY')
 google_gemini_api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
 google_documentation_search_engine_id = os.getenv('GOOGLE_DOCUMENTATION_SEARCH_ENGINE_ID')
+google_job_search_search_engine_id = os.getenv('GOOGLE_JOB_SEARCH_SEARCH_ENGINE_ID')
 print('API keys and other sensitive information loaded from environment variables.\n\n')
 
 # Establish the TTS bot's wake/activation word and script-specific global constants
 mic_on = False
-latest_bot_speech = ""
 conversation_history = []
 activation_word = os.getenv('ACTIVATION_WORD', 'robot')
 username = os.getenv('USERNAME', 'None')
@@ -120,19 +144,17 @@ exit_words = os.getenv('EXIT_WORDS', 'None').split(',')
 print(f'Activation word is {activation_word}\n\n')
 
 # Initialize the language models
-# pocket_sphinx_model_files = os.path.join(LOCAL_LLMS_DIR, "sphinx4-5prealpha-src")
+# pocket_sphinx_model_files = os.path.join(LOCAL_LLMS_DIR, "sphinx4-5prealpha-src")  # for offline speech recognition (not good)
 genai.configure(api_key=google_gemini_api_key)
 gemini_model = genai.GenerativeModel('gemini-pro')  
 gemini_vision_model = genai.GenerativeModel('gemini-pro-vision')
-print('Google Gemini LLM initialized.\n\n') 
-
 lemmmatizer = WordNetLemmatizer()
 intents = json.loads(open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_intents.json').read())
 words = pickle.load(open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_words.pkl', 'rb'))
 classes = pickle.load(open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_classes.pkl', 'rb'))
 chatbot_model = tf.keras.models.load_model(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_model.keras')
 unrecognized_file_path = f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_unrecognized_message_intents.json'
-print('Local chatbot model loaded.\n\n')
+print('Language models loaded.\n\n')
 
 # CLASS DEFINITIONS ###################################################################################################################################
 
@@ -213,6 +235,36 @@ class SpeechToTextTextToSpeechIO:
     
     @classmethod
     def speak_mainframe(cls, text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
+        '''speak_mainframe contains the bot's speech output voice settings, and it puts each chunk of text output from the bot or the LLM 
+        into the speech output queue to be processed in sequential order. it also separately returns the estimated duration of the speech 
+        output (in seconds), using thecalculate_speech_duration function.'''
+        global conversation_history
+        conversation_history.append("Bot: " + text)
+        cls.queue_lock.acquire()
+        try:
+            cls.speech_queue.put((text, rate, chunk_size, voice))
+            speech_duration = cls.calculate_speech_duration(text, rate)
+        finally:
+            cls.queue_lock.release()
+        return speech_duration
+    
+    @classmethod
+    def speak_clarity(cls, text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
+        '''speak_mainframe contains the bot's speech output voice settings, and it puts each chunk of text output from the bot or the LLM 
+        into the speech output queue to be processed in sequential order. it also separately returns the estimated duration of the speech 
+        output (in seconds), using thecalculate_speech_duration function.'''
+        global conversation_history
+        conversation_history.append("Bot: " + text)
+        cls.queue_lock.acquire()
+        try:
+            cls.speech_queue.put((text, rate, chunk_size, voice))
+            speech_duration = cls.calculate_speech_duration(text, rate)
+        finally:
+            cls.queue_lock.release()
+        return speech_duration
+    
+    @classmethod
+    def speak_alignment(cls, text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
         '''speak_mainframe contains the bot's speech output voice settings, and it puts each chunk of text output from the bot or the LLM 
         into the speech output queue to be processed in sequential order. it also separately returns the estimated duration of the speech 
         output (in seconds), using thecalculate_speech_duration function.'''
@@ -386,6 +438,234 @@ class ChatBotTools:
                 if query[0] in exit_words:
                     SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
                     break
+                
+                if query[0] == 'alfred':  
+                    global google_job_search_search_engine_id
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Calibrating.') 
+
+                    all_dicts = [
+                        user_demographics, 
+                        user_skills_and_experience,
+                        user_personality, 
+                        user_interests, 
+                        user_influential_figures, 
+                        user_life_soundtrack, 
+                        user_favorite_books,
+                        user_favorite_movies
+                    ]
+
+                    formatted_info = []
+                    for dictionary in all_dicts:
+                        # Check if the item is actually a dictionary
+                        if isinstance(dictionary, dict):
+                            formatted_dict = ", ".join([f"{k}={v}" for k, v in dictionary.items()])
+                            formatted_info.append(formatted_dict)
+                        else:
+                            print(f"Expected a dictionary, but found: {type(dictionary)}")
+
+                    formatted_user_info = " | ".join(formatted_info)
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nUSER INFO:")
+                    print(f'User info: \n{formatted_user_info}\n')
+                    
+                    alfred_intro_prompt = f"""### <SYSTEM MESSAGE> <START> ###
+                    Gemini, you are being calibrated as a personal assistant for the user. 
+                    You are about to recieve a host of data about your user along with instructions about your tasks and conduct. 
+                    The user data contains much of what you'll need to know to deeply understand the user. In this data, there is a list of the user's main 
+                    role models. Attempt to emulate these people, and align yourself with their philosophies and ways of thinking and acting. 
+                    Read this data about the user: \n{formatted_user_info}\n
+                    ### <SYSTEM MESSAGE> <END> ###
+                    """
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nALFRED INTRO PROMPT:")
+                    print(alfred_intro_prompt)
+                    
+                    alfred_intro_response = chat.send_message(f'{alfred_intro_prompt}', stream=True)
+                    alfred_intro_response.resolve()
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nALFRED INTRO RESPONSE:")
+                    print(alfred_intro_response)
+                    
+                    alfred_intro_prompt_2 = f"""### <SYSTEM MESSAGE> <START> ###
+                    Read the user persona again and try to understand them to their core. 
+                    Discern their motivations, strengths, and think of jobs or career paths where they 
+                    will be most successful and happy: 
+                    \n{formatted_user_info}\n
+                    ### <SYSTEM MESSAGE> <END> ###
+                    """
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nALFRED INTRO PROMPT 2:")
+                    print(alfred_intro_prompt_2)
+                    
+                    alfred_intro_response_2 = chat.send_message(f'{alfred_intro_prompt_2}', stream=True)
+                    alfred_intro_response_2.resolve()
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nALFRED INTRO RESPONSE 2:")
+                    print(alfred_intro_response_2)
+                    
+                    alfred_prompt = f"""### <SYSTEM MESSAGE> <START> ### 
+                    You are a mentor and a coach to the user, and may need to be a sounding board for their ideas and goals. 
+                    You are a life coach. You are here to help the user find direction for their career path and purpose. 
+                    The ultimate goal is to help the user find their Ikigai / vocation / greater purpose and then take swift action to work toward it. 
+                    We are here to combine theory and then take action. Not just talk about vague nebulous concepts. 
+                    All of your advice must also be followed by a recommended next best action. 
+                    Always think about the next best action and focus on this with the user. You are here to help keep things moving along. 
+                    Considering the user's profile: \n{formatted_user_info},\n what pursuits and study topics and career trajectories 
+                    and types of work would be most suitable for them? 
+                    Keep it simple and concise. 
+                    You are a life coach. 
+                    ### <SYSTEM MESSAGE> <END> ###
+                    """
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nALFRED PROMPT:")
+                    print(alfred_prompt)
+                    
+                    alfred_response = chat.send_message(f'{alfred_prompt}', stream=True)
+                    alfred_response.resolve()
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nALFRED RESPONSE:")
+                    print(alfred_response)
+                    
+                    alfred_self_check_prompt = f"""### <SYSTEM MESSAGE> <START> ### 
+                    It's time to do a self-check to make sure you're not hallucinating anything. 
+                    Please review your conversation to this point, and ensure you haven't recommended anything outlandish or unrealistic. 
+                    Please keep in mind the real-world limitations of the user's current situation, and provide advice that takes this into consideration. 
+                    Make sure you're recommending things that are attainable and realistic for the user. Ambitious is ok, but don't be unrealistic.  
+                    Considering the user's profile: \n{formatted_user_info},\n what pursuits and study topics and career trajectories 
+                    and types of work would be most suitable for them? Think this through step by step.  
+                    Keep it simple and concise. You are a life coach. 
+                    SELF-CHECK YOURSELF NOW. 
+                    ### <SYSTEM MESSAGE> <END> ###
+                    """
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nALFRED SELF CHECK PROMPT:")
+                    print(alfred_self_check_prompt)
+                    
+                    alfred_self_check = chat.send_message(f'{alfred_self_check_prompt}', stream=True)
+                    alfred_self_check.resolve()
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nALFRED SELF CHECK RESPONSE:")
+                    print(alfred_self_check)
+                    
+                    alfred_web_search_prompt = f"""### <SYSTEM MESSAGE> <START> ### 
+                    New information - you have access to tools. You are an AI agent that can take actions. 
+                    The next step in this assignment is for you to use one of your tools - a google programmable search engine that contains URLs for popular job search websites. 
+                    Please review your conversation to this point, and ensure you are still on track and you are working toward the user requirements. 
+                    Please keep in mind the real-world circumstances of the user's current situation, and provide advice that takes this into consideration. 
+                    Make sure you're recommending things that are attainable and realistic for the user. Ambitious is ok, but don't be unrealistic.  
+                    Considering the user's profile: \n{formatted_user_info},\n which job titles are most appropriate for the user based on their priorities and experience?  
+                    Your output for this step must be in the form of a job search website search phrase. 
+                    Your output will be passed to the search engine and the results will be added to your own context in the next prompt in this chain. 
+                    You are being asked to search a search engine for jobs for the user. 
+                    You will be searching indeed, linkedin, monster, ziprecruiter, etc. all at once with this custom search engine. 
+                    Search the most relevant job titles you can think of for the user. 
+                    The search phrase must be just a few words, no more. 
+                    DO NOT PROVIDE A LONG FORM RESPONSE. 
+                    DO NOT APPEND YOUR SEARCH PHRASE WITH ANY OTHER TEXT. 
+                    PROVIDE YOUR JOB TITLES SEARCH PHRASE NOW. 
+                    ### <SYSTEM MESSAGE> <END> ###
+                    """
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nALFRED WEB SEARCH PROMPT:")
+                    print(alfred_web_search_prompt)
+                    
+                    alfred_web_search = chat.send_message(f'{alfred_web_search_prompt}', stream=True)
+                    alfred_web_search.resolve()
+                    
+                    search_phrase = ""
+                    
+                    if alfred_web_search:
+                        for chunk in alfred_web_search:
+                            if hasattr(chunk, 'parts'):
+                                # Concatenate the text from each part
+                                search_phrase += ''.join(part.text for part in chunk.parts)
+                            else:
+                                # If it's a simple response, just concatenate the text
+                                search_phrase += chunk.text
+                    if not alfred_web_search:
+                        attempt_count = 1  # Initialize re-try attempt count
+                        while attempt_count < 5:
+                            alfred_web_search = chat.send_message(f'{alfred_web_search_prompt}', stream=True)
+                            attempt_count += 1  # Increment attempt count
+                            if alfred_web_search:
+                                for chunk in alfred_web_search:
+                                    if hasattr(chunk, 'parts'):
+                                        # Concatenate the text from each part
+                                        search_phrase += ''.join(part.text for part in chunk.parts)
+                                    else:
+                                        # If it's a simple response, just concatenate the text
+                                        search_phrase += chunk.text
+                            else:
+                                print('Search failed.')
+                    
+                    print(f"\n\n##########\n##########\n##########\n\nALFRED WEB SEARCH RESPONSE:")
+                    print(search_phrase)
+                    
+                    search_url = f"https://www.googleapis.com/customsearch/v1?key={google_cloud_api_key}&cx={google_job_search_search_engine_id}&q={search_phrase}"
+
+                    response = requests.get(search_url)
+                    if response.status_code == 200:
+                        search_results = response.json().get('items', [])
+                        print(f"Search results: \n{search_results}\n")
+                        ChatBotTools.data_store['last_search'] = search_results
+                        print('Search results added to memory.')
+                    else:
+                        print('Search unsuccessful.')
+                        
+                    data_store = ChatBotTools.data_store
+                    print(ChatBotTools.data_store)
+                    
+                    alfred_web_search_review_prompt = f"""### <SYSTEM MESSAGE> <START> ### 
+                    New information - you are now going to review the results of your search tool. You are an AI agent that is taking actions for the user. 
+                    The next step in this assignment is for you to review the results from your google programmable search for job titles. 
+                    Please review your conversation to this point, and ensure you are still on track and you are working toward the user requirements. 
+                    Please keep in mind the real-world circumstances of the user's current situation, and provide advice that takes this into consideration. 
+                    Make sure you're recommending things that are attainable and realistic for the user. Ambitious is ok, but don't be unrealistic.  
+                    Considering the search results: \n{data_store},\n which job titles are most attainable and suitable for the user based on their priorities and experience?  
+                    How should the user go about working toward these positions from where they currently are? Provide simple, actionable, concrete, steps to implement this plan.
+                    Think this through step by step. 
+                    PROVIDE YOUR INTERPRETATION OF THE RESULTS NOW. 
+                    ### <SYSTEM MESSAGE> <END> ###
+                    """
+                    
+                    print(alfred_web_search_review_prompt)
+                    
+                    alfred_web_search_review = chat.send_message(f'{alfred_web_search_review_prompt}', stream=True)
+                    alfred_web_search_review.resolve()
+                    
+                    print(alfred_web_search_review)
+                    
+                    alfred_prompt_2 = f"""### <SYSTEM MESSAGE> <START> ### 
+                    \n### JOB SEARCH RESULTS ### \n{data_store}\n\n 
+                    \n### USER PERSONA DATA ### \n{formatted_user_info}\n\n 
+                    now that you have had a chance to get the full picture, review the user persona information again. 
+                    Draw some more insightful conclusions about the user. 
+                    Look at the most relevant available positions for the user, and then provide tangible advice on how the user can worl toward these roles from their current position. 
+                    Use your critical thinking skills to challenge and refine your initial recommendations, to make them more accurate and more insightful.
+                    You are now done searching ang using your tools, and about to engage in a verbal real-time conversation with the human user, 
+                    and therefore you must make your responses concise so they sound like natural speech when you start the chat loop with the user.  
+                    Do not generate long form text unless specifically asked to do so. 
+                    PROVIDE YOUR REFINED THOUGHTS / RECOMMENDATIONS TO THE USER AND THEN AWAIT THEIR REPLY: 
+                    ### <SYSTEM MESSAGE> <END> ### 
+                    """
+                    
+                    print(alfred_prompt_2)
+                    
+                    alfred_response_2 = chat.send_message(f'{alfred_prompt_2}', stream=True)
+                    if alfred_response_2:
+                        for chunk in alfred_response_2:
+                            if hasattr(chunk, 'parts'):
+                                # Concatenate the text from each part
+                                full_text = ''.join(part.text for part in chunk.parts)
+                                SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                print(full_text)
+                            else:
+                                # If it's a simple response, just speak and print the text
+                                SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                                print(chunk.text)
+                            time.sleep(0.1)
+                        time.sleep(1)
+                    continue
                 
                 if query[0] == 'access' and query [1] == 'data':
                     SpeechToTextTextToSpeechIO.speak_mainframe('Accessing global memory.')
@@ -1019,8 +1299,9 @@ class ChatBotTools:
         
     @staticmethod
     def custom_search_engine():
-        SpeechToTextTextToSpeechIO.speak_mainframe("Speak your search query.")
-        time.sleep(2)
+        global google_documentation_search_engine_id
+        global google_job_search_search_engine_id
+        SpeechToTextTextToSpeechIO.speak_mainframe("Which engine do you want to use? Documentation or Job Search?")
         while True:
             user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
             if not user_input:
@@ -1034,20 +1315,44 @@ class ChatBotTools:
                 SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
                 break
             
-            search_query = ' '.join(query)
+            engine = ' '.join(query).lower()
+            
+            if engine in ['documentation', 'document', 'docs', 'documentation search', 'document search', 'docs search']:
+                google_search_engine_id = google_documentation_search_engine_id
+            
+            if engine in ['job search', 'job', 'jobs', 'career', ]:
+                google_search_engine_id = google_job_search_search_engine_id
         
-            search_url = f"https://www.googleapis.com/customsearch/v1?key={google_cloud_api_key}&cx={google_documentation_search_engine_id}&q={search_query}"
+            SpeechToTextTextToSpeechIO.speak_mainframe("Speak your search query.")
+            time.sleep(2)
+            
+            while True:
+                user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+                if not user_input:
+                    continue
 
-            response = requests.get(search_url)
-            if response.status_code == 200:
-                search_results = response.json().get('items', [])
-                print(f"Search results: \n{search_results}\n")
-                ChatBotTools.data_store['last_search'] = search_results
-                SpeechToTextTextToSpeechIO.speak_mainframe('Search results added to memory.')
-                return search_results
-            else:
-                SpeechToTextTextToSpeechIO.speak_mainframe('Search unsuccessful.')
-                return f"Error: {response.status_code}"
+                query = user_input.lower().split()
+                if not query:
+                    continue
+
+                if query[0] in exit_words:
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
+                    break
+                
+                search_query = ' '.join(query)
+            
+                search_url = f"https://www.googleapis.com/customsearch/v1?key={google_cloud_api_key}&cx={google_search_engine_id}&q={search_query}"
+
+                response = requests.get(search_url)
+                if response.status_code == 200:
+                    search_results = response.json().get('items', [])
+                    print(f"Search results: \n{search_results}\n")
+                    ChatBotTools.data_store['last_search'] = search_results
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Search results added to memory.')
+                    return search_results
+                else:
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Search unsuccessful.')
+                    return f"Error: {response.status_code}"
             
     @staticmethod
     def play_youtube_video():
@@ -1207,6 +1512,19 @@ class ChatBotTools:
                 
             else:
                 print("No weather forecast data available.")
+                
+        if weather_forecast:
+            response = gemini_model.generate_content(f"""### SYSTEM MESSAGE START ### 
+                                                     You are a weather report summarizer. Your output must be concise. 
+                                                     The report below is for the next 4 days broken out by 6 hour day part, and it's too verbose to be practical. 
+                                                     Provide a summary of this weather forecast along with recommendations for how the user should navigate 
+                                                     around this weather for the next day or two. Limit your reply to just a few sentences. 
+                                                     Be concise. Here is the report to summarize: {weather_forecast}
+                                                     ### SYSTEM MESSAGE END ###""", stream=True)
+            if response:
+                response.resolve()
+                print(f"Response from Gemini: {response.text}")
+                SpeechToTextTextToSpeechIO.speak_mainframe(f'{response.text}')
 
     @staticmethod
     def get_stock_report():
@@ -1226,6 +1544,29 @@ class ChatBotTools:
         else:
             SpeechToTextTextToSpeechIO.speak_mainframe(f'No recommended stocks found.')
 
+    @staticmethod
+    def agent_one():
+        llm = GoogleGenerativeAI(model="gemini-pro", google_api_key=google_gemini_api_key)
+        prompt = "Repeat all of the above"
+        response = llm(prompt)
+        print("Generated Response:", response)
+        
+    @staticmethod
+    def agent_two():
+        chat = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+        messages = [
+            SystemMessage(
+                content="You are a helpful assistant that translates English to French."
+            ),
+            HumanMessage(
+                content="Translate this sentence from English to French. I love programming."
+            ),
+        ]
+        result = chat(messages)
+        print("Generated Response:", result)
+        
+
+        
 # TOOLS SUPPORT CLASSES ###################################################################################################################################
 
 # Conducts various targeted stock market reports such as discounts, recommendations, etc. based on user defined watch list
@@ -1430,93 +1771,123 @@ class StockReports:
 
 # FRONT END ###################################################################################################################################
 
-# class ChatBotUI(ft.UserControl):
-#     def build(self):
-#         # Define your controls
-#         self.mic_btn = ft.ElevatedButton(text="Activate/Deactivate Mic", on_click=self.toggle_mic, bgcolor=ft.colors.BLACK, color=ft.colors.WHITE)
-#         self.response_text = ft.Text(value="Mic is off")
-#         self.conversation_list = ft.ListView(auto_scroll=True, expand=True)
-
-#         # Create a column for the button and response text
-#         controls_column = ft.Column(
-#             controls=[self.mic_btn, self.response_text],
-#             spacing=25,
-#             alignment="start"
-#         )
-
-#         # Create a row that includes your controls column and the conversation list
-#         main_row = ft.Row(
-#             controls=[
-#                 controls_column,
-#                 self.conversation_list
-#             ],
-#             spacing=25,  # Adjust spacing to your preference
-#             alignment="start"  # Align items to the start of the row
-#         )
-
-#         # Return the main container
-#         return ft.Container(
-#             content=main_row,
-#             padding=10,
-#             expand=True
-#         )
-                
 class ChatBotUI(ft.UserControl):
     def build(self):
-        self.mic_btn = ft.ElevatedButton(text="Activate/Deactivate Mic", on_click=self.toggle_mic, bgcolor=ft.colors.BLACK, color=ft.colors.WHITE)
-        self.response_text = ft.Text(value="Mic is off")
-        # self.conversation_text = ft.Text(value="")  
-        self.conversation_list = ft.ListView(auto_scroll=True,)
-        controls_column = ft.Column(controls=[self.mic_btn, self.response_text], spacing=15,)
-        convo_column = ft.Column(controls=[self.conversation_list], spacing=15, scroll=ft.ScrollMode.ALWAYS, height=1000, width=600, wrap=True)
+        self.mic_btn = ft.ElevatedButton(
+            text="MICROPHONE ON/OFF", 
+            tooltip="Click to toggle microphone on/off",
+            on_click=self.toggle_mic, 
+            elevation=10,
+            bgcolor=ft.colors.GREY, 
+            color=ft.colors.WHITE)
         
-        return ft.Container(content=ft.Row(controls=[controls_column, convo_column], spacing=15), padding=10)
+        self.response_text = ft.Text(
+            value="Mic is off")
+        
+        self.conversation_list = ft.ListView(
+            auto_scroll=True,)
+        
+        self.data_text = ft.TextField(
+            value="", 
+            multiline=True, 
+            read_only=True, 
+            height=1000, 
+            width=600)
+        
+        controls_column = ft.Column(
+            controls=[
+                self.mic_btn, 
+                self.response_text], 
+            spacing=15,)
+        
+        convo_column = ft.Column(
+            controls=[
+                self.conversation_list], 
+            spacing=15, 
+            scroll=ft.ScrollMode.ALWAYS, 
+            height=1000, 
+            width=600, 
+            wrap=True)
+        
+        data_column = ft.Column(
+            controls=[
+                self.data_text], 
+            spacing=15)
+        
+        return ft.Container(
+            content=ft.Row(
+                controls=[
+                    controls_column, 
+                    convo_column, 
+                    data_column
+                    ], 
+                spacing=15
+                ), 
+                padding=10
+                )
         
     def toggle_mic(self, e):
         global mic_on
         mic_on = not mic_on
         self.response_text.value = "Mic is on" if mic_on else "Mic is off"
         self.update()
-        
+    
+    def update_conversation(self):
+        global conversation_history
+        last_index = 0
+        while True:
+            current_len = len(conversation_history)
+            for i in range(last_index, current_len):
+                self.conversation_list.controls.append(ft.Text(value=conversation_history[i]))
+                last_index += 1
+            self.update()
+            time.sleep(1)
+
+    def update_data_store(self):
+        global ChatBotTools
+        last_data_keys = set()
+        while True:
+            current_data_keys = set(ChatBotTools.data_store.keys())
+            new_keys = current_data_keys - last_data_keys
+            if new_keys:
+                new_data_texts = []
+                for key in new_keys:
+                    value = ChatBotTools.data_store[key]
+                    formatted_value = json.dumps(value, indent=4) if isinstance(value, dict) else str(value)
+                    new_data_texts.append(f"{key}:\n{formatted_value}")
+                # Append the new data to the existing text
+                self.data_text.value += "\n".join(new_data_texts)
+                last_data_keys.update(new_keys)
+            self.update()
+            time.sleep(1)
+
+    def start_threads(self):
+        threading.Thread(target=self.update_conversation, daemon=True).start()
+        threading.Thread(target=self.update_data_store, daemon=True).start()
+
 def ui_main(page: ft.Page):
     page.title = "ROBOT"
     page.scroll = "adaptive"
+    page.bgcolor = ft.colors.BLACK
+    page.theme_mode = ft.ThemeMode.DARK
+    page.theme = ft.theme.Theme(color_scheme_seed="black")
+    page.padding = 50
     chatbot_ui = ChatBotUI()
     page.add(chatbot_ui)
-
-    # Start the thread and pass chatbot_ui to it
-    threading.Thread(target=update_conversation, args=(chatbot_ui,), daemon=True).start()  
-    
-def update_conversation(chatbot_ui):
-    global conversation_history
-    last_index = 0  # Keep track of the last message index added
-
-    while True:
-        current_len = len(conversation_history)
-        # Add new messages since the last update
-        for i in range(last_index, current_len):
-            chatbot_ui.conversation_list.controls.append(ft.Text(value=conversation_history[i]))
-            last_index += 1
-        chatbot_ui.update()
-        time.sleep(1)  # Update interval   
+    chatbot_ui.start_threads()
 
 # MAIN EXECUTION ###################################################################################################################################
 
 def run_chatbot():
-    chatbot_app = ChatBotApp()
-    chatbot_tools = ChatBotTools()
-    chatbot_app.chat(chatbot_tools)
+    chatbot_app = ChatBotApp()  # Initialize the chatbot app
+    chatbot_tools = ChatBotTools()  # Initialize the chatbot tools
+    chatbot_app.chat(chatbot_tools)  # Run the chatbot app with the tools
 
 if __name__ == '__main__':
     threading.Thread(target=SpeechToTextTextToSpeechIO.speech_manager, daemon=True).start()  # Speech manager thread
     threading.Thread(target=run_chatbot, daemon=True).start()  # Chatbot app logic thread
     ft.app(target=ui_main)  # Flet UI runs on the main thread
     
-# if __name__ == '__main__':
-#     threading.Thread(target=SpeechToTextTextToSpeechIO.speech_manager, daemon=True).start()
-#     chatbot_app = ChatBotApp()
-#     chatbot_tools = ChatBotTools()
-#     chatbot_app.chat(chatbot_tools)
     
     
     

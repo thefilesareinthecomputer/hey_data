@@ -1,6 +1,6 @@
 ## VERSION
 
-    hey_data 0.2.4
+    hey_data 0.2.5
     
 
 ## LICENSE
@@ -227,6 +227,10 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.2 - 2024-01-12 implemented a neo4j graph database with the intention of turning this into the bot's full knowledge base.
     0.2.3 - 2024-01-13 removed t5 from the generate_json_intent function along with the generate_variations helper function.
     0.2.4 - 2024-01-13 added a rudimentary ui with a mic on/off button using flet.
+    0.2.5 - 2024-01-17 added a chat log and visibility to the data_store to the flet UI.
+    0.2.5 - 2024-01-17 placed the entire flet UI except ui_main() within a ChatBotUI class.
+    0.2.5 - 2024-01-17 added __init__.py and main.py to the src directory to run the UI.
+
 
     
     
