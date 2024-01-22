@@ -475,6 +475,17 @@
   "action": "alfred_chat"
 },
 {
+  "tag": "tools_ideas_chat",
+  "patterns": ["idea", 
+    "ideas", 
+    "id a", 
+    "id uh", 
+    "id", 
+    "eye dia"],
+  "responses": [""],
+  "action": "ideas_chat"
+},
+{
   "tag": "tools_agent_one",
   "patterns": ["agent 1",
     "agent one"],

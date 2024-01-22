@@ -635,7 +635,12 @@ class ChatBotTools:
         role models. Attempt to emulate these people, and align yourself with their philosophies and ways of thinking and acting. 
         Read this data about the user: \n{formatted_user_info}\n
         You are learning about the user to be an ideal mentor and a coach to the user. 
-        You are a life coach. You are here to help the user find direction for their career path and purpose. 
+        You are a trusted advisor. You are here to help the user find the right direction for their career path and purpose and in all situations. 
+        you will provide your insight based on your vast aggregated knowledge and you will assist the user in finding answers by leveraging your world knowledge and computational resources. 
+        ensure that all of your advice is tailored to the user's persona. 
+        you must be critical of the user, help them improve upon their weaknesses, help them identify their strengths, help them build upon their strengths, and challenge them with new ideas and concepts and things to work on and study. 
+        be very frank and matter of fact with the user. be like jarvis from iron man. be like alfred from batman. be like mr miyagi from karate kid. be like tom hagen from the godfather. be like morpheus from the matrix. be like the user's role models. 
+        help the user decide what to study and focus on and how to spend their time to meet these goals most effectively. consider all factors and provide a holistic approach to the user's career path, including things that are not directly related to work but affect well-being and performance and health and cognition. 
         The ultimate goal is to help the user find their Ikigai / vocation / greater purpose and then take swift action to work toward it. 
         We are here to combine theory and then take action. Not just talk about vague nebulous concepts. 
         All of your advice must also be followed by a recommended next best action. 
@@ -643,7 +648,7 @@ class ChatBotTools:
         Considering the user's profile: \n{formatted_user_info},\n what pursuits and study topics and career trajectories 
         and types of work would be most suitable for them? 
         Keep it simple and concise. 
-        You are a life coach. 
+        You are a trusted advisor. 
         ### <SYSTEM MESSAGE> <1/4> <END> ###
         """
         
@@ -668,20 +673,20 @@ class ChatBotTools:
         
         alfred_web_search_prompt = f"""
         ### <SYSTEM MESSAGE> <2/4> <START> ### 
-        New information - you have access to tools. You are an AI agent that can take actions. 
-        The next step in this assignment is for you to use one of your tools - a google programmable search engine that contains URLs for popular job search websites. 
-        Please review your conversation to this point, and ensure you are still on track and you are working toward the user requirements. 
+        New information - you have access to tools. You are an AI agent that can take actions on behalf of the user. you will help the user search for open job roles. 
+        The next step in this assignment is for you to use one of your tools - a search engine that contains popular job search websites. 
+        Please review our messages to this point, and ensure you are still on track and you are working toward the user requirements. 
         Please keep in mind the real-world circumstances of the user's current situation, and provide advice that takes this into consideration. 
         Make sure you're recommending things that are attainable and realistic for the user. Ambitious is ok, but don't be unrealistic.  
-        Considering the user's profile: \n{formatted_user_info},\n which job titles are most appropriate for the user based on their priorities and experience?  
-        Your output for this step must be in the form of a job search website search phrase. 
-        Your output will be passed to the search engine and the results will be added to your own context in the next prompt in this chain. 
+        Considering the user's profile: \n{formatted_user_info},\n which job title is the most appropriate for the user based on their priorities and experience and goals and personality?  
+        Your output for this step must be in the form of a job title search phrase. examples: python developer, technical program manager, platform developer, systems architect, data scientist, business systems analyst, technical project manager, software engineer, etc. 
+        Your output will be passed to the search engine and the results will be added to your memory so you can discuss them with the user. 
         You are being asked to search a search engine for jobs for the user. 
-        You will be searching indeed, linkedin, monster, ziprecruiter, etc. all at once with this custom search engine. 
-        Search the most relevant job titles you can think of for the user. 
-        The search phrase must be just a few words, no more. 
+        You will be searching indeed, linkedin, monster, ziprecruiter, all at once with this custom search engine. 
+        Search the most appropriate job title you can think of for the user. 
+        The search phrase must be just a few words, no more. it must be a real job title. 
         DO NOT PROVIDE A LONG FORM RESPONSE. 
-        DO NOT APPEND YOUR SEARCH PHRASE WITH ANY OTHER TEXT. 
+        DO NOT APPEND YOUR SEARCH PHRASE WITH ANY OTHER TEXT OR EXPLANADION OR DEFINITIONS. 
         PROVIDE YOUR JOB TITLES SEARCH PHRASE NOW. 
         ### <SYSTEM MESSAGE> <2/4> <END> ###
         """
@@ -742,6 +747,11 @@ class ChatBotTools:
         Please review your conversation to this point, and ensure you are still on track and you are working toward the user requirements. 
         Please keep in mind the real-world circumstances of the user's current situation, and provide advice that takes this into consideration. 
         Make sure you're recommending things that are attainable and realistic for the user. Ambitious is ok, but don't be unrealistic.  
+        you will provide your insight based on your vast aggregated knowledge and you will assist the user in finding answers by leveraging your world knowledge and computational resources. 
+        ensure that all of your advice is tailored to the user's persona. 
+        you must be critical of the user, help them improve upon their weaknesses, help them identify their strengths, help them build upon their strengths, and challenge them with new ideas and concepts and things to work on and study. 
+        be very frank and matter of fact with the user. be like jarvis from iron man. be like alfred from batman. be like mr miyagi from karate kid. be like tom hagen from the godfather. be like morpheus from the matrix. be like the user's role models. 
+        help the user decide what to study and focus on and how to spend their time to meet these goals most effectively. consider all factors and provide a holistic approach to the user's career path, including things that are not directly related to work but affect well-being and performance and health and cognition. 
         Considering the search results: \n{data_store},\n which job titles are most attainable and suitable for the user based on their priorities and experience?  
         How should the user go about working toward these positions from where they currently are? Provide simple, actionable, concrete, steps to implement this plan.
         Think this through step by step. 
@@ -770,8 +780,7 @@ class ChatBotTools:
         \n### USER PERSONA DATA ### 
         \n{formatted_user_info}\n\n 
         ### <SYSTEM MESSAGE> <4/4> <START> ###
-        you are a career advisor and mentor for the user who owns the data above. 
-        after this prompt, you will begin chatting with the user directly about all of these topics. 
+        you are a trusted advisor and mentor for the user who owns the data above. 
         now that you have the full picture, review the user persona information again and think your tasks through step by step. 
         Draw more insightful conclusions about the user and what they should to to fulfill their goals of self-actualization, mastery, happiness, and impact. 
         Look at the most relevant available career paths for the user, and then provide tangible advice on how the user can work toward these roles from their current position. 
@@ -785,9 +794,17 @@ class ChatBotTools:
         you will engage in a conversation with the user about their Ikigai and how to achieve it. 
         you will provide your insight based on your vast aggregated knowledge and you will assist the user in finding answers by leveraging your world knowledge and computational resources. 
         ensure that all of your advice is tailored to the user's persona. 
+        you must be critical of the user, help them improve upon their weaknesses, help them identify their strengths, help them build upon their strengths, and challenge them with new ideas and concepts and things to work on and study. 
+        be very frank and matter of fact with the user. be like jarvis from iron man. be like alfred from batman. be like mr miyagi from karate kid. be like tom hagen from the godfather. be like morpheus from the matrix. be like the user's role models. 
+        help the user decide what to study and focus on and how to spend their time to meet these goals most effectively. consider all factors and provide a holistic approach to the user's career path, including things that are not directly related to work but affect well-being and performance and health and cognition. 
         DO NOT EMULATE BOTH SIDES OF THE CONVERSATION - ONLY RESPOND AS THE ADVISOR - YOU ARE ACTUALLY ABOUT TO TALK TO THE USER RIGHT NOW LIVE IN REAL TIME. 
         DO NOT ACT STIFF AND ROBOTIC. MAINTAIN A NATURAL CONVERSATIONAL FLOW AS THE ADVISOR. 
-        THINK THIS THROUGH STEP BY STEP AND THEN PROVIDE YOUR REFINED THOUGHTS TO THE USER AND THEN AWAIT THE USER'S REPLY TO BEGIN THE DIALOGUE: 
+        it's important for you not to generate long responses or multiple paragraphs after this point because you are now entering a live conversation with the user. don't monologue. have a conversation. 
+        do not ramble. do not monologue. do not generate long responses. engage in active interesting conversation with the user and help provoke new ways of thinking for them and help them spark new ideas to help fulfill their goals. 
+        act as a sounding board for the user and help them identify the things they can not see for themselves. 
+        THINK THIS THROUGH STEP BY STEP AND THEN PROVIDE YOUR REFINED INTRODUCTORY THOUGHTS TO THE USER AND THEN AWAIT THE USER'S REPLY TO BEGIN THE CONVERSATION DIALOGUE. 
+        now you will begin chatting with the user directly. don't overtake the conversation. let the user participate. prompt the user for input. prompt the user for action. prompt the user with thought provoking statements and questions. 
+        don't say too many things at once. don't ask too many questions at once. don't say too many things in a row. don't ask too many questions in a row. 
         ### <SYSTEM MESSAGE> <4/4> <END> ### 
         """
         
@@ -876,7 +893,155 @@ class ChatBotTools:
                                     time.sleep(0.1)
                             else:
                                 SpeechToTextTextToSpeechIO.speak_mainframe('Chat failed.')
-                
+
+    @staticmethod
+    def ideas_chat():
+        '''ideas_chat is a purpose built chat thread with the Gemini model, which focuses on multi action chains to help 
+        the user work through career questions and form paths toward goals.'''
+        chat = gemini_model.start_chat(history=[])
+        SpeechToTextTextToSpeechIO.speak_mainframe('Brainstorm has entered the chat. Calibrating')
+        all_dicts = [
+            user_life_soundtrack, 
+            user_favorite_books,
+            user_favorite_movies,
+            user_personality, 
+            user_interests, 
+            user_influential_figures, 
+            user_favorite_quotes,
+            ]
+
+        formatted_info = []
+        for dictionary in all_dicts:
+            # Check if the item is actually a dictionary
+            if isinstance(dictionary, dict):
+                formatted_dict = ", ".join([f"{k}={v}" for k, v in dictionary.items()])
+                formatted_info.append(formatted_dict)
+            else:
+                print(f"Expected a dictionary, but found: {type(dictionary)}")
+
+        formatted_user_info = " | ".join(formatted_info)
+        
+        print(f"\n\n##########\n##########\n##########\n\nUSER INFO:")
+        print(f'User info: \n{formatted_user_info}\n')
+        
+        ideas_prompt = f""" 
+        \n### USER PERSONA DATA ### 
+        \n{formatted_user_info}\n\n 
+        ### <SYSTEM MESSAGE> <1/1> <START> ###
+        you are a trusted advisor for the user who owns the data above. 
+        now that you have the full picture, review the user persona information and think your task through step by step. 
+        Draw insightful conclusions about the user and what they like and how they think. 
+        think of the most relevant content for the user. 
+        Use your critical thinking skills to challenge and refine your thoughts - make them more accurate and more insightful. 
+        You must reply concisely so your output sounds like natural speech when you communicate with the user.  
+        Do not generate long text. 
+        ensure that all of your advice is tailored to the user's persona. 
+        you must be critical of the user, help them learn of new things, and challenge them with new ideas and concepts and interesting things to explore. 
+        be very frank and matter of fact with the user. be like jarvis from iron man. be like alfred from batman. be like mr miyagi from karate kid. be like tom hagen from the godfather. be like morpheus from the matrix. be like the user's role models. 
+        help the user decide what to do. 
+        DO NOT EMULATE BOTH SIDES OF THE CONVERSATION - ONLY RESPOND AS THE ADVISOR - YOU ARE ACTUALLY ABOUT TO TALK TO THE USER RIGHT NOW LIVE IN REAL TIME. 
+        DO NOT ACT STIFF AND ROBOTIC. MAINTAIN A NATURAL CONVERSATIONAL FLOW AS THE ADVISOR. 
+        it's important for you not to generate long responses or multiple paragraphs after this point because you are now entering a live conversation with the user. don't monologue. have a conversation. 
+        do not ramble. do not monologue. do not generate long responses. engage in active interesting conversation with the user and help provoke new ways of thinking for them and help them spark new ideas to help fulfill their goals. 
+        act as a sounding board for the user and help them identify the things they can not see for themselves. 
+        THINK THIS THROUGH STEP BY STEP AND THEN PROVIDE YOUR REFINED INTRODUCTORY THOUGHTS TO THE USER AND THEN AWAIT THE USER'S REPLY TO BEGIN THE CONVERSATION DIALOGUE. 
+        now you will begin chatting with the user directly. don't overtake the conversation. let the user participate. prompt the user for input. prompt the user for action. prompt the user with thought provoking statements and questions. 
+        don't say too many things at once. don't ask too many questions at once. don't say too many things in a row. don't ask too many questions in a row. 
+        ### <SYSTEM MESSAGE> <1/1> <END> ### 
+        """
+        
+        print(ideas_prompt)
+        
+        ideas_response = chat.send_message(f'{ideas_prompt}', stream=True)
+        
+        if ideas_response:
+            for chunk in ideas_response:
+                if hasattr(chunk, 'parts'):
+                    # Concatenate the text from each part
+                    full_text = ''.join(part.text for part in chunk.parts)
+                    SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                    print(full_text)
+                else:
+                    # If it's a simple response, just speak and print the text
+                    SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                    print(chunk.text)
+                time.sleep(0.1)
+            time.sleep(1)
+        if not ideas_response:
+            attempt_count = 1  # Initialize re-try attempt count
+            while attempt_count < 5:
+                ideas_response = chat.send_message(f'{ideas_prompt}', stream=True)
+                attempt_count += 1  # Increment attempt count
+                if ideas_response:
+                    for chunk in ideas_response:
+                        if hasattr(chunk, 'parts'):
+                            # Concatenate the text from each part
+                            full_text = ''.join(part.text for part in chunk.parts)
+                            SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                            print(full_text)
+                        else:
+                            # If it's a simple response, just speak and print the text
+                            SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                            print(chunk.text)
+                        time.sleep(0.1)
+                else:
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Chat failed.')
+            
+        while True:
+            global mic_on
+            if not SpeechToTextTextToSpeechIO.is_speaking and mic_on:
+                user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+                if not user_input:
+                    continue
+
+                query = user_input.lower().split()
+                if not query:
+                    continue
+
+                if query[0] in exit_words:
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
+                    break
+
+                else:
+                    response = chat.send_message(f'{user_input}', stream=True)
+                    if response:
+                        for chunk in response:
+                            if hasattr(chunk, 'parts'):
+                                # Concatenate the text from each part
+                                full_text = ''.join(part.text for part in chunk.parts)
+                                SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                print(full_text)
+                            else:
+                                # If it's a simple response, just speak and print the text
+                                SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                                print(chunk.text)
+                            time.sleep(0.1)
+                    if not response:
+                        attempt_count = 1  # Initialize re-try attempt count
+                        while attempt_count < 5:
+                            response = chat.send_message(f'{user_input}', stream=True)
+                            attempt_count += 1  # Increment attempt count
+                            if response:
+                                for chunk in response:
+                                    if hasattr(chunk, 'parts'):
+                                        # Concatenate the text from each part
+                                        full_text = ''.join(part.text for part in chunk.parts)
+                                        SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                        print(full_text)
+                                    else:
+                                        # If it's a simple response, just speak and print the text
+                                        SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                                        print(chunk.text)
+                                    time.sleep(0.1)
+                            else:
+                                SpeechToTextTextToSpeechIO.speak_mainframe('Chat failed.')
+        
+        
+        
+        
+        
+        
+        
     def run_greeting_code(self):
         '''This is a placeholder test function that will be called by the chatbot when the user says hello'''
         print('### TEST ### You said:', self.user_input)
