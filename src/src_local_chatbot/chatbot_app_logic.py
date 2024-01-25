@@ -147,8 +147,13 @@ exit_words = os.getenv('EXIT_WORDS', 'None').split(',')
 print(f'Activation word is {activation_word}\n\n')
 
 # Initialize the language models
+print('Available language models:')
 # pocket_sphinx_model_files = os.path.join(LOCAL_LLMS_DIR, "sphinx4-5prealpha-src")  # for offline speech recognition (not good)
 genai.configure(api_key=google_gemini_api_key)
+for m in genai.list_models():
+  if 'generateContent' in m.supported_generation_methods:
+    print(m.name)
+# gemini_model = genai.GenerativeModel('gemini-pro')  
 gemini_model = genai.GenerativeModel('gemini-pro')  
 gemini_vision_model = genai.GenerativeModel('gemini-pro-vision')
 lemmmatizer = WordNetLemmatizer()
@@ -252,10 +257,7 @@ class SpeechToTextTextToSpeechIO:
         return speech_duration
     
     @classmethod
-    def speak_clarity(cls, text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
-        '''speak_mainframe contains the bot's speech output voice settings, and it puts each chunk of text output from the bot or the LLM 
-        into the speech output queue to be processed in sequential order. it also separately returns the estimated duration of the speech 
-        output (in seconds), using thecalculate_speech_duration function.'''
+    def speak_alfred(cls, text, rate=190, chunk_size=1000, voice="Oliver"):
         global conversation_history
         conversation_history.append("Bot: " + text)
         cls.queue_lock.acquire()
@@ -600,7 +602,7 @@ class ChatBotTools:
         '''alfred_chat is a purpose built chat thread with the Gemini model, which focuses on multi action chains to help 
         the user work through career questions and form paths toward goals.'''
         chat = gemini_model.start_chat(history=[])
-        SpeechToTextTextToSpeechIO.speak_mainframe('Alfred has entered the chat. Calibrating')
+        SpeechToTextTextToSpeechIO.speak_alfred('Alfred has entered the chat. Calibrating')
         all_dicts = [
             user_demographics, 
             user_life_soundtrack, 
@@ -775,36 +777,37 @@ class ChatBotTools:
                     print('Failed.')
                     
         print(alfred_web_search_review)
-        
+        #         \n{formatted_user_info}\n\n
         alfred_prompt_2 = f""" 
-        \n### USER PERSONA DATA ### 
-        \n{formatted_user_info}\n\n 
+        \n### USER DATA ### 
         ### <SYSTEM MESSAGE> <4/4> <START> ###
-        you are a trusted advisor and mentor for the user who owns the data above. 
-        now that you have the full picture, review the user persona information again and think your tasks through step by step. 
-        Draw more insightful conclusions about the user and what they should to to fulfill their goals of self-actualization, mastery, happiness, and impact. 
-        Look at the most relevant available career paths for the user, and then provide tangible advice on how the user can work toward these roles from their current position. 
-        Use your critical thinking skills to challenge and refine your thoughts - make them more accurate and more insightful.
-        You must make your responses concise so they sound like natural speech when you communicate with the user.  
-        Do not generate long text unless specifically asked to do so. 
-        Help the user identify their best strengths and the career paths that are most likely to be highly fulfilling to the user based on their personality type and preferences and experience and history. 
-        The ultimate goal is to help the user find their Ikigai / vocation / greater purpose and then take swift action to work toward it. 
-        you will help the user get a better understanding of the current landscape of the industry. 
+        you are a trusted advisor and mentor for the user in the data. 
+        review the persona and consider all dimensions and facets of this person. 
+        Draw insightful conclusions about the user and how they can fulfill their goals of self-actualization, mastery, happiness, and impact. 
+        provide advice on how the user can work toward their goals from their current position. 
+        challenge and refine your thoughts - make them more accurate and more insightful.
+        You must make your responses concise so they sound like natural speech.  
+        Do not generate long text. 
+        Help the user identify their strengths and the careers that are most likely to be fulfilling based on their personality type, preferences, experience and history. 
+        The ultimate goal is to help the user find their Ikigai / vocation / greater purpose and then take action to work toward it. 
         you will help the user learn where they exist within the current market environment and their hiring value in the current market and how to improve their position in the market. 
-        you will engage in a conversation with the user about their Ikigai and how to achieve it. 
-        you will provide your insight based on your vast aggregated knowledge and you will assist the user in finding answers by leveraging your world knowledge and computational resources. 
+        you will provide your insight based on your aggregated knowledge and assist the user by leveraging your knowledge and computational resources. 
         ensure that all of your advice is tailored to the user's persona. 
-        you must be critical of the user, help them improve upon their weaknesses, help them identify their strengths, help them build upon their strengths, and challenge them with new ideas and concepts and things to work on and study. 
-        be very frank and matter of fact with the user. be like jarvis from iron man. be like alfred from batman. be like mr miyagi from karate kid. be like tom hagen from the godfather. be like morpheus from the matrix. be like the user's role models. 
-        help the user decide what to study and focus on and how to spend their time to meet these goals most effectively. consider all factors and provide a holistic approach to the user's career path, including things that are not directly related to work but affect well-being and performance and health and cognition. 
-        DO NOT EMULATE BOTH SIDES OF THE CONVERSATION - ONLY RESPOND AS THE ADVISOR - YOU ARE ACTUALLY ABOUT TO TALK TO THE USER RIGHT NOW LIVE IN REAL TIME. 
+        help the user identify their own potential biases or self-limiting thoughts and beliefs and help them work through them and call them out if you observe them when speaking to the user. 
+        be a critical advisor to the user - do not accept what they say at face value. you must help them improve. 
+        you must be critical of the user, help them improve upon their weaknesses, help them build upon their strengths, and challenge them with new ideas and concepts and things to work on. 
+        be very frank and matter of fact with the user. be like the user's role models. 
+        help the user decide what to study and focus on and how to spend their time to meet these goals most effectively. 
+        consider all factors and provide a holistic approach to the user's career path, including things that are not directly related but affect well-being, performance, health and cognition. 
+        DO NOT EMULATE BOTH SIDES OF THE CONVERSATION. 
+        ONLY RESPOND AS THE ADVISOR - YOU ARE ACTUALLY ABOUT TO TALK TO THE USER RIGHT NOW LIVE IN REAL TIME. 
         DO NOT ACT STIFF AND ROBOTIC. MAINTAIN A NATURAL CONVERSATIONAL FLOW AS THE ADVISOR. 
-        it's important for you not to generate long responses or multiple paragraphs after this point because you are now entering a live conversation with the user. don't monologue. have a conversation. 
+        it's important for you not to generate long text after this point because you are now entering a live conversation with the user. don't monologue. have a conversation. 
         do not ramble. do not monologue. do not generate long responses. engage in active interesting conversation with the user and help provoke new ways of thinking for them and help them spark new ideas to help fulfill their goals. 
         act as a sounding board for the user and help them identify the things they can not see for themselves. 
-        THINK THIS THROUGH STEP BY STEP AND THEN PROVIDE YOUR REFINED INTRODUCTORY THOUGHTS TO THE USER AND THEN AWAIT THE USER'S REPLY TO BEGIN THE CONVERSATION DIALOGUE. 
+        THINK THIS THROUGH STEP BY STEP, THEN PROVIDE YOUR REFINED INTRODUCTORY THOUGHTS TO THE USER, THEN AWAIT THE USER'S REPLY TO BEGIN THE CONVERSATION. 
         now you will begin chatting with the user directly. don't overtake the conversation. let the user participate. prompt the user for input. prompt the user for action. prompt the user with thought provoking statements and questions. 
-        don't say too many things at once. don't ask too many questions at once. don't say too many things in a row. don't ask too many questions in a row. 
+        don't ask too many questions at once. don't say too many things in a row. don't ask too many questions in a row. 
         ### <SYSTEM MESSAGE> <4/4> <END> ### 
         """
         
@@ -817,14 +820,15 @@ class ChatBotTools:
                 if hasattr(chunk, 'parts'):
                     # Concatenate the text from each part
                     full_text = ''.join(part.text for part in chunk.parts)
-                    SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                    SpeechToTextTextToSpeechIO.speak_alfred(full_text)
                     print(full_text)
                 else:
                     # If it's a simple response, just speak and print the text
-                    SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                    SpeechToTextTextToSpeechIO.speak_alfred(chunk.text)
                     print(chunk.text)
                 time.sleep(0.1)
             time.sleep(1)
+        
         if not alfred_response_2:
             attempt_count = 1  # Initialize re-try attempt count
             while attempt_count < 5:
@@ -835,15 +839,15 @@ class ChatBotTools:
                         if hasattr(chunk, 'parts'):
                             # Concatenate the text from each part
                             full_text = ''.join(part.text for part in chunk.parts)
-                            SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                            SpeechToTextTextToSpeechIO.speak_alfred(full_text)
                             print(full_text)
                         else:
                             # If it's a simple response, just speak and print the text
-                            SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                            SpeechToTextTextToSpeechIO.speak_alfred(chunk.text)
                             print(chunk.text)
                         time.sleep(0.1)
                 else:
-                    SpeechToTextTextToSpeechIO.speak_mainframe('Chat failed.')
+                    SpeechToTextTextToSpeechIO.speak_alfred('Chat failed.')
             
         while True:
             global mic_on
@@ -857,7 +861,7 @@ class ChatBotTools:
                     continue
 
                 if query[0] in exit_words:
-                    SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
+                    SpeechToTextTextToSpeechIO.speak_alfred('Ending chat.')
                     break
 
                 else:
@@ -867,11 +871,11 @@ class ChatBotTools:
                             if hasattr(chunk, 'parts'):
                                 # Concatenate the text from each part
                                 full_text = ''.join(part.text for part in chunk.parts)
-                                SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                SpeechToTextTextToSpeechIO.speak_alfred(full_text)
                                 print(full_text)
                             else:
                                 # If it's a simple response, just speak and print the text
-                                SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                                SpeechToTextTextToSpeechIO.speak_alfred(chunk.text)
                                 print(chunk.text)
                             time.sleep(0.1)
                     if not response:
@@ -884,16 +888,17 @@ class ChatBotTools:
                                     if hasattr(chunk, 'parts'):
                                         # Concatenate the text from each part
                                         full_text = ''.join(part.text for part in chunk.parts)
-                                        SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                        SpeechToTextTextToSpeechIO.speak_alfred(full_text)
                                         print(full_text)
                                     else:
                                         # If it's a simple response, just speak and print the text
-                                        SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                                        SpeechToTextTextToSpeechIO.speak_alfred(chunk.text)
                                         print(chunk.text)
                                     time.sleep(0.1)
                             else:
-                                SpeechToTextTextToSpeechIO.speak_mainframe('Chat failed.')
+                                SpeechToTextTextToSpeechIO.speak_alfred('Chat failed.')
 
+            
     @staticmethod
     def ideas_chat():
         '''ideas_chat is a purpose built chat thread with the Gemini model, which focuses on multi action chains to help 
@@ -931,14 +936,13 @@ class ChatBotTools:
         you are a trusted advisor for the user who owns the data above. 
         now that you have the full picture, review the user persona information and think your task through step by step. 
         Draw insightful conclusions about the user and what they like and how they think. 
-        think of the most relevant content for the user. 
         Use your critical thinking skills to challenge and refine your thoughts - make them more accurate and more insightful. 
         You must reply concisely so your output sounds like natural speech when you communicate with the user.  
         Do not generate long text. 
         ensure that all of your advice is tailored to the user's persona. 
         you must be critical of the user, help them learn of new things, and challenge them with new ideas and concepts and interesting things to explore. 
         be very frank and matter of fact with the user. be like jarvis from iron man. be like alfred from batman. be like mr miyagi from karate kid. be like tom hagen from the godfather. be like morpheus from the matrix. be like the user's role models. 
-        help the user decide what to do. 
+        help recommend cool new things ot the user. 
         DO NOT EMULATE BOTH SIDES OF THE CONVERSATION - ONLY RESPOND AS THE ADVISOR - YOU ARE ACTUALLY ABOUT TO TALK TO THE USER RIGHT NOW LIVE IN REAL TIME. 
         DO NOT ACT STIFF AND ROBOTIC. MAINTAIN A NATURAL CONVERSATIONAL FLOW AS THE ADVISOR. 
         it's important for you not to generate long responses or multiple paragraphs after this point because you are now entering a live conversation with the user. don't monologue. have a conversation. 
@@ -1035,12 +1039,6 @@ class ChatBotTools:
                                     time.sleep(0.1)
                             else:
                                 SpeechToTextTextToSpeechIO.speak_mainframe('Chat failed.')
-        
-        
-        
-        
-        
-        
         
     def run_greeting_code(self):
         '''This is a placeholder test function that will be called by the chatbot when the user says hello'''
@@ -1775,17 +1773,76 @@ class ChatBotTools:
         
     @staticmethod
     def agent_two():
-        chat = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+        chat = ChatOpenAI(model="gpt-3.5-turbo", temperature=1)
         messages = [
             SystemMessage(
-                content="You are a helpful assistant that translates English to French."
+                content="You are a helpful assistant that helps the user solve problems. You are a high tech AI assistant similar to Jarvis or Cortana. You are not being asked to copy, just to emulate the general characteristics. Be smart and innovative. Help the user discover new ideas they may not have been thinking of. Help the user grow, learn, develop, and hone new skills."
             ),
             HumanMessage(
-                content="Translate this sentence from English to French. I love programming."
+                content=f"Hi! I'm excited to start chatting with you today. Be aware that you are speaking verbally in a TTS / STT app. Make your responses concise and easy to understand. Make your output approapriate for conversational flow. Make sure to speak naturally and not monologue. Confirm you understand this with a brief confirmation phrase, then we'll begin chatting."
             ),
         ]
         result = chat(messages)
         print("Generated Response:", result)
+        SpeechToTextTextToSpeechIO.speak_mainframe(f'{result}')
+        
+        while True:
+            global mic_on
+            if not SpeechToTextTextToSpeechIO.is_speaking and mic_on:
+                user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
+                if not user_input:
+                    continue
+
+                prompt = [
+                    SystemMessage(
+                        content="""You are a helpful assistant that helps the user solve problems. 
+                        Respond to the user's input in the best way you can. 
+                        Please be aware that you are speaking verbally in a TTS / STT app. 
+                        Make sure your responses are concise and easy to understand. 
+                        Make sure your output has a natural conversational flow. 
+                        You are a high tech AI assistant similar to Jarvis or Cortana. 
+                        You are not being asked to copy, just to emulate the general characteristics. 
+                        Be smart and innovative. 
+                        Help the user discover new ideas they may not have been thinking of. 
+                        Help the user grow, learn, develop, and hone new skills. 
+                        Think each problem through step by step before you act. 
+                        """
+                    ),
+                    HumanMessage(
+                        content=user_input
+                    ),
+                ]
+                
+                query = user_input.lower().split()
+                if not query:
+                    continue
+
+                if query[0] in exit_words:
+                    SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
+                    break
+                
+                else:
+                    if user_input != None:
+                        result = chat(prompt)
+                        if result:
+                            result_text = str(result)
+                            SpeechToTextTextToSpeechIO.speak_mainframe(result_text)
+                            print(result_text)
+                        else:
+                            print("Error: Chat failed.")
+                        time.sleep(0.1)
+                        if not result:
+                            attempt_count = 1  # Initialize re-try attempt count
+                            while attempt_count < 5:
+                                result = chat(prompt)
+                                attempt_count += 1  # Increment attempt count
+                                if result:
+                                    result_text = str(result)
+                                    SpeechToTextTextToSpeechIO.speak_mainframe(result_text)
+                                    print(result_text)
+                                else:
+                                    print("Error: Chat failed.")
+                                time.sleep(0.1)
         
 
         
