@@ -7,10 +7,11 @@ app_databases/
 app_generated_files/
 app_local_models/
 app_source_data/
+archived_versions_main/
 db/
 hey_data/
 venv/
-src/user_persona.py
+src/src_local_chatbot/user_persona.py
 **/user_persona.py
 .vscode/
 .idea/
