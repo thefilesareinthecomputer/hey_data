@@ -193,6 +193,16 @@
                 "Beep boop! I am a robot."
             ],
             "action": "robotguy_function"
+        },
+        {
+            "tag": "unrecognized_20240125120155",
+            "patterns": [
+                "robot customer service"
+            ],
+            "responses": [
+                "Hello! How can I assist you today?"
+            ],
+            "action": "robotcustomerservice_function"
         }
     ]
 }

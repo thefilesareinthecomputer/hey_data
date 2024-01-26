@@ -54,6 +54,7 @@ from user_persona import (
     user_demographics, 
     user_life_soundtrack, 
     user_favorite_books,
+    user_favorite_podcasts,
     user_favorite_movies,
     user_skills_and_experience,
     user_personality, 
@@ -135,6 +136,8 @@ google_maps_api_key = os.getenv('GOOGLE_MAPS_API_KEY')
 google_gemini_api_key = os.getenv('GOOGLE_GEMINI_API_KEY')
 google_documentation_search_engine_id = os.getenv('GOOGLE_DOCUMENTATION_SEARCH_ENGINE_ID')
 google_job_search_search_engine_id = os.getenv('GOOGLE_JOB_SEARCH_SEARCH_ENGINE_ID')
+google_health_search_engine_id = os.getenv('GOOGLE_HEALTH_SEARCH_ENGINE_ID')
+google_research_search_engine_id = os.getenv('GOOGLE_RESEARCH_SEARCH_ENGINE_ID')
 print('API keys and other sensitive information loaded from environment variables.\n\n')
 
 # Establish the TTS bot's wake/activation word and script-specific global constants
@@ -242,7 +245,7 @@ class SpeechToTextTextToSpeechIO:
         return seconds + 1
     
     @classmethod
-    def speak_mainframe(cls, text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
+    def speak_mainframe(cls, text, rate=185, chunk_size=1000, voice=USER_PREFERRED_VOICE):
         '''speak_mainframe contains the bot's speech output voice settings, and it puts each chunk of text output from the bot or the LLM 
         into the speech output queue to be processed in sequential order. it also separately returns the estimated duration of the speech 
         output (in seconds), using thecalculate_speech_duration function.'''
@@ -257,7 +260,7 @@ class SpeechToTextTextToSpeechIO:
         return speech_duration
     
     @classmethod
-    def speak_alfred(cls, text, rate=190, chunk_size=1000, voice="Oliver"):
+    def speak_alfred(cls, text, rate=185, chunk_size=1000, voice="Oliver"):
         global conversation_history
         conversation_history.append("Bot: " + text)
         cls.queue_lock.acquire()
@@ -269,7 +272,7 @@ class SpeechToTextTextToSpeechIO:
         return speech_duration
     
     @classmethod
-    def speak_alignment(cls, text, rate=190, chunk_size=1000, voice=USER_PREFERRED_VOICE):
+    def speak_alignment(cls, text, rate=185, chunk_size=1000, voice=USER_PREFERRED_VOICE):
         '''speak_mainframe contains the bot's speech output voice settings, and it puts each chunk of text output from the bot or the LLM 
         into the speech output queue to be processed in sequential order. it also separately returns the estimated duration of the speech 
         output (in seconds), using thecalculate_speech_duration function.'''
@@ -414,13 +417,22 @@ class ChatBotTools:
         SpeechToTextTextToSpeechIO.speak_mainframe('Initializing...')
         chat = gemini_model.start_chat(history=[])
         
-        prompt_template = '''### "*SYSTEM MESSAGE*" ### Gemini, you are in a verbal chat with the user via a 
-        STT / TTS application. Please generate text that sounds like natural speech 
-        rather than written text. Please avoid monologuing or including anything in the output that will 
+        prompt_template = '''### <* SYSTEM MESSAGE BEGIN *> ### 
+        ### <* these are your instructions *> ### 
+        Gemini, you are in a verbal chat with the user via a 
+        STT / TTS AI companion agent application. Please generate text that is structured like natural spoken language, 
+        not long written text. Please avoid monologuing or including anything in the output that will 
         not sound like natural spoken language. After confirming you understand this message, the chat will proceed. 
         Refer to the user directly in the second person tense. You are talking to the user directly. 
-        Please confirm your understanding of these instructions by simply saying "Chat loop is open" 
-        and then await another prompt from the user. ### "*wait for user input after you acknowledge this message*" ###'''
+        You are a trusted advisor to the user. The user will come to you for help solving problems and answering questions. 
+        Please confirm your understanding of these instructions by simply saying "Chat loop is open", 
+        and then await another prompt from the user. 
+        Do not generate markdown. Do not generate paragraphs. You are engaging in conversational dialogue. 
+        Do not generate text that will take a long time to speak or read. 
+        Each message back and forth must be only a few sentences at maximum. Some may only require a few words. Be direct and to the point. 
+        ### <* wait for user input after you acknowledge this message *> ### 
+        ### <* SYSTEM MESSAGE END *> ### 
+        '''
 
         intro_response = chat.send_message(f'{prompt_template}', stream=True)
         
@@ -607,6 +619,7 @@ class ChatBotTools:
             user_demographics, 
             user_life_soundtrack, 
             user_favorite_books,
+            user_favorite_podcasts,
             user_favorite_movies,
             user_skills_and_experience,
             user_personality, 
@@ -898,7 +911,6 @@ class ChatBotTools:
                             else:
                                 SpeechToTextTextToSpeechIO.speak_alfred('Chat failed.')
 
-            
     @staticmethod
     def ideas_chat():
         '''ideas_chat is a purpose built chat thread with the Gemini model, which focuses on multi action chains to help 
@@ -1521,7 +1533,9 @@ class ChatBotTools:
     def custom_search_engine():
         global google_documentation_search_engine_id
         global google_job_search_search_engine_id
-        SpeechToTextTextToSpeechIO.speak_mainframe("Which engine do you want to use? Documentation or Job Search?")
+        global google_health_search_engine_id
+        global google_research_search_engine_id
+        SpeechToTextTextToSpeechIO.speak_mainframe("Which engine do you want to use?")
         while True:
             user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
             if not user_input:
@@ -1537,11 +1551,17 @@ class ChatBotTools:
             
             engine = ' '.join(query).lower()
             
-            if engine in ['documentation', 'document', 'docs', 'documentation search', 'document search', 'docs search']:
+            if engine in ['coding', 'programming', 'python', 'documentation', 'document', 'docs', 'documentation search', 'document search', 'docs search']:
                 google_search_engine_id = google_documentation_search_engine_id
             
-            if engine in ['job search', 'job', 'jobs', 'career', ]:
+            if engine in ['job search', 'job', 'jobs', 'career']:
                 google_search_engine_id = google_job_search_search_engine_id
+                
+            if engine in ['health', 'health search', 'healthcare', 'healthcare search', 'supplements', 'nutrition', 'fitness', 'wellness']:
+                google_search_engine_id = google_health_search_engine_id
+                
+            if engine in ['research', 'work', 'design', 'scientific', 'science', 'work work']:
+                google_search_engine_id = google_research_search_engine_id
         
             SpeechToTextTextToSpeechIO.speak_mainframe("Speak your search query.")
             time.sleep(2)
@@ -1572,6 +1592,7 @@ class ChatBotTools:
                     return search_results
                 else:
                     SpeechToTextTextToSpeechIO.speak_mainframe('Search unsuccessful.')
+                    print(f"Error: {response.status_code}")
                     return f"Error: {response.status_code}"
             
     @staticmethod

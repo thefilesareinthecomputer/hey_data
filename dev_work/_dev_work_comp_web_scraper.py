@@ -205,7 +205,7 @@ class SeleniumWebScraper:
             self.driver.quit()
 
 # MAIN CODE EXECUTION ###################################################################################################################################
-URL = os.getenv('URL')
+URL = "https://hillstonerestaurant.com/locations/phoenix/"
 scraper = SeleniumWebScraper()
 scraper.scrape_website_data(URL)
 

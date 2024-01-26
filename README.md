@@ -29,7 +29,7 @@ For commercial use of this project, a separate commercial license is required. T
     neo4j community edition, locally hosted self managed graph database (place in the project root directory after unzipping)
     https://neo4j.com/deployment-center/?ref=subscription#community
 
-    if you prefer to run the bot fully offline you'll need a speech to text model instead of the google api which is the SpeechRecognition package's default. you can also pass your own Google Cloud API key to the speech_recognition Recognizer if you want further control over your parsed data. if you opt to run it offline, ensure the pocketsphinx model is present in the speech_recognition directory once installed. if not, download and unzip it, then store it in the speech_recognition package directory.
+    the following step is only necessary if you intend this project to run offline with no internet connection. if you prefer to run the bot fully offline you'll need a local LLM and a speech to text model instead of the google api which is the SpeechRecognition package's default. you can also pass your own Google Cloud API key to the speech_recognition Recognizer if you want further control over your parsed data. if you opt to run it offline, ensure the pocketsphinx model or an equivalent is present in the speech_recognition directory once installed. if not, download and unzip it, then store it in the speech_recognition package directory. 
     https://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/US%20English/
 
     pip install --upgrade pip
@@ -88,37 +88,11 @@ For commercial use of this project, a separate commercial license is required. T
 
 ## APP OVERVIEW & NOTES:
 
-    this is a voice activated ai assistent app designed to turn the user's laptop into a voice activated command center, note taker, question answerer, research assistant, information organizer/retriever, task automator, etc.
-    when the app is running, it listens for user input and waits until it hears the activation word.
-    the activation word, followed by one of the pre-determined hard-coded phrases, will trigger various functions based on the phrases. some will be quick one-off actions, and others will trigger sub-loops such as the 'robot, call gemini' command which will enter a stateful TTS<>STT chat loop with the gemini chatbot via the Google AI Studio SDK API.
-    the user interacts with the app by speaking the activation word (a global constant variable) followed by predetermined phrases.
-    
-    The current operational phrases are:
-    - "robot, terminate program" to end the program
-    - "robot, screenshot" to take a screenshot of the screen
-    - "robot, take notes" to take notes
-    - "robot, recall notes" to recall notes
-    - "robot, google search" to search google
-    - "robot, mouse click" to click the mouse
-    - "robot, mouse {direction} {distance}" to move the mouse x pixels in y direction
-    - "robot, translate to {language}" to translate to a language
-    - "robot, wiki research" to search wikipedia
-                WIKI NOTES:
-                the app crashes when wikipedia doesn't return a valid result and needs error handling. 
-                the bot should list the next 3 closest results and ask the user if one of the 'next closest search results' is acceptable and if so, read it, and if not, then the bot should ask the user to rephrase the query.
-                the bot recites the full wikipedia summary which can tend to be long. the user wants a way to interrupt the bot if necessary by saying "robot reset robot".
-    - "robot, youtube video" to search youtube
-    - "robot, computation engine" to interact with Wolfram|Alpha
-                WOLFRAM ALPHA NOTES:
-                functional, in UAT, clunky.
-                the pods need to be summarized better - consolidated into a text to speech output that makes sense of the most relevant results returned from the wolfram alpha api in a concise but informative manner.
-                once the contents of these pods have been aggregated into the answer variable, we need to summarize them before they are passed into the text to speech output.
-    - "robot, weather forecast" to get a local weather forecast by day part
-    - "robot, stock report" to open a dialogue about stocks (discounts, recommendations, yesterday, world, single)
-    - "robot, call gemini" to interact with the Gemini chatbot (then say "robot, terminate chat" to exit back to the main chat loop)    
-    - "robot, call chatgpt" to interact with chatgpt.
-                currently not returning a successful response from the openai api due to quota limits but the account is fully paid and should be working. we need to debug this.
-    - "robot, custom search engine" to interact with the custom search engine.
+    this is a voice activated ai assistent app designed to turn the user's laptop into a voice activated command center, note taker, question answerer, research assistant, information organizer/retriever, task automator, etc. 
+    when the app is running, it listens for user input and waits until it hears the activation word. 
+    the activation word, followed by one of the pre-determined hard-coded phrases, will trigger responses from the locally trained model (chatbot_model.keras), and then will call functions based on the phrases if applicable. some will be quick one-off actions, and others will trigger sub-loops such as the 'robot, call AI' command which will enter a stateful TTS<>STT chat loop with the Gemini LLM via the Google API. there are also base code blocks for langchain agents powered by Gemini and GPT-3.5-turbo, but they're not as built out as the Gemini chat loop yet. 
+    the user interacts with the app by speaking the activation word (a global constant variable) followed by their phrases. if the user speaks a phrase the bot doesn't recognize, it will save that interaction in the form of a JSON intent template that can then be vetted and corrected by the user and added into its intents.json training data file for the next training session. this has an opportunity to become more robust and automatic in a future sprint. 
+    the bots have access to tools in the form of a ChatBotTools class. The gemini LLM and the agents themselves are all part of the ChatBotTools class - the chatbot_model.keras is the main "router" and function caller for triggering tools, but the agents in ChatBotTools can also all use the tools in that class. They also have shared access to a class variable called data_store which is a dictionary that stores data rendered by tools for access by the llm agent. Some examples of current tools include: google custom search engine, wolfram alpha, wikipedia, speech translation, text file translation, mouse control, weather forecast, spotify, youtube, user watch list stock report, etc.
 
 
 ## BACKLOG (planned additions, improvements, and bug fixes):
@@ -230,6 +204,7 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.5 - 2024-01-17 added a chat log and visibility to the data_store to the flet UI.
     0.2.5 - 2024-01-17 placed the entire flet UI except ui_main() within a ChatBotUI class.
     0.2.5 - 2024-01-17 added __init__.py and main.py to the src directory to run the UI.
+    0.2.5 - 2024-01-25 added a .gitignore'd user_persona.py file containing dictionaries of user details by category (movie, music, book preferences, general interests, etc.) to be used by the chatbot for more calibrated responses. Dictionaries can contain anything and can be passed individually or together in a prompt template.
 
 
     
