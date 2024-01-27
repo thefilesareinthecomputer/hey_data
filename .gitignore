@@ -8,6 +8,8 @@ app_generated_files/
 app_local_models/
 app_source_data/
 archived_versions_main/
+dev/
+dev_work/
 db/
 hey_data/
 venv/
