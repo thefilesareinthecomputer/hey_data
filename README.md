@@ -1,13 +1,22 @@
 ## APP OVERVIEW & NOTES:
 
     the majority of the codebase exists within the src/src_local_chatbot/chatbot_app_logic.py file.
-    this is a voice activated ai assistant app designed to turn the user's computer into a voice activated command center, note taker, question answerer, research assistant, information organizer/retriever, task automator, etc. 
+    this is a voice activated ai assistant app designed to turn the user's computer into a voice activated command center.
+    it can act as a note taker, question answerer, research assistant, information organizer/retriever, task automator, etc. 
     It's the basis for a jarvis-like ai assistant that can be extended with any number of tools and features. 
-    the bots have access to tools in the form of a ChatBotTools class. The gemini LLM and the agents themselves are all part of the ChatBotTools class - the chatbot_model.keras is the main entry point to the app and acts as the "router" and function caller for triggering tools based on user commands. 
-    the agents in ChatBotTools can also all use the tools in that class. They also have shared access to a class dictionary called data_store which stores data rendered by tools for later access by the llm agent. Some examples of current tools include: google custom search engine, wolfram alpha, wikipedia, speech translation, text file translation, mouse control, weather forecast, spotify, youtube, user watch list stock report, etc.
+    the bots have access to tools in the form of a ChatBotTools class. 
+    The gemini LLM and the agents themselves are all part of the ChatBotTools class. 
+    the chatbot_model.keras is the main entry point to the app and acts as the "router" and function caller for triggering tools based on user commands. 
+    the agents in ChatBotTools can also all use the tools in that class. 
+    They also have shared access to a class dictionary called data_store which stores data rendered by tools for later access by the llm agent. 
+    Some examples of current tools include: google custom search engine, wolfram alpha, wikipedia, speech translation, text file translation, mouse control, weather forecast, spotify, youtube, user watch list stock report, etc.
     when the app is running, it listens for user input and waits until it hears the activation word. 
-    the activation word, followed by a recognized phrase, will trigger responses from the locally trained model (chatbot_model.keras), and then will call functions based on recognized phrases if applicable. some will be quick one-off actions, and others will trigger sub-loops such as the 'robot, AI' command which will enter a stateful TTS<>STT chat loop with the Gemini LLM. there is also base code for langchain agents powered by Gemini and GPT-3.5-turbo currently under "agent_one" and "agent_two", but they're not as built out as the Gemini chat loop yet. 
-    the user interacts with the app by speaking the activation word (a global constant variable) followed by their phrases. if the user speaks a phrase the bot doesn't recognize, it will save that interaction in the form of a JSON intent template that can then be vetted and corrected by the user and added into its intents.json training data file for the next training session. this has an opportunity to become a more robust and automatic process in a future sprint. 
+    the activation word, followed by a recognized phrase, will trigger responses from the locally trained model (chatbot_model.keras), and then will call functions based on recognized phrases if applicable. 
+    some functions are one-off actions, and others trigger sub-loops such as the 'robot, AI' command which will enter a stateful TTS<>STT chat loop with the Gemini LLM. 
+    there is also base code for langchain agents powered by Gemini and GPT-3.5-turbo currently under "agent_one" and "agent_two", but they're not as built out as the Gemini chat loop yet. 
+    the user interacts with the app by speaking the activation word (a global constant variable) followed by their phrases. 
+    if the user speaks a phrase the bot doesn't recognize, it will save that interaction in the form of a JSON intent template that can then be vetted and corrected by the user and added into its intents.json training data file for the next training session. 
+    this "memory logging" has an opportunity to become a more robust and automatic process in a future sprint. 
 
 
 ## VERSION
