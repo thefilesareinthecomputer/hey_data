@@ -1,3 +1,15 @@
+## APP OVERVIEW & NOTES:
+
+    the majority of the codebase exists within the src/src_local_chatbot/chatbot_app_logic.py file.
+    this is a voice activated ai assistant app designed to turn the user's computer into a voice activated command center, note taker, question answerer, research assistant, information organizer/retriever, task automator, etc. 
+    It's the basis for a jarvis-like ai assistant that can be extended with any number of tools and features. 
+    the bots have access to tools in the form of a ChatBotTools class. The gemini LLM and the agents themselves are all part of the ChatBotTools class - the chatbot_model.keras is the main entry point to the app and acts as the "router" and function caller for triggering tools based on user commands. 
+    the agents in ChatBotTools can also all use the tools in that class. They also have shared access to a class dictionary called data_store which stores data rendered by tools for later access by the llm agent. Some examples of current tools include: google custom search engine, wolfram alpha, wikipedia, speech translation, text file translation, mouse control, weather forecast, spotify, youtube, user watch list stock report, etc.
+    when the app is running, it listens for user input and waits until it hears the activation word. 
+    the activation word, followed by a recognized phrase, will trigger responses from the locally trained model (chatbot_model.keras), and then will call functions based on recognized phrases if applicable. some will be quick one-off actions, and others will trigger sub-loops such as the 'robot, AI' command which will enter a stateful TTS<>STT chat loop with the Gemini LLM. there is also base code for langchain agents powered by Gemini and GPT-3.5-turbo currently under "agent_one" and "agent_two", but they're not as built out as the Gemini chat loop yet. 
+    the user interacts with the app by speaking the activation word (a global constant variable) followed by their phrases. if the user speaks a phrase the bot doesn't recognize, it will save that interaction in the form of a JSON intent template that can then be vetted and corrected by the user and added into its intents.json training data file for the next training session. this has an opportunity to become a more robust and automatic process in a future sprint. 
+
+
 ## VERSION
 
     hey_data 0.2.5
@@ -14,7 +26,7 @@ This project is licensed under the GNU General Public License v3.0 - see the LIC
 For commercial use of this project, a separate commercial license is required. This includes use in a commercial entity or for commercial purposes. Please contact us at https://github.com/thefilesareinthecomputer for more information about obtaining a commercial license.
 
 
-## DEPENDENCIES
+## DEPENDENCIES / INSTALLATION / CONFIG:
 
     macOS Sonoma 14
 
@@ -40,11 +52,13 @@ For commercial use of this project, a separate commercial license is required. T
     pip install --upgrade setuptools
 
     requirements.txt
+    .env
+    user_persona.py
 
-    This version utilizes the built-in macOS text to speech (TTS) engine for the bot's voice, and will need slight modification on windows and linux with pyttsx3 or other TTS libraries.
+    This version of the app utilizes built-in macOS text to speech (TTS) engine for the bot's voice, and will need slight modification on windows and linux with pyttsx3 or other TTS libraries.
 
 
-## USER DEFINED VARIABLES:
+## USER DEFINED VARIABLES IN THE .env FILE:
 
     within the .env file, optionally declare any of these variables (or others of your own) to extend tool functionality to the assistant:
     PROJECT_VENV_DIRECTORY=
@@ -85,74 +99,62 @@ For commercial use of this project, a separate commercial license is required. T
     USER_CRYPTO=
     USER_STOCK_WATCH_LIST=
 
+## USER DEFINED VARIABLES IN THE src/src_local_chatbot/user_persona.py FILE:
 
-## APP OVERVIEW & NOTES:
-
-    this is a voice activated ai assistent app designed to turn the user's laptop into a voice activated command center, note taker, question answerer, research assistant, information organizer/retriever, task automator, etc. 
-    when the app is running, it listens for user input and waits until it hears the activation word. 
-    the activation word, followed by one of the pre-determined hard-coded phrases, will trigger responses from the locally trained model (chatbot_model.keras), and then will call functions based on the phrases if applicable. some will be quick one-off actions, and others will trigger sub-loops such as the 'robot, call AI' command which will enter a stateful TTS<>STT chat loop with the Gemini LLM via the Google API. there are also base code blocks for langchain agents powered by Gemini and GPT-3.5-turbo, but they're not as built out as the Gemini chat loop yet. 
-    the user interacts with the app by speaking the activation word (a global constant variable) followed by their phrases. if the user speaks a phrase the bot doesn't recognize, it will save that interaction in the form of a JSON intent template that can then be vetted and corrected by the user and added into its intents.json training data file for the next training session. this has an opportunity to become more robust and automatic in a future sprint. 
-    the bots have access to tools in the form of a ChatBotTools class. The gemini LLM and the agents themselves are all part of the ChatBotTools class - the chatbot_model.keras is the main "router" and function caller for triggering tools, but the agents in ChatBotTools can also all use the tools in that class. They also have shared access to a class variable called data_store which is a dictionary that stores data rendered by tools for access by the llm agent. Some examples of current tools include: google custom search engine, wolfram alpha, wikipedia, speech translation, text file translation, mouse control, weather forecast, spotify, youtube, user watch list stock report, etc.
+    optionally, the user can create a persona file for themself that is used to calibrate better responses 
+    from the bots. the user_persona.py file is a series of dictionaries that can be passed to the bot in 
+    prompt templates. the ones currently in use are:
+    user_demographics, 
+    user_life_soundtrack, 
+    user_favorite_books,
+    user_favorite_podcasts,
+    user_favorite_movies,
+    user_skills_and_experience,
+    user_personality, 
+    user_interests, 
+    user_influential_figures, 
+    user_favorite_quotes,
 
 
 ## BACKLOG (planned additions, improvements, and bug fixes):
 
-    gain the ability to ingest knowledge from various media, interpret and summarize it, index it to a knowledge database (likely a graph database, maybe PostgreSQL), be able to query it in literal terms, and be able to converse about it with the user.
-    new voices for the speech interface. Investigate text-to-speech (TTS) libraries that offer a variety of voices. Python libraries like pyttsx3 or using third-party services like Google Cloud Text-to-Speech can provide diverse voice options.
-    news report from tailored sources. Implement a feature to fetch news from APIs like NewsAPI, filtering content based on user preferences.
-    communication (sms, google voice text, whatsapp text, signal text, email, etc.).
+    implement rag with the neo4j graph database.
+    populate the neo4j graph database with nodes and relationships.
+    gain the ability to ingest knowledge from various media, interpret and summarize it, index it to a knowledge graph using a neo4j database, be able to query it based on user input, and be able to converse about it with the user in real time.
+    new voices for the speech interface independent of hardware - pyttsx3 or Google Cloud Text-to-Speech. 
+    tailored news reports. Implement a feature to fetch news from APIs, filtering content based on user preferences or persona. 
+    communications integration (sms, google voice, whatsapp, signal, email, etc.).
     add tqdm progress bars to long running tasks.
-    consume knowledge from a youtube video playlist and then gain the ability to summarize the playlist, index it to a knowledge database (likely a graph database), and converse about it with the user.
-    translators: google translate for quick phrases, deepl for longer documents.
-    click a link on the screen by name based on user speech.
+    translators: currently using the Opus-MT models from transformers for real time speech translation. may need to move to google translate for in-browser, and something like deepl for longer documents.
+    click a link on the screen by name, and select a text field, check box, or button, etc. based on user speech.
     select a tab or window by description based on user speech (a description, such as 'top left of the screen, in back' or 'bottom right of the screen, in front', or 'minimized browser windows' or 'minimized VS code windows' or 'minimized images').
-    find youtube videos by name or by subject and play them in the browser, play the audio, or summarize them.
-    play spotify. Utilize the Spotify Web API for music playback controls.
-    real estate analyzer. Utilize the Zillow API to fetch real estate data.
     system commands.
     meditation coach.
-    restaurant reservations.
-    google custom search engines.
-    retrieval augmented generation from custom knowledge in a vector database or graph database with a semantic layer.
+    restaurant reservation assistant.
+    real estate analyzer. Utilize the Zillow API to fetch real estate data and implement ml to analyze deals.
     add the ability to follow specific predefined user voice prompts to click windows, open links, type in fields, interact with UIs and apps, edit and crop, adjust settings like brightness and volume, etc. based on voice commands.
     add knowledge bases and retrieval augmented generation from custom knowledge in a vector database or graph database with a semantic layer.
-    add the ability to talk to chatgpt, the api is not functioning. the assistant run is executing, but the api is not successfully returning a response. 
-    vad (voice activity detection) for bot voice and background noice cancellation, or a way to filter out the bot's own voice from the user's input.
-    chatgpt
-        the chatgpt api code in this app is almost working but the chatgpt api is not fully working yet. 
-        responses are not coming back from the model but the thread is running.
-        we need to fix the non-functional response from the chatgpt api call and have the bot speak it back to the user. 
-        we need to enter a stateful chat loop with chatgpt when chatgpt is called by the user. 
-        the user must be able to exit the chat by saying "robot, end chat".
-        i need debugging advice and direction please.    
-    integrate it with the phomemo printer to print notes.
+    vad (voice activity detection) for bot voice and background noice cancellation, or a way to filter out the bot's own voice from the user's input without needing rule-based on/off of the mic input while the bot talks.
+    integrate it with a bluetooth printer.
     add the ability to conduct legal research with websites like casetext, lexisnexis, westlaw, docketbird, pacer, bloomberg law, bna, fastcase, bestlaw, case text, casecheck, case notebook.
-    add oauth2 for authentication to google cloud API services with pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib.
-    unit tests.
+    more unit tests.
     input validations for each function.
     performance optimization.
     code profiling to identify bottlenecks.
     additional secutiry measures - encryption, access control, input sanitation, etc.
     to modularize the "chatbot tools initial conversation" we can implement args into the tools and then have the "inquiry" function get user input for each arg in a loop - for arg in args: arg = input("what is your value for " + arg + "?") - then we can pass the args into the tool function.
-    give the bot the ability to do DRUD operations on the tools class data store.
-    use asyncio to run the speech recognition and speech output in separate threads so that the bot can listen while it speaks.
+    give the bot the ability to do CRUD operations on the data_store variable in the tools class.
+    implement asyncio to run the speech recognition and speech output in separate threads so that the bot can listen while it speaks.
+    implement cachching for speed increase.
 
 
 
 ## CURRENT SPRINT DETAILS:
 
     the speech timeout settings are still a bit clunky with room for improvement.
-    currently, the bot is hearing its own output which is muddying the user input when the bot prompts the user for input.
-    this is interfering with the ability to create a lifelike stateful chat loop with good conversational flow.
-    the speech recognizer is combining the bot's speech and the user's speech into one message which is not correct.
-    The i/o is currently working like this and needs to be fixed: 
-        the user says "robot, translate to spanish", the bot says "Speak the phrase you want to translate.", the user says "this is the phrase." then the bot interprets and translates "Speak the phrase you want to translate. this is the phrase." into Spanish.
-        this is also affecting other functions like the wikipedia summary function. 
-        the bot also hears its own announcement when it sais "robot online", etc.
-        we need the simplest solution possible to fix this problem.
-    planning to build the ui in flet .
-    implement cachching for speed increase.
-    add functionality to work with the ne04j graph database.
+    occasionaly, the bot is hearing its own output which can interfere with the user input.
+    building the ui in flet.
+    add functionality for the agents to operate on the ne04j graph database.
 
 
 ## COMPLETION LOG / COMMIT MESSAGES:
@@ -205,6 +207,7 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.5 - 2024-01-17 placed the entire flet UI except ui_main() within a ChatBotUI class.
     0.2.5 - 2024-01-17 added __init__.py and main.py to the src directory to run the UI.
     0.2.5 - 2024-01-25 added a .gitignore'd user_persona.py file containing dictionaries of user details by category (movie, music, book preferences, general interests, etc.) to be used by the chatbot for more calibrated responses. Dictionaries can contain anything and can be passed individually or together in a prompt template.
+    0.2.5 - 2024-01-27 focusing on the in-line pair programmer agent and neo4j graph database.
 
 
     
