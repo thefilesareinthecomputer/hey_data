@@ -12,23 +12,23 @@
 {
   "tag": "demo_1",
   "patterns": ["tell me about my apps",
-    "what apps are in okta"],
-  "responses": ["OK - you already know about gmail and zoom. There's also monday for project management, oracle e b s for expenses, resto net for company resources, dayforce for scheduling, u k g for your payroll, and collective health for your benefits. dynafile is how to send forms to h r. you can basically ignore the rest. i'll let you know if you need to know about any of the others later."],
+    "what apps are in my portal"],
+  "responses": ["Placeholder."],
   "action": ""
 },
 {
   "tag": "demo_2",
   "patterns": ["are there any updates for me",
     "what are my updates"],
-  "responses": ["Thinking. Chef A sent you a message asking to pull some data. You got tagged in the project spreadsheet for the upcoming rollout. And like i told you yesterday, you have to complete your h c m compliance training. Don't be that guy and make someone have to remind you. "],
+  "responses": ["Placeholder."],
   "action": ""
 },
 {
   "tag": "conversation_greeting",
-  "patterns": ["hello there",
+  "patterns": ["hello",
     "hey how is it going",
     "hi my name is",
-    "hello", "hi",
+    "hi",
     "whats up",
     "aloha",
     "howdy",
@@ -141,7 +141,7 @@
     "Design is not just what it looks like and feels like. Design is how it works. -Steve Jobs",
     "I have promises to keep, and miles to go before I sleep. -Robert Frost",
     "Every strike brings me closer to the next home run. -Babe Ruth"],
-  "action": "# engage llm to ask the user if they want more quotes on a specific topic"
+  "action": ""
 },
 {
   "tag": "conversation_jokes",
@@ -155,7 +155,9 @@
   "responses": [
       "Why don't scientists trust atoms? Because they make up everything!",
       "What do you call fake spaghetti? An impasta!",
-      "Parallel lines have so much in common. It’s a shame they’ll never meet."
+      "Parallel lines have so much in common. It’s a shame they’ll never meet.",
+      "What did the pirate say on his 80th birthday? Aye Matey!",
+      "What do you call a fake noodle? An impasta!"
   ],
   "action": ""
 },
@@ -169,7 +171,7 @@
       "I need a conversation starter"
   ],
   "responses": [
-      "Did you know that octopuses have three hearts?",
+      "Did you know that octopuses have three hearts? Also yes it's octopuses not octopi.",
       "A group of flamingos is called a flamboyance.",
       "Honey never spoils. Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3000 years old and still edible.",
       "The shortest war in history was between Britain and Zanzibar on August 27, 1896. Zanzibar surrendered after 38 minutes.",
@@ -185,15 +187,16 @@
   "patterns": [
     "You're doing great",
     "Nice work",
-    "Good job AI",
-    "You're very helpful",
-    "Impressive response"
+    "Good job",
+    "Very helpful",
+    "Impressive"
   ],
   "responses": [
     "Thank you for the compliment!",
     "I'm glad you think so!",
     "Thanks, I try my best!",
-    "I appreciate your kind words!"
+    "I appreciate it",
+    "Thanks!"
   ],
   "action": ""
 },
@@ -209,8 +212,7 @@
   "responses": [
     "You're welcome!",
     "Happy to help!",
-    "Glad I could assist you.",
-    "Anytime, I'm here to help!"
+    "Anytime!"
   ],
   "action": ""
 },
@@ -227,7 +229,7 @@
     "No worries at all!",
     "It's completely fine, don't worry about it.",
     "Apology accepted.",
-    "That's okay, everyone makes mistakes."
+    "That's okay."
   ],
   "action": ""
 },
@@ -243,8 +245,7 @@
   "responses": [
     "You're doing better than you think!",
     "Keep going, you're doing great!",
-    "Every step forward is progress.",
-    "Believe in yourself, I believe in you!"
+    "Every step forward is progress."
   ],
   "action": ""
 },
@@ -283,249 +284,12 @@
     "I'm leaving now"
   ],
   "responses": [
-    "Goodbye! Feel free to return if you have more questions.",
-    "Farewell! Hope to assist you again soon.",
+    "Goodbye!",
+    "Take it easy!",
     "Bye! Take care.",
-    "See you later! Let me know if you need anything else.",
-    "Goodbye! Have a great day ahead."
+    "See you later!"
   ],
   "action": ""
-},
-{
-  "tag": "external_messaging_send_email",
-  "patterns": [
-      "Can you send an email?",
-      "Send an email for me",
-      "Compose an email",
-      "Start an email",
-      "I need to draft an email"
-  ],
-  "responses": [
-      "Sure, I can help with that.",
-      "Drafting an email.",
-      "Starting email now.",
-      "I'll compose a draft."
-  ],
-  "action": "# handle email dictation and sending"
-},
-{
-  "tag": "learning_get_smarter",
-  "patterns": ["get smarter", 
-    "i want you to get smarter", 
-    "learn from your memories", 
-    "re train yourself",
-    "refresh your training data",
-    "re load your training data",
-    "learn from the past"],
-  "responses": ["OK", "Done", "Will do", "Good idea"],
-  "action": "# call the get_smarter function"
-},
-{
-  "tag": "recommend_travel",
-  "patterns": [
-      "I need travel advice",
-      "Can you help me plan a trip?",
-      "I'm looking for travel destinations",
-      "Suggest some travel spots",
-      "Help me with my travel itinerary"
-  ],
-  "responses": [
-      "I'd love to help with your travel plans.",
-      "Sure, where are you planning to go?",
-      "Let's plan an exciting trip for you.",
-      "I can suggest some popular destinations."
-  ],
-  "action": "# interact with travel API and engage an agent who can find best deals based on user input"
-},
-{
-  "tag": "recommend_food",
-  "patterns": [
-      "I'm hungry, any food suggestions?",
-      "Recommend me a good restaurant",
-      "Where should I eat today?",
-      "I need ideas for dinner",
-      "Find me a place to eat"
-  ],
-  "responses": [
-      "How about trying some Italian cuisine tonight?",
-      "There's a great sushi place nearby. Want directions?",
-      "I've heard good things about the new burger joint in town.",
-      "How about some healthy salad options for dinner?"
-  ],
-  "action": "# recommend restaurants or recipes"
-},
-{
-  "tag": "recommend_exercise",
-  "patterns": [
-      "Suggest me some exercises",
-      "I need a workout plan",
-      "Help me with fitness tips",
-      "Tell me some good workouts",
-      "What exercises should I do today?"
-  ],
-  "responses": [
-      "Let's get you moving with some cardio!",
-      "How about a 30-minute yoga session?",
-      "Strength training is a great way to start the day.",
-      "I can guide you through a quick HIIT session."
-  ],
-  "action": "# provide workout routines"
-},
-{
-  "tag": "recommend_movies",
-  "patterns": [
-      "Suggest me a movie",
-      "What movie should I watch?",
-      "I need a movie recommendation",
-      "Find a good movie for me",
-      "Can you recommend a film?"
-  ],
-  "responses": [
-      "How about watching a classic like 'The Shawshank Redemption'?",
-      "I heard 'Inception' is a great movie.",
-      "You might enjoy 'The Godfather'.",
-      "Why not watch 'Forrest Gump' tonight?"
-  ],
-  "action": "# suggest movies based on popular choices or genres"
-},
-{
-  "tag": "recommend_books",
-  "patterns": [
-      "Can you recommend a book?",
-      "I'm looking for a good book to read",
-      "Suggest me a novel",
-      "What book should I read next?",
-      "Find me a book to read"
-  ],
-  "responses": [
-      "I suggest '1984' by George Orwell.",
-      "'To Kill a Mockingbird' is a must-read.",
-      "How about 'The Great Gatsby'?",
-      "You might enjoy 'The Catcher in the Rye'."
-  ],
-  "action": "# suggest books based on popular choices or genres"
-},
-{
-  "tag": "recommend_music",
-  "patterns": [
-      "Play some music",
-      "I want to listen to a song",
-      "Can you put on some music?",
-      "I'd like to hear some tunes",
-      "Start playing music"
-  ],
-  "responses": [
-      "Sure, what genre or artist are you in the mood for?",
-      "Playing music now. Any specific requests?",
-      "Alright, let's get some music going!",
-      "Music coming right up! Any favorite artists?"
-  ],
-  "action": "# play music through music API or engage spotify with a search based on user input"
-},
-{
-  "tag": "report_news",
-  "patterns": [
-      "What's the latest news?",
-      "Tell me today's headlines",
-      "I want to hear some news",
-      "Update me on current events",
-      "Give me a news briefing"
-  ],
-  "responses": [
-      "Here are the latest headlines.",
-      "Let me update you with today's news.",
-      "Sure, fetching the current news for you.",
-      "Here's what's happening in the world today."
-  ],
-  "action": "# call news API"
-},
-{
-  "tag": "report_entertainment_info",
-  "patterns": [
-      "What's happening in the entertainment world?",
-      "Tell me some celebrity news",
-      "Who won the latest award show?",
-      "Give me updates on recent movies",
-      "Any new music album releases?"
-  ],
-  "responses": [
-      "Here's the latest in entertainment news.",
-      "Let me share some recent celebrity updates.",
-      "Here are the results from the latest award show.",
-      "There are a few new movies out. Let me list them for you.",
-      "Several new music albums were released recently. Here's a list."
-  ],
-  "action": "# provide updates on entertainment and celebrity news"
-},
-{
-  "tag": "report_travel_guidance",
-  "patterns": [
-      "What are the travel restrictions in place?",
-      "I need travel safety tips",
-      "Can you provide travel alerts?",
-      "What should I pack for my trip?",
-      "Advise on best travel insurance options"
-  ],
-  "responses": [
-      "Currently, there are some travel restrictions. Here's what you need to know.",
-      "Travel safely with these tips.",
-      "I can provide you with the latest travel alerts.",
-      "Packing depends on your destination. Here's a general list.",
-      "There are several travel insurance options. Let's find the best one for you."
-  ],
-  "action": "# provide travel-related guidance and information with an agent"
-},
-{
-  "tag": "scheduling_appointment",
-  "patterns": [
-      "I need to schedule an appointment",
-      "Can you book a meeting for me?",
-      "Set up an appointment please",
-      "Help me manage my calendar",
-      "I want to see my appointments"
-  ],
-  "responses": [
-      "Sure, I can help with that. What time works for you?",
-      "Let's find a suitable time for your appointment.",
-      "I can assist with scheduling. Who is this appointment with?",
-      "Alright, let's check your calendar."
-  ],
-  "action": "# interact with calendar API to schedule an appointment on google calendar"
-},
-{
-  "tag": "scheduling_reminder",
-  "patterns": [
-      "Set a reminder for me",
-      "Remind me to",
-      "I need a reminder",
-      "Can you remind me about",
-      "Don't let me forget to"
-  ],
-  "responses": [
-      "Sure, I'll remind you.",
-      "Reminder set.",
-      "Okay, I'll make sure to remind you.",
-      "You won't forget it, I'll remind you."
-  ],
-  "action": "# interact with calendar API to schedule a reminder on google calendar"
-},
-{
-  "tag": "scheduling_calendar_management",
-  "patterns": [
-      "What's on my calendar today?",
-      "Add an event to my calendar",
-      "When is my next meeting?",
-      "Schedule a meeting for next week",
-      "Remind me about my appointments"
-  ],
-  "responses": [
-      "Here are your scheduled events.",
-      "Pulling up your itinerary.",
-      "Here are your upcoming meetings.",
-      "Getting schedule.",
-      "One moment for your schedule."
-  ],
-  "action": "# provide a summary of the user's upcoming calendar events"
 },
 {
   "tag": "tools_gemini_chat",
@@ -550,7 +314,7 @@
     "gemini a i",
     "gemini ai",
     "speak with a i"],
-  "responses": ["Heard."],
+  "responses": [""],
   "action": "gemini_chat"
 },
 {
@@ -624,7 +388,7 @@
     "application", 
     "help me code", 
     "this code"],
-  "responses": ["Loading..."],
+  "responses": [""],
   "action": "pair_programmer"
 },
 {
@@ -639,16 +403,14 @@
       "custom search",
       "custom search engine"
   ],
-  "responses": [
-      "Heard."
-  ],
+  "responses": [""],
   "action": "custom_search_engine"
 },
 {
   "tag": "tools_wiki_summary",
   "patterns": ["wiki", 
     "wikipedia"],
-  "responses": ["Done."],
+  "responses": [""],
   "action": "wiki_summary"
 },
 {
@@ -659,16 +421,14 @@
     "stock portfolio", 
     "stock performance", 
     "stock watch list"],
-  "responses": ["Ok.", 
-    "Got it.", 
-    "Heard."],
+  "responses": [""],
   "action": "get_stock_report"
 },
 {
   "tag": "tools_control_mouse",
   "patterns": ["move the mouse", 
     "control the mouse"],
-  "responses": ["Heard."],
+  "responses": [""],
   "action": "control_mouse"
 },
 {
@@ -678,7 +438,7 @@
     "you tube",
     "u tube",
     "you tube video"],
-  "responses": ["Heard."],
+  "responses": [""],
   "action": "play_youtube_video"
 },
 {
@@ -687,21 +447,14 @@
       "forecast weather",
       "weather forecast",
       "weather for cast",
-      "Weather"
-  ],
-  "responses": [
-      "On it."
-  ],
+      "Weather"],
+  "responses": [""],
   "action": "get_weather_forecast"
 },
 {
   "tag": "tools_google_search",
-  "patterns": [
-      "google"
-  ],
-  "responses": [
-      ""
-  ],
+  "patterns": ["google"],
+  "responses": [""],
   "action": "google_search"
 },
 {
@@ -735,9 +488,7 @@
       "hindi translation",
       "portuguese translation",
       "dutch translation"],
-  "responses": [
-      "Heard."
-  ],
+  "responses": [""],
   "action": "translate_speech"
 },
 {
@@ -747,8 +498,50 @@
     "screen capture", 
     "snapshot", 
     "screen"],
-  "responses": ["Heard"],
+  "responses": [""],
   "action": "take_screenshot"
+},
+{
+  "tag": "tools_save_note",
+  "patterns": ["take a note", 
+    "take a note", 
+    "take this message", 
+    "record this message", 
+    "record this note", 
+    "take notes",
+    "take note",
+    "some notes"],
+  "responses": [""],
+  "action": "save_note"
+},
+{
+  "tag": "tools_recall_notes",
+  "patterns": ["recall notes", 
+    "note recall", 
+    "recall", 
+    "re call"],
+  "responses": [""],
+  "action": "recall_notes"
+},
+{
+  "tag": "tools_file_management",
+  "patterns": [
+      "Open this file for me",
+      "Manage my files",
+      "I need help with file organization",
+      "Can you locate a file?",
+      "open file",
+      "help me find file",
+      "find file"
+  ],
+  "responses": [
+      "Heard.",
+      "On it.",
+      "No problem.",
+      "Sure.",
+      "OK."
+  ],
+  "action": "# assist with file management tasks"
 },
 {
   "tag": "tools_fact_checking",
@@ -771,48 +564,6 @@
     "Understood, checking.", 
     "OK, one moment while I check."],
   "action": "# trigger an agent containing a classification model with fact checker tools to review the last 5 exchanges between the user and chatbot and verify if they are accurate"
-},
-{
-  "tag": "tools_save_note",
-  "patterns": ["take a note", 
-    "take a note", 
-    "take this message", 
-    "record this message", 
-    "record this note", 
-    "take notes",
-    "take note",
-    "some notes"],
-  "responses": ["Heard"],
-  "action": "save_note"
-},
-{
-  "tag": "tools_recall_notes",
-  "patterns": ["recall notes", 
-    "note recall", 
-    "recall", 
-    "re call"],
-  "responses": ["Heard"],
-  "action": "recall_notes"
-},
-{
-  "tag": "tools_file_management",
-  "patterns": [
-      "Open this file for me",
-      "Manage my files",
-      "I need help with file organization",
-      "Can you locate a file?",
-      "open file",
-      "help me find file",
-      "find file"
-  ],
-  "responses": [
-      "Heard.",
-      "On it.",
-      "No problem.",
-      "Sure.",
-      "OK."
-  ],
-  "action": "# assist with file management tasks"
 }
     ]
 }

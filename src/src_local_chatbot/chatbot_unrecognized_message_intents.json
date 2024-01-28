@@ -27,94 +27,12 @@
             "action": ""
         },
         {
-            "tag": "unrecognized_20240104192813",
-            "patterns": [
-                "robot High"
-            ],
-            "responses": "",
-            "action": ""
-        },
-        {
             "tag": "unrecognized_20240104200231",
             "patterns": [
                 "robot call Gemini"
             ],
             "responses": "",
             "action": ""
-        },
-        "After reviewing the initial JSON intent I wrote, I have made some adjustments to ensure it is accurate, concise, meets the requirements, and follows a similar format to the provided examples and template:\n\n```\n{\n  \"tag\": \"unrecognized_20240104223754\",\n  \"patterns\": [\n    \"robot bologna oink oink\",\n    \"robot pig noises\"\n  ],\n  \"responses\": [\n    \"I'm sorry, I don't understand what you mean.\",\n    \"Could you please rephrase your question or try asking it in a different way?\",\n    \"I'm still under development and learning new things every day. Can you help me understand by asking your question in a different way?\"\n  ],\n  \"action\": \"handle_unrecognized_input\"\n}\n```\n\n* I have added an additional pattern to the `patterns` array to capture similar nonsensical inputs that are related to the original pattern.\n* I have revised the responses to be more friendly and informative, while still prompting the user to rephrase their question.\n* I have changed the action to `handle_unrecognized_input`, which is a more descriptive and practical function name.\n\nI believe this JSON intent is now accurate, concise, meets the requirements, and follows a similar format to the provided examples and template.",
-        {
-            "tag": "unrecognized_20240104231837",
-            "patterns": [
-                "robot Pokemon bologna",
-                "Synthetic pocket monster baloney",
-                "Synthetic Pok\u00e9mon sausage.",
-                "Mechanical pocket monster meat."
-            ],
-            "responses": [
-                "\"Synthesized cuisine for inorganic lifeforms.\"",
-                "\"Synthesized sustenance for artificial organisms.\"",
-                "\"\ud83e\udd16 \ud83c\udf55 \ud83d\udeab \ud83e\udde0.\""
-            ],
-            "action": [
-                "web_search"
-            ]
-        },
-        {
-            "tag": "unrecognized_20240104232152",
-            "patterns": [
-                "robot Pokemon bologna",
-                "Cognizant cyborg Pok\u00e9mon baloney",
-                "Metallic Pok\u00e9mon baloney.",
-                "Metallic pocket monsters' processed meat."
-            ],
-            "responses": [
-                "Electric dreams of circuitry.",
-                "\"Technology corrupts.\"",
-                "Electric dreams of processed meat."
-            ],
-            "action": [
-                "google_search"
-            ]
-        },
-        {
-            "tag": "unrecognized_20240104232801",
-            "patterns": [
-                "robot Pokemon bologna",
-                "Automated pocket monsters baloney",
-                "Inanimate pocket monster lunch meat.",
-                "Mechanical pocket monsters' meat"
-            ],
-            "responses": [
-                "Synthetic pocket monsters, processed meats.",
-                "\"\ud83e\udd16 \ud83d\udc7e \ud83e\udd6a?\"",
-                "Electric bologna bot."
-            ],
-            "action": "search_requested"
-        },
-        {
-            "tag": "unrecognized_20240104234554",
-            "patterns": [
-                "robot Pokemon bologna",
-                "robot Pokemon bologna is a robot robot . robots are using robots like robots ."
-            ],
-            "responses": [
-                "Robot Pok\u00e9mon Bologna: A Culinary and Technological Fusion\n\nIn the realm of culinary innovation, the fusion of distinct elements can lead to unexpected and delightful creations. One such example is the concept of robot Pok\u00e9mon bologna, a captivating blend of culinary art and technological advancement. Imagine a world where the beloved Pok\u00e9mon characters are reimagined as delectable bologna slices, each infused with unique flavors and characteristics.\n\nVisual Appeal:\nRobot Pok\u00e9mon bologna slices would captivate the eyes with their vibrant colors and intricate designs. Each slice could feature a different Pok\u00e9mon character, rendered in meticulous detail. The combination of the Pok\u00e9mon's iconic features and the vibrant colors of bologna would create an visually engaging experience, making mealtime a feast for the eyes.\n\nTaste Sensations:\nThe taste of robot Pok\u00e9mon bologna would offer a symphony of flavors, carefully crafted to reflect the individual characteristics of each Pok\u00e9mon. For instance, a Pikachu-inspired slice might possess a tangy and slightly sweet flavor, reminiscent of the electric spark of the Pok\u00e9mon's attacks. A Squirtle-inspired slice, on the other hand, could boast a refreshing and oceanic taste, capturing the essence of the water-type Pok\u00e9mon's playful nature.\n\nNutritional Value:\nRobot Pok\u00e9mon bologna could be designed to provide a balanced nutritional profile, catering to the dietary needs of both children and adults. By incorporating wholesome ingredients, such as lean meats, vegetables, and grains, these bologna slices could offer a protein-rich and nutritious alternative to traditional bologna options.\n\nTechnological Integration:\nThe robot aspect of robot Pok\u00e9mon bologna lies in its potential integration with advanced food technology. Imagine bologna slices that can communicate with each other, creating interactive and engaging mealtime experiences. With built-in sensors and interactive displays, robot Pok\u00e9mon bologna could respond to touch or voice commands, allowing consumers to interact with their favorite Pok\u00e9mon characters while enjoying their meal.\n\nSustainability:\nIn an era where sustainability is paramount, robot Pok\u00e9mon bologna could be produced using environmentally friendly practices. By utilizing plant-based ingredients and employing innovative production methods, these bologna slices could minimize their carbon footprint and appeal to environmentally conscious consumers.\n\nRobot Pok\u00e9mon bologna represents a visionary blend of culinary creativity and technological advancement. By combining the beloved Pok\u00e9mon characters with innovative food technology, this concept promises to revolutionize mealtime experiences, offering a delicious, visually appealing, and interactive culinary journey.",
-                "robot Pok\u00e9mon bologna is a captivating blend of culinary art and technological advancement . combining the beloved Pok\u00e9mon characters with innovative food technology, this concept promises to revolutionize mealtime experiences ."
-            ],
-            "action": "robotpokemonbologna_function"
-        },
-        {
-            "tag": "unrecognized_20240104235315",
-            "patterns": [
-                "robot Pokemon balloon",
-                "robot Pokemon balloon balloon . robot Pokemon Pokemon balloon - a robot robot ."
-            ],
-            "responses": [
-                "Electric-powered, helium-filled Pikachu",
-                "electric-powered, helium-filled Pikachu is powered by a solar powered electric ."
-            ],
-            "action": "robotpokemonballoon_function"
         },
         {
             "tag": "unrecognized_20240105002408",
@@ -133,56 +51,12 @@
             "action": ""
         },
         {
-            "tag": "unrecognized_20240105122708",
-            "patterns": [
-                "robot Shanghai Green Bay Packers"
-            ],
-            "responses": "",
-            "action": ""
-        },
-        {
             "tag": "unrecognized_20240105125755",
             "patterns": [
                 "robot call AI"
             ],
             "responses": "",
             "action": ""
-        },
-        {
-            "tag": "unrecognized_20240105161519",
-            "patterns": [
-                "robot tambourine",
-                "robot tambourine is a robot robot that can be used to make robots . robots can be accessed from the robot ."
-            ],
-            "responses": [
-                "Mechanical merriment.",
-                "mechanical merriment . mr. sneel ."
-            ],
-            "action": "robottambourine_function"
-        },
-        {
-            "tag": "unrecognized_20240105162552",
-            "patterns": [
-                "robot tambourine",
-                "robot tambourine is a robot robot that can be used to make robots . robots can be accessed from the robot ."
-            ],
-            "responses": [
-                "Dancing robot rocks rhythm.",
-                "Dancing robot rocks rhythm . dancing robot is a robot that rocks rhythm."
-            ],
-            "action": "robottambourine_function"
-        },
-        {
-            "tag": "unrecognized_20240112184429",
-            "patterns": [
-                "robot Cornelius",
-                "robot cornelius is a robot robot . the robot was able to use the robot to create a prototype . a robotic robot could be used to test the robots ."
-            ],
-            "responses": [
-                "Metal friend Cornelius.",
-                "metal friend cornelius . he was a friend of the metal friend ."
-            ],
-            "action": "robotcornelius_function"
         },
         {
             "tag": "unrecognized_20240120131401",
