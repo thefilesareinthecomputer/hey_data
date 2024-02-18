@@ -50,9 +50,6 @@ For commercial use of this project, a separate commercial license is required. T
     neo4j community edition, locally hosted self managed graph database (place in the project root directory after unzipping)
     https://neo4j.com/deployment-center/?ref=subscription#community
 
-    the following step is only necessary if you intend this project to run offline with no internet connection. if you prefer to run the bot fully offline you'll need a local LLM and a speech to text model instead of the google api which is the SpeechRecognition package's default. you can also pass your own Google Cloud API key to the speech_recognition Recognizer if you want further control over your parsed data. if you opt to run it offline, ensure the pocketsphinx model or an equivalent is present in the speech_recognition directory once installed. if not, download and unzip it, then store it in the speech_recognition package directory. 
-    https://sourceforge.net/projects/cmusphinx/files/Acoustic%20and%20Language%20Models/US%20English/
-
     pip install --upgrade pip
     pip install --upgrade virtualenv
     pip install --upgrade pytest
@@ -114,14 +111,8 @@ For commercial use of this project, a separate commercial license is required. T
     from the bots. the user_persona.py file is a series of dictionaries that can be passed to the bot in 
     prompt templates. the ones currently in use are:
     user_demographics, 
-    user_life_soundtrack, 
-    user_favorite_books,
-    user_favorite_podcasts,
-    user_favorite_movies,
     user_skills_and_experience,
-    user_personality, 
     user_interests, 
-    user_influential_figures, 
     user_favorite_quotes,
 
 

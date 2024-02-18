@@ -1,44 +1,37 @@
 '''takes a python list and prints an alphabetically sorted version'''
 
-science_websites = [
-    'https://arxiv.org/',
-    'https://blog.scienceopen.com/',
-    'https://clinicaltrials.gov/',
-    'https://doaj.org/',
-    'https://osf.io/preprints/psyarxiv',
-    'https://plos.org/',
-    'https://pubmed.ncbi.nlm.nih.gov/',
-    'https://scholar.google.com/',
-    'https://www.amjmed.com/',
-    'https://www.cdc.gov/',
-    'https://www.cell.com/',
-    'https://www.drugs.com/',
-    'https://www.health.harvard.edu/',
-    'https://www.health.harvard.edu/',
-    'https://www.mayoclinic.org/',
-    'https://www.mayoclinic.org/',
-    'https://www.medicinenet.com/',
-    'https://www.medlineplus.gov/',
-    'https://www.nature.com/',
-    'https://www.ncbi.nlm.nih.gov/pmc',
-    'https://www.nejm.org/',
-    'https://www.nhs.uk/',
-    'https://www.nih.gov/',
-    'https://www.nlm.nih.gov/',
-    'https://www.safemedication.com/',
-    'https://www.science.gov/',
-    'https://www.science.org/',
-    'https://www.semanticscholar.org/',
-    'https://zenodo.org/',
-    ]
 
-list_name = science_websites
+user_favorite_movies = [
+    "Ender's Game",
+    'Lord of the Rings',
+    'The Hobbit',
+    'The Silmarillion',
+    "Hitchhiker's Guide to the Galaxy",
+    'Life, the Universe and Everything',
+    'The Color of Magic',
+    'The Four Agreements',
+    'The Redemption of Althalus',
+    'Harry Potter',
+    'Emotional Intelligence 2.0',
+    'The Book of Five Rings',
+    'The Chronicles of Narnia',
+    'The Screwtape Letters',
+    'Dune',
+    'Angels & Demons',
+    '1984',
+    'Animal Farm',
+    'The Dark Tower series',
+    'The Call of Cthulhu',
+    'Good Omens'
+]
+
+list_name = user_favorite_movies
 
 list_name.sort()
 
-print("# Sorted")
-print("sorted_list = [")
+print('# Sorted')
+print(f'sorted_list = [')
 for word in list_name[:-1]:
-    print(f"    '{word}',")
-print(f"    '{list_name[-1]}'")
-print("]")
+    print(f'    "{word}",')
+print(f'    "{list_name[-1]}"')
+print(']')

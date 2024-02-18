@@ -28,16 +28,9 @@ SRC_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'src')
 TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, '_tests')
 UTILITIES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'utilities')
 
-# SCRIPT_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-# SRC_DIR_PATH = os.path.dirname(SCRIPT_DIR_PATH)
-# PROJECT_ROOT_DIR_PATH = os.path.dirname(SRC_DIR_PATH)
-# ARCHIVED_DEV_VERSIONS_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_archive')
-# FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_generated_files')
-# LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_local_models')
-# NOTES_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_base_knowledge')
-# SOURCE_DATA_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, 'app_source_data')
-# TESTS_DIR_PATH = os.path.join(PROJECT_ROOT_DIR_PATH, '_tests')
-# UTILITIES_DIR_PATH = os.path.join(SCRIPT_DIR_PATH, 'utilities')
+# create the file drop folder if it doesn't exist
+if not os.path.exists(FILE_DROP_DIR_PATH):
+    os.makedirs(FILE_DROP_DIR_PATH)
 
 now = datetime.now()
 

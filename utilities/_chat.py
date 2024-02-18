@@ -1,4 +1,5 @@
-'''command line interface for text generation with gemini - can be improved as a loop'''
+'''straightforward command line chat interface for google gemini-pro'''
+'''requires a .env file with a GOOGLE_GEMINI_API_KEY variable'''
 
 from dotenv import load_dotenv
 import certifi

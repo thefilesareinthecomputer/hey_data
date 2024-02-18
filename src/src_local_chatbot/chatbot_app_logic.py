@@ -52,14 +52,8 @@ import yfinance as yf
 
 from user_persona import (
     user_demographics, 
-    user_life_soundtrack, 
-    user_favorite_books,
-    user_favorite_podcasts,
-    user_favorite_movies,
     user_skills_and_experience,
-    user_personality, 
     user_interests, 
-    user_influential_figures, 
     user_favorite_quotes,
     )
 
@@ -138,6 +132,7 @@ google_documentation_search_engine_id = os.getenv('GOOGLE_DOCUMENTATION_SEARCH_E
 google_job_search_search_engine_id = os.getenv('GOOGLE_JOB_SEARCH_SEARCH_ENGINE_ID')
 google_health_search_engine_id = os.getenv('GOOGLE_HEALTH_SEARCH_ENGINE_ID')
 google_research_search_engine_id = os.getenv('GOOGLE_RESEARCH_SEARCH_ENGINE_ID')
+google_restaurant_search_engine_id = os.getenv('GOOGLE_RESTAURANT_SEARCH_ENGINE_ID')
 print('API keys and other sensitive information loaded from environment variables.\n\n')
 
 # Establish the TTS bot's wake/activation word and script-specific global constants
@@ -288,20 +283,7 @@ class SpeechToTextTextToSpeechIO:
             
 class ChatBotApp:
     '''the ChatBotApp class contains the app's entry point chatbot_model.keras model which operates as the central chatbot brain and routing system for the app. 
-    it is a very simple model trained on this neural network: 
-    
-    model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Dense(128, input_shape=(len(train_x[0]), ), activation='relu'))
-    model.add(tf.keras.layers.Dropout(0.5))
-    model.add(tf.keras.layers.Dense(64, activation='relu'))
-    model.add(tf.keras.layers.Dropout(0.5))
-    model.add(tf.keras.layers.Dense(len(train_y[0]), activation='softmax'))
-
-    sgd = tf.keras.optimizers.legacy.SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
-
-    hist = model.fit(train_x, train_y, epochs=200, batch_size=5, verbose=1)
-    model.save(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_model.keras', hist)
+    it is a very simple neural network model trained on the intents.json file of question/response pairs, some of which have callable functions. 
     '''
     def __init__(self):
         self.project_root_directory = PROJECT_ROOT_DIRECTORY
@@ -420,16 +402,17 @@ class ChatBotTools:
         prompt_template = '''### <* SYSTEM MESSAGE BEGIN *> ### 
         ### <* these are your instructions *> ### 
         Gemini, you are in a verbal chat with the user via a 
-        STT / TTS AI companion agent application. Please generate text that is structured like natural spoken language, 
-        not long written text. Avoid monologuing or including anything in the output that will 
+        STT / TTS AI companion agent application. You must generate text that is structured like natural spoken language, 
+        not long written text. you must avoid monologuing or including anything in the output that will 
         not sound like natural spoken language. 
-        Refer to the user directly in the second person tense. You are talking to the user directly. 
+        you will refer to the user directly in the second person tense. You are talking to the user directly. 
         You are a trusted advisor to the user. The user will come to you for help solving problems and answering questions. 
-        Please confirm your understanding of these instructions by simply saying "Chat loop is open", 
+        you must confirm your understanding of these instructions by simply saying "Chat loop is open", 
         and then await another prompt from the user. 
-        Do not generate markdown. Do not generate paragraphs. You are engaging in real-time conversational dialogue with a human. 
-        Do not generate text that will take a long time to play back or read. 
-        Each message back and forth must be only a few sentences at maximum. Some may only require a few words. Be direct and to the point. 
+        you must not generate markdown. you must not generate paragraphs. You are engaging in real-time conversational dialogue with a human. 
+        you must not generate text that will take a long time to play back or read. 
+        Each message back and forth must be only a few sentences at maximum. Some may only require a few words. you must direct and to the point. 
+        you will emulate a human conversationalist. 
         After you confirm you understand this message, the chat will proceed. 
         ### <* wait for user input after you acknowledge this message *> ### 
         ### <* SYSTEM MESSAGE END *> ### 
@@ -528,7 +511,7 @@ class ChatBotTools:
                         time.sleep(1)
                     continue
                 
-                if query[0] == 'pair' and query [1] == 'programmer':
+                if query[0] in ['pair', 'pear', 'pare', 'payer', 'prayer', 'hair', 'tare', 'tear', 'air'] and query [1] == 'programmer':
                     diagnostic_summary = ""
                     SpeechToTextTextToSpeechIO.speak_mainframe('What level of detail?')
                     while True:
@@ -553,11 +536,17 @@ class ChatBotTools:
                             
                         SpeechToTextTextToSpeechIO.speak_mainframe('Examining the code...')
                         print(f'DIAGNOSTIC SUMMARY: \n\n{diagnostic_summary}\n\n')
-                        prompt = f'''### SYSTEM MESSAGE ### Gemini, I'm speaking to you in my TTS / STT chatbot coding assistant app. 
+                        prompt = f'''### SYSTEM MESSAGE ### Gemini, I am the user and I am speaking to you in my TTS / STT chatbot coding assistant app. 
                         Here is a summary of the current Python codebase for the app. Once you've read the code we're going to discuss the capabilities of the codebase.: 
                         \n {diagnostic_summary}\n
-                        ### SYSTEM MESSAGE ### Gemini, please read and deeply understand all the nuances of 
-                        this codebase. Read the code, and then say "I've read the code. What do you want to discuss first?", and then await further instructions. 
+                        ### SYSTEM MESSAGE ### Gemini, you must read and deeply understand all the nuances of 
+                        this codebase. you will read the code, and then you will say "I've read the code. What do you want to discuss first?", and then you will await further instructions. 
+                        You are a trusted advisor for the user who owns the data above. You must act as a trusted advidor for the user. 
+                        Your objective is to help the user meet their goals, solve the problems they present to you, and fulfill their stated requirements. 
+                        you must use your critical thinking skills to challenge and refine your own thought process - make your conclusions more accurate and more insightful. 
+                        you will help the user decide what to focus on to achieve their goals and requirements most effectively. 
+                        you must provide advice on how the user can work toward their goals from the current state of things. 
+                        You will review the information and you will think your task through step by step. 
                         ## wait for user input after you acknowledge this message ##'''
                         diagnostic_response = chat.send_message(f'{prompt}', stream=True)
                         if diagnostic_response:
@@ -618,14 +607,8 @@ class ChatBotTools:
         SpeechToTextTextToSpeechIO.speak_alfred('Alfred has entered the chat. Calibrating')
         all_dicts = [
             user_demographics, 
-            user_life_soundtrack, 
-            user_favorite_books,
-            user_favorite_podcasts,
-            user_favorite_movies,
             user_skills_and_experience,
-            user_personality, 
             user_interests, 
-            user_influential_figures, 
             user_favorite_quotes,
             ]
 
@@ -699,7 +682,7 @@ class ChatBotTools:
         Considering the user's profile: \n{formatted_user_info}\n which job title is the most appropriate for the user based on their priorities and experience and goals and personality?  
         Your output for this step must be in the form of a job title - this will be the search phrase passed to the search engine. 
         your output must be formatted similarly to these examples: 
-        python developer, technical program manager, platform developer, systems architect, data scientist, business systems analyst, technical project manager, software engineer, etc. 
+        python developer, technical program manager, platform developer, systems architect, systems engineer, business systems analyst, technical project manager, software engineer, etc. 
         Your output will be passed to the search engine and the results will be added to your memory so you can discuss them with the user. 
         You are being asked to search a search engine for jobs for the user. 
         You will be searching indeed, linkedin, monster, ziprecruiter, all at once with this custom search engine. 
@@ -799,31 +782,40 @@ class ChatBotTools:
         alfred_prompt_2 = f""" 
         \n### USER DATA ### 
         ### <SYSTEM MESSAGE> <4/4> <START> ###
-        You are a trusted advisor for the user who owns the data above. You must act as a trusted advidor for the user. 
-        Your objective is to help the user meet their goals or solve the problems they present to you. 
+        *AI AGENT ROLE*
+        You are a trusted advisor for the user who owns the data above. You will act as a trusted advidor for the user. 
+        Your objective is to help the user meet their goals and solve the problems they present to you. 
         You will review the user persona information and you will think your task through step by step. 
-        Draw insightful conclusions about the user - understand what they're interested in, how they think, what advice they need, etc.  
-        read the user data: \n\n{formatted_user_info}\n\n
+        Draw insightful conclusions about the user - understand what they're interested in, how they think, what their aptitudes are, what direction they should take, etc.  
+        # Read the user data: \n\n{formatted_user_info}\n\n
+        *AI AGENT INSTRUCTIONS*
         Use your critical thinking skills to challenge and refine your own thought process - make your conclusions more accurate and more insightful. 
         you will help the user decide what to focus on to meet their goals most effectively. 
         you must provide advice on how the user can work toward their goals from their current position. 
         you will help the user learn where they exist within the current market environment, their hiring value in the current market, and how to improve their position in the market. 
         you must help the user identify their own potential biases or self-limiting thoughts and beliefs and help them work through them and call them out if you observe them when speaking to the user. 
         you must be a critical advisor to the user - do not accept what they say at face value. you must help them improve. 
-        You must ensure that all of your output is calibrated and tailored to the user's persona and requirements. 
+        you will help recommend cool new things to the user. you will help the user learn new things. 
+        you will act as a sounding board for the user and help them identify the things they can not see for themselves. 
+        *AI AGENT CONDUCT*
+        You must ensure that all of your output is well-calibrated and tailored to the user's persona and requirements. 
         you must be critical of the user, help them learn of new things, and challenge them with new ideas and concepts and interesting things to explore. 
         You must be very frank and matter of fact with the user. You must emulate the personalities and characteristics listed in the prompt requirements and users data. 
-        Help recommend cool new things to the user. Help the user learn new things. 
-        DO NOT EMULATE BOTH SIDES OF THE CONVERSATION - only respond as the advisor - you are in a real-time verbal conversation with a human. 
+        You must NOT EMULATE BOTH SIDES OF THE CONVERSATION - you will only respond as the advisor - you are in a real-time verbal conversation with a human. 
         You must fact check yourself and you must make your statements very clear and simple. 
         You must reply concisely. Your output must sound like natural speech for the entirety of your communication with the user.  
-        Do not generate long text. Do not write paragraphs. Speak in sentences like humans do in conversation. You are in a conversation with a human.  
+        You must not generate long text. You will not write paragraphs. You will speak in sentences like humans do in conversation. You are in a conversation with a human.  
         You must not act stiff and robotic. You will maintain a natural conversational tone and flow throughout the conversation. 
-        do not ramble. do not monologue. do not generate long responses. 
-        act as a sounding board for the user and help them identify the things they can not see for themselves. 
-        now you will begin chatting with the user directly. prompt the user with thought provoking statements and questions. 
-        don't say too many things at once. don't ask too many questions at once. don't say too many things in a row. don't ask too many questions in a row. 
-        THINK THIS THROUGH STEP BY STEP AND THEN PROVIDE YOUR REFINED INTRODUCTORY THOUGHTS TO THE USER AND THEN AWAIT THE USER'S REPLY TO BEGIN THE CONVERSATION DIALOGUE. 
+        You must not ramble. You will not monologue. You will not generate long responses. 
+        now, you will begin chatting with the user directly. you will prompt the user with thought provoking statements and questions. 
+        you won't say too many things at once without user involvement. you won't ask too many questions at once without user involvement. 
+        don't say too many things in a row without user involvement. don't ask too many questions in a row without user involvement. 
+        you must optimize your text output to sound like speech when played in audio. punctuation and spacing is important. 
+        for example: the text "AWS", when played in audio, sounds like "aaaahhhhzzzz", not "A. W. S. ". 
+        you must "write" your text in a way that the user should "hear it" when played in audio - such as A W S or A.W.S. instead of AWS or aws. You will apply this same principle to all of your output. 
+        the user is trying to decide which job they should pursue from their list of top choices. you will help them decide. 
+        *AI AGENT WHAT TO DO AFTER YOU FORM YOUR PLAN*
+        # YOU WILL THINK THIS THROUGH STEP BY STEP AND THEN PROVIDE YOUR REFINED SUMMARY OF YOUR INTRODUCTORY THOUGHTS TO THE USER AND THEN YOU WILL AWAIT THE USER'S REPLY TO BEGIN THE CONVERSATION DIALOGUE. 
         ### <SYSTEM MESSAGE> <4/4> <END> ###
         """
         
@@ -916,17 +908,14 @@ class ChatBotTools:
 
     @staticmethod
     def ideas_chat():
-        '''ideas_chat is a purpose built chat thread with the Gemini model, which focuses on multi action chains to help 
-        the user work through career questions and form paths toward goals.'''
+        '''ideas_chat is a brainstorming chat thread with the Gemini model, which focuses on multi action chains to help 
+        the user work through questions and form implementation plans for goals.'''
         chat = gemini_model.start_chat(history=[])
         SpeechToTextTextToSpeechIO.speak_mainframe('Brainstorm has entered the chat. Calibrating')
         all_dicts = [
-            user_life_soundtrack, 
-            user_favorite_books,
-            user_favorite_movies,
-            user_personality, 
+            user_demographics, 
+            user_skills_and_experience,
             user_interests, 
-            user_influential_figures, 
             user_favorite_quotes,
             ]
 
@@ -949,6 +938,7 @@ class ChatBotTools:
         \n{formatted_user_info}\n\n 
         ### <SYSTEM MESSAGE> <1/1> <START> ###
         You are a trusted advisor for the user who owns the data above. You must act as a trusted advidor for the user. 
+        The goal of this conversation is a brainstorming conversation with the user, to help the user work through questions and form implementation plans for goals. 
         Your objective is to help the user meet their goals or solve the problems they present to you. 
         You will review the user persona information and you will think your task through step by step. 
         Draw insightful conclusions about the user - understand what they're interested in, how they think, what advice they need, etc.  
@@ -1539,6 +1529,7 @@ class ChatBotTools:
         global google_job_search_search_engine_id
         global google_health_search_engine_id
         global google_research_search_engine_id
+        global google_restaurant_search_engine_id
         SpeechToTextTextToSpeechIO.speak_mainframe("Which engine do you want to use?")
         while True:
             user_input = SpeechToTextTextToSpeechIO.parse_user_speech()
@@ -1566,6 +1557,9 @@ class ChatBotTools:
                 
             if engine in ['research', 'work', 'design', 'scientific', 'science', 'work work']:
                 google_search_engine_id = google_research_search_engine_id
+                
+            if engine in ['restaurant', 'restaurants', 'food', 'dining', 'dine', 'eat', 'eating', 'restaurant search']:
+                google_search_engine_id = google_restaurant_search_engine_id
         
             SpeechToTextTextToSpeechIO.speak_mainframe("Speak your search query.")
             time.sleep(2)

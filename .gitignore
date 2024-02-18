@@ -12,6 +12,7 @@ dev/
 dev_work/
 db/
 hey_data/
+Open_Sans/
 venv/
 src/src_local_chatbot/user_persona.py
 **/user_persona.py
