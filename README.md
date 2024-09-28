@@ -1,6 +1,5 @@
 ## APP OVERVIEW & NOTES:
 
-    the majority of the codebase exists within the src/src_local_chatbot/chatbot_app_logic.py file.
     this is a voice activated ai assistant app designed to turn the user's computer into a voice activated command center.
     it can act as a note taker, question answerer, research assistant, information organizer/retriever, task automator, etc. 
     It's the basis for a jarvis-like ai assistant that can be extended with any number of tools and features. 
