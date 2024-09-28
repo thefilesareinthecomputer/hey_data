@@ -57,9 +57,7 @@ source {VENV_NAME}/bin/activate
  
 pip install --upgrade pip pip-check-reqs wheel python-dotenv certifi setuptools
 
-pip install {ADDITIONAL_PACKAGES}
-
-pip freeze > requirements.txt
+pip install -r requirements.txt
 
 echo "{VENV_NAME}/
 _archive/
@@ -75,11 +73,6 @@ db.sqlite3
 staticfiles/" > .gitignore
 
 cat .gitignore
-
-
-install the requirements:
-
-requirements.txt
 
 create a .env file in the root directory (required variables outlined below):
 .env
