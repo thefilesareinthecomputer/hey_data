@@ -1,3 +1,7 @@
+'''
+this is a testing module that's essentially a replica of the main chatbot module
+but pared down to only have the ability to write to and read from the neo4j graph database.
+'''
 
 from datetime import datetime, timedelta
 from dotenv import load_dotenv

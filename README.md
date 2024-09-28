@@ -208,7 +208,7 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.5 - 2024-01-17 added __init__.py and main.py to the src directory to run the UI.
     0.2.5 - 2024-01-25 added a .gitignore'd user_persona.py file containing dictionaries of user details by category (movie, music, book preferences, general interests, etc.) to be used by the chatbot for more calibrated responses. Dictionaries can contain anything and can be passed individually or together in a prompt template.
     0.2.5 - 2024-01-27 focusing on the in-line pair programmer agent and neo4j graph database.
-
+    0.3.0 - 2024-04-17 today i'm focusing on building a recipe tool in a tools subdirectory to test routing and function calling before moving the majority of the tools from the original monolith into their own respective files for better modularity and maintainability.
 
     
     

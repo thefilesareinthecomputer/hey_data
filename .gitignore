@@ -26,3 +26,4 @@ _requirements.txt
 *.sqlite3
 *.db
 *.pyc
+utilities/

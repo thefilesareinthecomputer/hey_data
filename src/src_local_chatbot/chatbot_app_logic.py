@@ -78,8 +78,10 @@ USER_SELECTED_HOME_LON = os.getenv('USER_SELECTED_HOME_LON', 'None')  # Float wi
 USER_SELECTED_TIMEZONE = os.getenv('USER_SELECTED_TIMEZONE', 'America/Chicago')  # Country/State format
 USER_STOCK_WATCH_LIST = os.getenv('USER_STOCK_WATCH_LIST', 'None').split(',')  # Comma separated list of stock symbols
 USER_DOWNLOADS_FOLDER = os.getenv('USER_DOWNLOADS_FOLDER')
-PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
 PROJECT_ROOT_DIRECTORY = os.getenv('PROJECT_ROOT_DIRECTORY')
+PROJECT_VENV_DIRECTORY = os.getenv('PROJECT_VENV_DIRECTORY')
+PROJECT_CODE_DIRECTORY = os.getenv('PROJECT_CODE_DIRECTORY')
+PROJECT_TOOL_DIRECTORY = os.getenv('PROJECT_TOOL_DIRECTORY')
 DATABASES_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_databases')
 FILE_DROP_DIR_PATH = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_generated_files')
 LOCAL_LLMS_DIR = os.path.join(PROJECT_ROOT_DIRECTORY, 'app_local_models')
@@ -152,7 +154,7 @@ for m in genai.list_models():
   if 'generateContent' in m.supported_generation_methods:
     print(m.name)
 # gemini_model = genai.GenerativeModel('gemini-pro')  
-gemini_model = genai.GenerativeModel('gemini-pro')  
+gemini_model = genai.GenerativeModel('gemini-1.0-pro-latest')  
 gemini_vision_model = genai.GenerativeModel('gemini-pro-vision')
 lemmmatizer = WordNetLemmatizer()
 intents = json.loads(open(f'{PROJECT_ROOT_DIRECTORY}/src/src_local_chatbot/chatbot_intents.json').read())
@@ -536,17 +538,17 @@ class ChatBotTools:
                             
                         SpeechToTextTextToSpeechIO.speak_mainframe('Examining the code...')
                         print(f'DIAGNOSTIC SUMMARY: \n\n{diagnostic_summary}\n\n')
-                        prompt = f'''### SYSTEM MESSAGE ### Gemini, I am the user and I am speaking to you in my TTS / STT chatbot coding assistant app. 
-                        Here is a summary of the current Python codebase for the app. Once you've read the code we're going to discuss the capabilities of the codebase.: 
+                        prompt = f'''### SYSTEM MESSAGE ### Gemini, Here is a summary of the current Python codebase for the app. 
+                        Once you've read the code we're going to discuss and plan modifications to the codebase.: 
                         \n {diagnostic_summary}\n
-                        ### SYSTEM MESSAGE ### Gemini, you must read and deeply understand all the nuances of 
-                        this codebase. you will read the code, and then you will say "I've read the code. What do you want to discuss first?", and then you will await further instructions. 
-                        You are a trusted advisor for the user who owns the data above. You must act as a trusted advidor for the user. 
-                        Your objective is to help the user meet their goals, solve the problems they present to you, and fulfill their stated requirements. 
-                        you must use your critical thinking skills to challenge and refine your own thought process - make your conclusions more accurate and more insightful. 
+                        ### SYSTEM MESSAGE ### Gemini, you must read and understand all the nuances of this codebase. 
+                        you will read the code, and then you will say "I've read the code. What do you want to discuss first?", 
+                        and then you will await further instructions. 
+                        You are a trusted advisor for the user who owns the data above. 
+                        Your objective is to help the user meet goals, solve problems, and fulfill stated requirements. 
                         you will help the user decide what to focus on to achieve their goals and requirements most effectively. 
-                        you must provide advice on how the user can work toward their goals from the current state of things. 
-                        You will review the information and you will think your task through step by step. 
+                        you will guide implementation of stated requirements beginning from the current state of things. 
+                        You will review all the information in context and you will think your task through step by step. 
                         ## wait for user input after you acknowledge this message ##'''
                         diagnostic_response = chat.send_message(f'{prompt}', stream=True)
                         if diagnostic_response:
@@ -1375,7 +1377,8 @@ class ChatBotTools:
     
     @staticmethod
     def translate_speech():
-        '''Translats a spoken phrase from user's preferred language to another language by saying "{activation_word}, translate" or "{activation_word}, help me translate".'''
+        '''Translats a spoken phrase from user's preferred language to another language by saying 
+        "{activation_word}, translate" or "{activation_word}, help me translate".'''
         language_code_mapping = {
             "en": ["english", "Daniel"],
             "es": ["spanish", "Paulina"],
@@ -1754,10 +1757,11 @@ class ChatBotTools:
                 
         if weather_forecast:
             response = gemini_model.generate_content(f"""### SYSTEM MESSAGE START ### 
-                                                     You are a weather report summarizer. Your output must be concise. 
-                                                     The report below is for the next 4 days broken out by 6 hour day part, and it's too verbose to be practical. 
-                                                     Provide a summary of this weather forecast along with recommendations for how the user should navigate 
-                                                     around this weather for the next day or two. Limit your reply to just a few sentences. 
+                                                     You are a weather report summarizer. 
+                                                     Your output must be short and concise. Limit your response to just a few sentences. 
+                                                     The report below is weather for the next 4 days, by 6 hour day part, and it's too verbose to be practical. 
+                                                     Provide a concise (short) summary of this weather forecast with recommendations for how the user should navigate 
+                                                     this weather on each day. Limit your reply to just 1-2 sentences per day.  
                                                      Be concise. Here is the report to summarize: {weather_forecast}
                                                      ### SYSTEM MESSAGE END ###""", stream=True)
             if response:
