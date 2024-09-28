@@ -1,70 +1,105 @@
 ## APP OVERVIEW & NOTES:
-
-    this is a voice activated ai assistant app designed to turn the user's computer into a voice activated command center.
-    it can act as a note taker, question answerer, research assistant, information organizer/retriever, task automator, etc. 
-    It's the basis for a jarvis-like ai assistant that can be extended with any number of tools and features. 
-    the bots have access to tools in the form of a ChatBotTools class. 
-    The gemini LLM and the agents themselves are all part of the ChatBotTools class. 
-    the chatbot_model.keras is the main entry point to the app and acts as the "router" and function caller for triggering tools based on user commands. 
-    the agents in ChatBotTools can also all use the tools in that class. 
-    They also have shared access to a class dictionary called data_store which stores data rendered by tools for later access by the llm agent. 
-    Some examples of current tools include: google custom search engine, wolfram alpha, wikipedia, speech translation, text file translation, mouse control, weather forecast, spotify, youtube, user watch list stock report, etc.
-    when the app is running, it listens for user input and waits until it hears the activation word. 
-    the activation word, followed by a recognized phrase, will trigger responses from the locally trained model (chatbot_model.keras), and then will call functions based on recognized phrases if applicable. 
-    some functions are one-off actions, and others trigger sub-loops such as the 'robot, AI' command which will enter a stateful TTS<>STT chat loop with the Gemini LLM. 
-    there is also base code for langchain agents powered by Gemini and GPT-3.5-turbo currently under "agent_one" and "agent_two", but they're not as built out as the Gemini chat loop yet. 
-    the user interacts with the app by speaking the activation word (a global constant variable) followed by their phrases. 
-    if the user speaks a phrase the bot doesn't recognize, it will save that interaction in the form of a JSON intent template that can then be vetted and corrected by the user and added into its intents.json training data file for the next training session. 
-    this "memory logging" has an opportunity to become a more robust and automatic process in a future sprint. 
+- this is a speech-to-text ai assistant chatbot desktop app designed to act as a copilot with the ability to access external web services and also interact with files and browsers on the user's computer.
+- it can act as a note taker, question answerer, research assistant, information organizer/retriever, task automator, etc. 
+- It's the basis for a jarvis-like ai assistant that can be extended with any number of attitional tools and features. 
+- The app contains a collection of agents and tools that work together to provide a range of functionality as one cohesive experience.
+- The tools available to the bot exist as static methods in the ChatBotTools class. 
+- The tools are called by the chatbot_model.keras and the agents themselves based on specific verbal prompts from the user.
+- The agents powered by large LLMs like gemini and openai are all part of the ChatBotTools class. 
+- When the larger LLMs are called, they enter a sub-loop with the user and can be used to search the web, answer questions, or have a conversation with the user.
+- The chatbot_intents.json file is a collection of possible user phrases and responses that are used to train the app's first model.
+- The first model that the user interacts with is a smaller model trained locally on the hard-coded chatbot_intents.json file which contains sets of phrase / response pairs for the initial chatbot. Some responses also trigger calls to static methods from the ChatBotTools class.
+- All of the available functions are listed below in detail.
+- The chatbot_model.keras model is the first model to activate when the app is run and acts as the "router" and function caller for triggering tools or more complex agents based on user commands. 
+- The agents in ChatBotTools can also all use the static method tools in that class. 
+- They also have shared access to a class-level dictionary called data_store which stores data rendered by tools for later access by the llm agent. 
+- Some examples of current tools include: google custom search engine, wolfram alpha, wikipedia, speech translation, text file translation, mouse control, weather forecast, spotify, youtube, user watch list stock report, etc.
+- when the app is running, it listens for user input and waits until it hears the activation word. 
+- the activation word, followed by a recognized phrase, will trigger responses from the locally trained model (chatbot_model.keras), and then will call functions based on recognized phrases if applicable. 
+- some functions are one-off actions, and others trigger sub-loops such as the 'robot, AI' command which will enter a stateful TTS<>STT chat loop with the Gemini LLM. 
+- there is also base code for langchain agents powered by Gemini and GPT-3.5-turbo currently under "agent_one" and "agent_two", but they're not as built out as the Gemini chat loop yet. 
+- the user interacts with the app by speaking the activation word (a global constant variable) followed by their phrases. 
+- if the user speaks a phrase the bot doesn't recognize, it will save that interaction in the form of a JSON intent template that can then be vetted and corrected by the user and added into its intents.json training data file for the next training session. 
+- this "memory logging" has an opportunity to become a more robust and automatic process in a future sprint. 
 
 
 ## VERSION
-
-    hey_data 0.2.5
+- hey_data 0.2.5
     
 
 ## LICENSE
 
 ### Open Source License
-
-This project is licensed under the GNU General Public License v3.0 - see the LICENSE.txt file for details. This open-source license is primarily for individual researchers, academic institutions, and non-commercial use. Contributions to the open-source version fall under the same GPLv3 licensing terms.
+- This project is licensed under the GNU General Public License v3.0 - see the LICENSE.txt file for details. This open-source license is primarily for individual researchers, academic institutions, and non-commercial use. Contributions to the open-source version fall under the same GPLv3 licensing terms.
 
 ### Commercial License
+- For commercial use of this project, a separate commercial license is required. This includes use in a commercial entity or for commercial purposes. Please contact us at https://github.com/thefilesareinthecomputer for more information about obtaining a commercial license.
 
-For commercial use of this project, a separate commercial license is required. This includes use in a commercial entity or for commercial purposes. Please contact us at https://github.com/thefilesareinthecomputer for more information about obtaining a commercial license.
+## DEVELOPMENT ENVIRONMENT / DEPENDENCIES / INSTALLATION / CONFIG:
+
+```bash
+os: macOS Sonoma 14
+python 3.11.4
+
+this app requires the following homebrew packages to be installed on the local machine:
+brew install portaudio
+brew install flac
+
+clone the repository from github: https://github.com/thefilesareinthecomputer/hey_data
+
+set up a virtual environment:
+
+cd {REPO_FOLDER}
+
+python3.11 -m venv {VENV_NAME}
+
+source {VENV_NAME}/bin/activate
+ 
+pip install --upgrade pip pip-check-reqs wheel python-dotenv certifi setuptools
+
+pip install {ADDITIONAL_PACKAGES}
+
+pip freeze > requirements.txt
+
+echo "{VENV_NAME}/
+_archive/
+_notes/
+_notes.txt
+generated_data/
+venv/
+__pycache__/
+*.pyc
+*/migrations/*
+db.sqlite3
+.env
+staticfiles/" > .gitignore
+
+cat .gitignore
 
 
-## DEPENDENCIES / INSTALLATION / CONFIG:
+install the requirements:
 
-    macOS Sonoma 14
+requirements.txt
 
-    python3.11
+create a .env file in the root directory (required variables outlined below):
+.env
 
-    brew install portaudio
-    brew install flac
+create a user_persona.py file in the src/src_local_chatbot directory (optional, but recommended):
 
-    Java 17 for the neo4j graph database
-    https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
+user_persona.py
 
-    neo4j community edition, locally hosted self managed graph database (place in the project root directory after unzipping)
-    https://neo4j.com/deployment-center/?ref=subscription#community
+This version of the app utilizes built-in macOS text to speech (TTS) engine for the bot voice, and will need slight modification on windows and linux with pyttsx3 or other TTS libraries.
 
-    pip install --upgrade pip
-    pip install --upgrade virtualenv
-    pip install --upgrade pytest
-    pip install --upgrade wheel
-    pip install --upgrade certifi
-    pip install --upgrade setuptools
+Java 17 is required for the neo4j graph database
+https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
 
-    requirements.txt
-    .env
-    user_persona.py
+neo4j community edition is the graph database which will be used to extend long-term memory to the bot via graph RAG. Neo4j is a locally hosted self managed graph database. Download from the URL below and and place in the project root directory after unzipping.
+https://neo4j.com/deployment-center/?ref=subscription#community
+```
 
-    This version of the app utilizes built-in macOS text to speech (TTS) engine for the bot's voice, and will need slight modification on windows and linux with pyttsx3 or other TTS libraries.
+## USER-DEFINED VARIABLES IN THE .env FILE:
 
-
-## USER DEFINED VARIABLES IN THE .env FILE:
-
+```bash
     within the .env file, optionally declare any of these variables (or others of your own) to extend tool functionality to the assistant:
     PROJECT_VENV_DIRECTORY=
     PROJECT_ROOT_DIRECTORY=
@@ -103,9 +138,11 @@ For commercial use of this project, a separate commercial license is required. T
 
     USER_CRYPTO=
     USER_STOCK_WATCH_LIST=
+```
 
 ## USER DEFINED VARIABLES IN THE src/src_local_chatbot/user_persona.py FILE:
 
+```bash
     optionally, the user can create a persona file for themself that is used to calibrate better responses 
     from the bots. the user_persona.py file is a series of dictionaries that can be passed to the bot in 
     prompt templates. the ones currently in use are:
@@ -113,10 +150,11 @@ For commercial use of this project, a separate commercial license is required. T
     user_skills_and_experience,
     user_interests, 
     user_favorite_quotes,
+```
 
+## FEATURE BACKLOG (planned additions, improvements, and bug fixes):
 
-## BACKLOG (planned additions, improvements, and bug fixes):
-
+```bash
     implement rag with the neo4j graph database.
     populate the neo4j graph database with nodes and relationships.
     gain the ability to ingest knowledge from various media, interpret and summarize it, index it to a knowledge graph using a neo4j database, be able to query it based on user input, and be able to converse about it with the user in real time.
@@ -145,19 +183,21 @@ For commercial use of this project, a separate commercial license is required. T
     give the bot the ability to do CRUD operations on the data_store variable in the tools class.
     implement asyncio to run the speech recognition and speech output in separate threads so that the bot can listen while it speaks.
     implement cachching for speed increase.
-
+```
 
 
 ## CURRENT SPRINT DETAILS:
 
+```bash
     the speech timeout settings are still a bit clunky with room for improvement.
     occasionaly, the bot is hearing its own output which can interfere with the user input.
     building the ui in flet.
     add functionality for the agents to operate on the ne04j graph database.
-
+```
 
 ## COMPLETION LOG / COMMIT MESSAGES:
 
+```bash
     0.1.1 - 2023-11-30 added google search, wikipedia search, and wolfram alpha query
     0.1.1 - 2023-12-01 note taking and note recall added
     0.1.1 - 2023-12-01 moved speech output to a separate thread so that in the future the bot can listen while speaking.
@@ -208,7 +248,7 @@ For commercial use of this project, a separate commercial license is required. T
     0.2.5 - 2024-01-25 added a .gitignore'd user_persona.py file containing dictionaries of user details by category (movie, music, book preferences, general interests, etc.) to be used by the chatbot for more calibrated responses. Dictionaries can contain anything and can be passed individually or together in a prompt template.
     0.2.5 - 2024-01-27 focusing on the in-line pair programmer agent and neo4j graph database.
     0.3.0 - 2024-04-17 today i'm focusing on building a recipe tool in a tools subdirectory to test routing and function calling before moving the majority of the tools from the original monolith into their own respective files for better modularity and maintainability.
-
+```
     
     
 
