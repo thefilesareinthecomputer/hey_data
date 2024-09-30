@@ -39,6 +39,7 @@ from langchain.prompts.chat import (
 from langchain.schema import HumanMessage, SystemMessage
 import numpy as np
 import nltk
+nltk.download('punkt_tab')
 import pandas as pd
 import PIL.Image
 import pyautogui
@@ -284,8 +285,9 @@ class SpeechToTextTextToSpeechIO:
         return speech_duration
             
 class ChatBotApp:
-    '''the ChatBotApp class contains the app's entry point chatbot_model.keras model which operates as the central chatbot brain and routing system for the app. 
+    '''the ChatBotApp class contains the app's entry point chatbot_model.keras model which operates as the "cns" of the chatbot and handles most of the routing for the app. 
     it is a very simple neural network model trained on the intents.json file of question/response pairs, some of which have callable functions. 
+    shout out and credit to @neuralnine for the tutorual that taught me how to build this section of the app.
     '''
     def __init__(self):
         self.project_root_directory = PROJECT_ROOT_DIRECTORY
