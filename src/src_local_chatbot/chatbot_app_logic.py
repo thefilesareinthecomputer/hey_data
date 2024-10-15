@@ -206,7 +206,20 @@ class SpeechToTextTextToSpeechIO:
                 except sr.UnknownValueError:
                     print('Speech not recognized. Please try again.')
                     return None
-                
+
+    @classmethod
+    def calculate_speech_duration(cls, text, rate):
+        '''calculate_speech_duration calculates the duration of the speech based on text length and speech rate. 
+        the intent for calculate_speech_duration is to calculate how long each piece of speech output will "take to say". 
+        it will be used for various reasons, primarily a time.sleep() for bot listening in the speech manager. 
+        that said, this is a workaround that will eventually conflict with our desired funcitonality of the bot being able to 
+        listen while it is speaking. also, the timing is sometimes inaccurate.'''
+        words = text.split() if text else []
+        number_of_words = len(words)
+        minutes = number_of_words / rate
+        seconds = minutes * 60
+        return seconds + 1
+    
     @classmethod
     def speech_manager(cls):
         '''speech_manager handles the flow of the speech output queue in a first in first out order, 
@@ -228,25 +241,12 @@ class SpeechToTextTextToSpeechIO:
                 cls.queue_lock.release()
             cls.is_speaking = False
             time.sleep(0.2)
-
-    @classmethod
-    def calculate_speech_duration(cls, text, rate):
-        '''calculate_speech_duration calculates the duration of the speech based on text length and speech rate. 
-        the intent for calculate_speech_duration is to calculate how long each piece of speech output will "take to say". 
-        it will be used for various reasons, primarily a time.sleep() for bot listening in the speech manager. 
-        that said, this is a workaround that will eventually conflict with our desired funcitonality of the bot being able to 
-        listen while it is speaking. also, the timing is sometimes inaccurate.'''
-        words = text.split() if text else []
-        number_of_words = len(words)
-        minutes = number_of_words / rate
-        seconds = minutes * 60
-        return seconds + 1
     
     @classmethod
     def speak_mainframe(cls, text, rate=185, chunk_size=1000, voice=USER_PREFERRED_VOICE):
         '''speak_mainframe contains the bot's speech output voice settings, and it puts each chunk of text output from the bot or the LLM 
         into the speech output queue to be processed in sequential order. it also separately returns the estimated duration of the speech 
-        output (in seconds), using thecalculate_speech_duration function.'''
+        output (in seconds), using the calculate_speech_duration function.'''
         global conversation_history
         conversation_history.append("Bot: " + text)
         cls.queue_lock.acquire()
@@ -444,6 +444,61 @@ class ChatBotTools:
                     SpeechToTextTextToSpeechIO.speak_mainframe('Ending chat.')
                     break
                 
+                if query[0] == 'stoic' and query[1] == 'lesson':
+                    SpeechToTextTextToSpeechIO.speak_mainframe('OK - thinking.')
+                    url = "https://stoic-quotes.com/api/quote"  # Fetch a single quote
+                    response = requests.get(url)
+                    # Check the status code and handle any issues
+                    if response.status_code == 200:
+                        try:
+                            quotes_data = response.json()
+
+                            # Handle case where it's a single quote
+                            if isinstance(quotes_data, dict):
+                                quote_text = quotes_data['text']
+                                quote_author = quotes_data['author']
+                                print(f"From {quote_author}: {quote_text}")
+                                SpeechToTextTextToSpeechIO.speak_mainframe(f"From {quote_author}: {quote_text}")
+                                stoic_response = chat.send_message(f'''You are a stoic philosophy expert. You are teaching the user about the following quote from 
+                                                                   {quote_author}: {quote_text}. Mimic the philosopher who authored this quote, and give the user a deep 
+                                                                   analysis of the quote. Teach the user the deeper lessons underlying this quote, and teach the user how to apply these 
+                                                                   principles within the context of modern life. Provide references to similar stoic principles, and connect these principles 
+                                                                   with common themes from the daily realities of modern living. Give examples of how these stoic principles apply to 
+                                                                   modern issues like technology and money and health, and how the user as an individual can apply these principles to achieve 
+                                                                   greater happiness and quality of life. 
+                                                                   To repeat, the quote you're currently examining is from {quote_author}. 
+                                                                   The quote is: {quote_text}. Provide your insights on this quote now.''', stream=True)
+                                if stoic_response:
+                                    for chunk in stoic_response:
+                                        if hasattr(chunk, 'parts'):
+                                            # Concatenate the text from each part
+                                            full_text = ''.join(part.text for part in chunk.parts)
+                                            SpeechToTextTextToSpeechIO.speak_mainframe(full_text)
+                                            print(full_text)
+                                        else:
+                                            # If it's a simple response, just speak and print the text
+                                            SpeechToTextTextToSpeechIO.speak_mainframe(chunk.text)
+                                            print(chunk.text)
+                                        time.sleep(0.1)
+                                    time.sleep(1)
+                                continue
+                            
+                            # Handle case where it's multiple quotes
+                            elif isinstance(quotes_data, list) and quotes_data:
+                                for quote in quotes_data:
+                                    SpeechToTextTextToSpeechIO.speak_mainframe(f"From {quote['author']}: {quote['text']}")
+                            
+                            else:
+                                SpeechToTextTextToSpeechIO.speak_mainframe("No quotes available at the moment.")
+                        except ValueError:
+                            # Handle JSON decoding error
+                            SpeechToTextTextToSpeechIO.speak_mainframe("Error: Unable to decode the response from the Stoic API.")
+                            print(f"Failed to decode JSON: {response.text}")
+                    else:
+                        # Handle non-200 status codes
+                        SpeechToTextTextToSpeechIO.speak_mainframe(f"Error: Received a {response.status_code} status code from the Stoic API.")
+                        print(f"Error: Status Code {response.status_code}, Response: {response.text}")
+                    
                 if query[0] == 'access' and query [1] == 'data':
                     SpeechToTextTextToSpeechIO.speak_mainframe('Accessing global memory.')
                     data_store = ChatBotTools.data_store
